@@ -23,3 +23,14 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Archivos temporales de deploy
+/public/deploy.php
+/public/showlog.php
+/public/clearcache.php
+/public/healthcheck.php
+
+# ZIPs y backups
+*.zip
+*.tar.gz
+*.bak
