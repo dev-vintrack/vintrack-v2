@@ -16,10 +16,12 @@ class ProviderService extends Model
         'provider_id',
         'key',
         'name',
+        'credit_cost',
         'enabled',
     ];
 
     protected $casts = [
+        'credit_cost' => 'decimal:2',
         'enabled' => 'boolean',
     ];
 

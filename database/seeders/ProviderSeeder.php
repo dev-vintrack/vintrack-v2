@@ -27,18 +27,22 @@ class ProviderSeeder extends Seeder
         );
 
         $services = [
-            'repuve' => 'REPUVE',
-            'pgj' => 'PGJ',
-            'aviso' => 'Aviso Judicial',
-            'ocra' => 'OCRA',
-            'carfax' => 'CARFAX',
-            'rapi' => 'RAPI',
+            ['key' => 'repuve', 'name' => 'REPUVE', 'credit_cost' => 0],
+            ['key' => 'pgj', 'name' => 'PGJ', 'credit_cost' => 0],
+            ['key' => 'aviso', 'name' => 'Aviso Judicial', 'credit_cost' => 0],
+            ['key' => 'ocra', 'name' => 'OCRA', 'credit_cost' => 0],
+            ['key' => 'carfax', 'name' => 'CARFAX', 'credit_cost' => 0],
+            ['key' => 'rapi', 'name' => 'RAPI', 'credit_cost' => 0],
         ];
 
-        foreach ($services as $key => $name) {
-            ProviderService::firstOrCreate(
-                ['provider_id' => $placas->id, 'key' => $key],
-                ['name' => $name, 'enabled' => true]
+        foreach ($services as $service) {
+            ProviderService::updateOrCreate(
+                ['provider_id' => $placas->id, 'key' => $service['key']],
+                [
+                    'name' => $service['name'],
+                    'credit_cost' => $service['credit_cost'],
+                    'enabled' => true,
+                ]
             );
         }
     }
