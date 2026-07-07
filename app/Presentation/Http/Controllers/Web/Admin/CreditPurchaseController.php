@@ -5,7 +5,7 @@ namespace App\Presentation\Http\Controllers\Web\Admin;
 use App\Application\Credits\CommandHandlers\AddCreditsCommandHandler;
 use App\Application\Credits\Commands\AddCreditsCommand;
 use App\Infrastructure\Persistence\Models\Provider;
-use App\Infrastructure\Persistence\Models\User;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
