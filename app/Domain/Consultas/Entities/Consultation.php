@@ -26,10 +26,25 @@ class Consultation
         private readonly ?string $errorMessage,
         private readonly bool $alertaRobo,
         private readonly array $theftFlags,
+        private readonly array $flagsJson,
         private readonly array $responseJson,
         private readonly ?int $creditsApi,
         private readonly DateTimeImmutable $createdAt
     ) {
+    }
+
+    /**
+     * @param array<string, int> $flags
+     */
+    private static function hasAnyFlag(array $flags): bool
+    {
+        foreach ($flags as $value) {
+            if ((int) $value === 1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static function fromResponse(
@@ -55,7 +70,8 @@ class Consultation
             null,
             $response->success(),
             $response->errorMessage(),
-            (bool) ($response->theftFlags()['alerta_robo'] ?? 0),
+            self::hasAnyFlag($response->theftFlags()),
+            $response->theftFlags(),
             $response->theftFlags(),
             $response->data(),
             $response->creditsApi(),
@@ -121,6 +137,11 @@ class Consultation
     public function theftFlags(): array
     {
         return $this->theftFlags;
+    }
+
+    public function flagsJson(): array
+    {
+        return $this->flagsJson;
     }
 
     public function responseJson(): array

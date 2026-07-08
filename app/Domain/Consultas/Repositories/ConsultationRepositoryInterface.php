@@ -6,7 +6,7 @@ use App\Domain\Consultas\Entities\Consultation;
 
 interface ConsultationRepositoryInterface
 {
-    public function save(Consultation $consultation): void;
+    public function save(Consultation $consultation): Consultation;
 
     public function findById(int $id): ?Consultation;
 

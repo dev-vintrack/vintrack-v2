@@ -26,7 +26,23 @@ class ProviderSeeder extends Seeder
             ]
         );
 
-        $services = [
+        $vindata = Provider::firstOrCreate(
+            ['code' => 'VINDATA'],
+            [
+                'name' => 'VINData',
+                'base_url' => 'https://api.vindata.com/v1',
+                'policies_json' => [
+                    'debitTiming' => 'postAccept',
+                    'creditCost' => 1.0,
+                    'resetPeriod' => 'none',
+                    'carryOver' => true,
+                    'expireAfterDays' => null,
+                ],
+                'enabled' => true,
+            ]
+        );
+
+        $placasServices = [
             ['key' => 'repuve', 'name' => 'REPUVE', 'credit_cost' => 0],
             ['key' => 'pgj', 'name' => 'PGJ', 'credit_cost' => 0],
             ['key' => 'aviso', 'name' => 'Aviso Judicial', 'credit_cost' => 0],
@@ -35,9 +51,25 @@ class ProviderSeeder extends Seeder
             ['key' => 'rapi', 'name' => 'RAPI', 'credit_cost' => 0],
         ];
 
-        foreach ($services as $service) {
+        foreach ($placasServices as $service) {
             ProviderService::updateOrCreate(
                 ['provider_id' => $placas->id, 'key' => $service['key']],
+                [
+                    'name' => $service['name'],
+                    'credit_cost' => $service['credit_cost'],
+                    'enabled' => true,
+                ]
+            );
+        }
+
+        $vinDataServices = [
+            ['key' => 'VHR', 'name' => 'VIN History Report', 'credit_cost' => 1],
+            ['key' => 'NMVTISPlus', 'name' => 'NMVTIS+', 'credit_cost' => 1],
+        ];
+
+        foreach ($vinDataServices as $service) {
+            ProviderService::updateOrCreate(
+                ['provider_id' => $vindata->id, 'key' => $service['key']],
                 [
                     'name' => $service['name'],
                     'credit_cost' => $service['credit_cost'],

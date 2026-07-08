@@ -20,15 +20,18 @@ class HomeController
 
     public function index(): View
     {
-        $provider = $this->providerRepository->findByCode(ProviderCode::fromString('PLACAS'));
-        $services = $provider
-            ? $this->serviceRepository->findEnabledByProviderId($provider->id()->value())
-            : [];
+        $providers = $this->providerRepository->findEnabled();
         $wallets = $this->walletRepository->findByUser(Auth::id());
 
+        $servicesByProvider = [];
+        foreach ($providers as $provider) {
+            $servicesByProvider[$provider->id()->value()] = $this->serviceRepository
+                ->findEnabledByProviderId($provider->id()->value());
+        }
+
         return view('home', [
-            'provider' => $provider,
-            'services' => $services,
+            'providers' => $providers,
+            'servicesByProvider' => $servicesByProvider,
             'wallets' => $wallets,
         ]);
     }

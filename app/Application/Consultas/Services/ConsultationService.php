@@ -35,24 +35,27 @@ class ConsultationService
         string $type,
         string $value,
         array $services
-    ): ConsultationResponse {
+    ): ConsultationResult {
         $providerCodeVo = ProviderCode::fromString($providerCode);
         $provider = $this->providerRepository->findByCode($providerCodeVo);
         if (!$provider || !$provider->isEnabled()) {
-            return new ConsultationResponse(false, 403, 'Proveedor no disponible.', [], null, $this->emptyFlags());
+            $response = new ConsultationResponse(false, 403, 'Proveedor no disponible.', [], null, $this->emptyFlags());
+            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, 0, $type, $value, $services, $response));
         }
 
         $enabledServices = $this->serviceRepository->findEnabledByProviderId($provider->id()->value());
         $enabledKeys = array_map(fn ($s) => $s->key(), $enabledServices);
         $requestedServices = array_values(array_intersect($services, $enabledKeys));
         if (empty($requestedServices)) {
-            return new ConsultationResponse(false, 422, 'Debe seleccionar al menos un servicio habilitado.', [], null, $this->emptyFlags());
+            $response = new ConsultationResponse(false, 422, 'Debe seleccionar al menos un servicio habilitado.', [], null, $this->emptyFlags());
+            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, $services, $response));
         }
 
         $wallet = $this->walletRepository->findByUserAndProviderOrCreate($userId, $provider->id()->value());
         $cost = $provider->creditCost();
         if ($cost > 0 && !$wallet->balance()->isGreaterThanOrEqual(Money::fromFloat($cost))) {
-            return new ConsultationResponse(false, 402, 'Saldo insuficiente de créditos.', [], null, $this->emptyFlags());
+            $response = new ConsultationResponse(false, 402, 'Saldo insuficiente de créditos.', [], null, $this->emptyFlags());
+            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, $requestedServices, $response, $cost));
         }
 
         $request = new ConsultationRequest($userId, $providerCode, $value, $type, $requestedServices);
@@ -81,9 +84,30 @@ class ConsultationService
             $response,
             new DateTimeImmutable()
         );
-        $this->consultationRepository->save($consultation);
+        $savedConsultation = $this->consultationRepository->save($consultation);
 
-        return $response;
+        return new ConsultationResult($response, $savedConsultation);
+    }
+
+    private function createUnsavedConsultation(
+        int $userId,
+        int $providerId,
+        string $type,
+        string $value,
+        array $services,
+        ConsultationResponse $response,
+        float $cost = 0
+    ): Consultation {
+        return Consultation::fromResponse(
+            $userId,
+            $providerId,
+            $type,
+            $value,
+            $services,
+            $cost,
+            $response,
+            new DateTimeImmutable()
+        );
     }
 
     private function emptyFlags(): array

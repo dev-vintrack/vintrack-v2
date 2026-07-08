@@ -31,6 +31,7 @@ class Consultation extends Model
         'ocra_robo',
         'carfax_robo',
         'rapi_robo',
+        'flags_json',
         'response_json',
         'credits_api',
     ];
@@ -45,6 +46,7 @@ class Consultation extends Model
         'ocra_robo' => 'boolean',
         'carfax_robo' => 'boolean',
         'rapi_robo' => 'boolean',
+        'flags_json' => 'array',
         'response_json' => 'array',
     ];
 

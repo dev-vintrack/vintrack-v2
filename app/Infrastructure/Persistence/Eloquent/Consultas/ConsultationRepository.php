@@ -9,7 +9,7 @@ use DateTimeImmutable;
 
 class ConsultationRepository implements ConsultationRepositoryInterface
 {
-    public function save(Consultation $consultation): void
+    public function save(Consultation $consultation): Consultation
     {
         $model = ConsultationModel::updateOrCreate(
             ['id' => $consultation->id()],
@@ -31,11 +31,14 @@ class ConsultationRepository implements ConsultationRepositoryInterface
                 'ocra_robo' => $consultation->theftFlags()['ocra_robo'] ?? 0,
                 'carfax_robo' => $consultation->theftFlags()['carfax_robo'] ?? 0,
                 'rapi_robo' => $consultation->theftFlags()['rapi_robo'] ?? 0,
+                'flags_json' => $consultation->flagsJson(),
                 'response_json' => $consultation->responseJson(),
                 'credits_api' => $consultation->creditsApi(),
                 'created_at' => $consultation->createdAt()->format('Y-m-d H:i:s'),
             ]
         );
+
+        return $this->toEntity($model);
     }
 
     public function findById(int $id): ?Consultation
@@ -78,6 +81,7 @@ class ConsultationRepository implements ConsultationRepositoryInterface
                 'carfax_robo' => $model->carfax_robo ? 1 : 0,
                 'rapi_robo' => $model->rapi_robo ? 1 : 0,
             ],
+            $model->flags_json ?? [],
             $model->response_json ?? [],
             $model->credits_api,
             new DateTimeImmutable($model->created_at)
