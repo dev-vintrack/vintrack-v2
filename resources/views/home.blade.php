@@ -61,10 +61,12 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Tipo</label>
-                                <select id="typeSelect" name="type" class="form-select" required>
+                                <select id="typeSelect" class="form-select" required>
                                     <option value="placa">Placa</option>
                                     <option value="niv">NIV</option>
+                                    <option value="vin" style="display:none">VIN</option>
                                 </select>
+                                <input type="hidden" id="typeHidden" name="type" value="">
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Valor</label>
@@ -97,6 +99,11 @@
 <script>
 const providerSelect = document.getElementById('providerSelect');
 const typeSelect = document.getElementById('typeSelect');
+const typeHidden = document.getElementById('typeHidden');
+
+function syncType() {
+    typeHidden.value = typeSelect.value;
+}
 
 function updateProviderUI() {
     const provider = providerSelect.value;
@@ -112,9 +119,15 @@ function updateProviderUI() {
         typeSelect.disabled = true;
     } else {
         typeSelect.disabled = false;
+        if (typeSelect.value === 'vin') {
+            typeSelect.value = 'placa';
+        }
     }
+
+    syncType();
 }
 
+typeSelect?.addEventListener('change', syncType);
 providerSelect?.addEventListener('change', updateProviderUI);
 updateProviderUI();
 
