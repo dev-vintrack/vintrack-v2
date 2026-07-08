@@ -1,20 +1,26 @@
-DEPLOY CHECKLIST - SPRINT 3 (VINData)
-=====================================
+DEPLOY CHECKLIST - SPRINT 3 (VINData) - PRODUCCION HOSTING
+==========================================================
 
-1. Pull latest develop branch on hosting:
+1. Backup de la base de datos en hosting (recomendado).
+
+2. Pull latest develop branch on hosting:
    git pull origin develop
 
-2. Install/update PHP dependencies:
+3. Install/update PHP dependencies:
    composer install --no-dev --optimize-autoloader
 
-3. Run migrations:
+4. Run migrations:
    php artisan migrate --force
 
-4. Seed VINDATA provider and services:
+5. Seed VINDATA provider and services:
    php artisan db:seed --class=ProviderSeeder --force
    OR run the SQL file seed_vindata_hosting.sql in phpMyAdmin / MySQL client.
 
-5. Set environment variables in .env:
+6. Insertar/actualizar usuario admin (si no existe):
+   php artisan db:seed --class=UserAdminSeeder --force
+   OR run insert_admin.sql en phpMyAdmin / MySQL client.
+
+7. Set environment variables in .env:
    VINDATA_API_URL=https://api.vindata.com/v1
    VINDATA_USERNAME=TU_USUARIO
    VINDATA_PASSWORD=TU_PASSWORD
@@ -22,13 +28,19 @@ DEPLOY CHECKLIST - SPRINT 3 (VINData)
    VINDATA_HTTP_TIMEOUT=60
    VINDATA_TOKEN_TTL_MINUTES=55
 
-6. Clear caches:
+   Tambien verificar:
+   PLACAS_API_URL=https://placas.info/api/v2/consultar/
+   PLACAS_API_TOKEN=TU_TOKEN
+
+8. Clear caches:
    php artisan config:clear
    php artisan cache:clear
    php artisan route:clear
    php artisan view:clear
 
-7. Verify:
-   - Login page loads
+9. Verify:
+   - Login page loads con admin@vintrack.com.mx / Vintrack.2024!Admin
    - Home page shows VINData provider/services
    - Test a VIN query with VINData (requires real credentials and credits)
+
+NOTA: En local ahora phpunit.xml usa SQLite :memory: para no borrar la BD MySQL al correr tests.
