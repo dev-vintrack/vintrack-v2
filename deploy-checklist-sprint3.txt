@@ -1,0 +1,34 @@
+DEPLOY CHECKLIST - SPRINT 3 (VINData)
+=====================================
+
+1. Pull latest develop branch on hosting:
+   git pull origin develop
+
+2. Install/update PHP dependencies:
+   composer install --no-dev --optimize-autoloader
+
+3. Run migrations:
+   php artisan migrate --force
+
+4. Seed VINDATA provider and services:
+   php artisan db:seed --class=ProviderSeeder --force
+   OR run the SQL file seed_vindata_hosting.sql in phpMyAdmin / MySQL client.
+
+5. Set environment variables in .env:
+   VINDATA_API_URL=https://api.vindata.com/v1
+   VINDATA_USERNAME=TU_USUARIO
+   VINDATA_PASSWORD=TU_PASSWORD
+   VINDATA_SECRET_KEY=TU_SECRET_KEY
+   VINDATA_HTTP_TIMEOUT=60
+   VINDATA_TOKEN_TTL_MINUTES=55
+
+6. Clear caches:
+   php artisan config:clear
+   php artisan cache:clear
+   php artisan route:clear
+   php artisan view:clear
+
+7. Verify:
+   - Login page loads
+   - Home page shows VINData provider/services
+   - Test a VIN query with VINData (requires real credentials and credits)
