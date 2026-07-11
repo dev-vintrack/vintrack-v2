@@ -230,7 +230,8 @@ class VinDataConsultationTest extends TestCase
                 $app->make(ProviderAdapterRegistry::class),
                 $app->make(\App\Domain\Credits\Repositories\WalletRepositoryInterface::class),
                 $app->make(DebitCreditsCommandHandler::class),
-                $app->make(ConsultationRepositoryInterface::class)
+                $app->make(ConsultationRepositoryInterface::class),
+                $app->make(\App\Application\Consultas\Notifications\ConsultationNotifierInterface::class)
             );
         });
     }

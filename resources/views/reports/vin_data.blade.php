@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Reporte VINData - VINTRACK')
+@section('title', 'Reporte VINTrack - VINTRACK')
 
 @section('content')
 <div class="container py-4">
@@ -22,7 +22,7 @@
         <div class="card-body">
             @php
                 $info = $vehicleInfo;
-                $productName = $info['productName'] ?? $info['productCode'] ?? 'Reporte VINData';
+                $productName = $info['productName'] ?? $info['productCode'] ?? 'Reporte VINTrack';
                 $vin = $info['vin'] ?? $consultation->valor();
                 $year = $info['year'] ?? ($summary['year'] ?? null);
                 $make = $info['make'] ?? ($summary['make'] ?? null);
@@ -30,20 +30,30 @@
                 $color = $info['color'] ?? null;
             @endphp
 
-            <div class="row mb-4">
+            @php
+                $summaryColor = $reportSummary['color'] ?? 'green';
+                $borderColor  = $summaryColor === 'red' ? '#dc3545' : ($summaryColor === 'yellow' ? '#ffc107' : '#198754');
+                $bgColor      = $summaryColor === 'red' ? '#fff8f8'  : ($summaryColor === 'yellow' ? '#fffdf0'  : '#f0fff4');
+            @endphp
+
+            <div class="row mb-3">
                 <div class="col-md-12">
-                    <h5 class="text-primary">{{ $productName }}</h5>
                     <h2 class="mb-1">{{ $year }} {{ $make }} {{ $model }}</h2>
-                    <p class="text-muted mb-2">VIN: <strong>{{ $vin }}</strong></p>
+                    <p class="text-muted mb-1">VIN: <strong>{{ $vin }}</strong></p>
                     @if($color)
-                        <p class="text-muted mb-0">Color: {{ $color }}</p>
+                        <p class="text-muted mb-2">Color: {{ $color }}</p>
                     @endif
+
+                    <div style="display:inline-flex; align-items:center; background:#333; border-radius:24px; padding:5px 14px; margin:8px 0 14px 0; gap:8px;">
+                        <span style="display:inline-block; width:22px; height:22px; border-radius:50%; background:{{ $summaryColor === 'red' ? '#dc3545' : '#555' }}; {{ $summaryColor === 'red' ? 'box-shadow:0 0 8px #dc3545;' : '' }}"></span>
+                        <span style="display:inline-block; width:22px; height:22px; border-radius:50%; background:{{ $summaryColor === 'yellow' ? '#ffc107' : '#555' }}; {{ $summaryColor === 'yellow' ? 'box-shadow:0 0 8px #ffc107;' : '' }}"></span>
+                        <span style="display:inline-block; width:22px; height:22px; border-radius:50%; background:{{ $summaryColor === 'green' ? '#198754' : '#555' }}; {{ $summaryColor === 'green' ? 'box-shadow:0 0 8px #198754;' : '' }}"></span>
+                    </div>
                 </div>
             </div>
 
             @if(!empty($reportSummary['message']))
-                @php $alertColor = ($reportSummary['color'] ?? 'yellow') === 'red' ? 'danger' : 'warning'; @endphp
-                <div class="alert alert-{{ $alertColor }}">
+                <div style="border-left: 4px solid {{ $borderColor }}; background: {{ $bgColor }}; padding: 10px 14px; margin-bottom: 16px; border-radius: 0 4px 4px 0;">
                     <strong>Resumen:</strong> {{ $reportSummary['message'] }}
                 </div>
             @endif
@@ -141,9 +151,30 @@
             @endif
 
             @if(!empty($junkSalvageTotalLoss))
-                <div class="alert alert-danger mt-4">
-                    <strong>Marca de Junk / Salvage / Total Loss registrada.</strong>
-                </div>
+                <h6 class="mt-4">Junk / Salvage / Total Loss</h6>
+                <table class="table table-bordered table-sm mt-2">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Entidad reportante</th>
+                            <th>Tipo de entidad</th>
+                            <th>Disposición</th>
+                            <th>Fuente</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($junkSalvageTotalLoss as $junk)
+                            @php $rowClass = ($junk['color'] ?? '') === 'red' ? 'table-danger' : (($junk['color'] ?? '') === 'yellow' ? 'table-warning' : ''); @endphp
+                            <tr class="{{ $rowClass }}">
+                                <td>{{ isset($junk['date']) ? \Carbon\Carbon::parse($junk['date'])->format('d/m/Y') : 'N/A' }}</td>
+                                <td>{{ $junk['reportedEntity'] ?? 'N/A' }}</td>
+                                <td>{{ $junk['reportedEntityType'] ?? 'N/A' }}</td>
+                                <td>{{ $junk['disposition'] ?? 'N/A' }}</td>
+                                <td>{{ $junk['source'] ?? 'N/A' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             @endif
 
             @if(!empty($titleBrandReported))
@@ -184,10 +215,22 @@
                     Descargar PDF
                 </a>
             </div>
+
+            <style>
+                .disclaimer { margin-top: 30px; padding: 20px; background-color: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.85rem; color: #444; line-height: 1.5; }
+                .disclaimer-title { font-size: 1rem; font-weight: 700; color: #222; margin-top: 22px; margin-bottom: 10px; }
+                .disclaimer-title:first-child { margin-top: 0; }
+                .disclaimer-text { margin-bottom: 10px; text-align: justify; }
+                .disclaimer-list { margin-top: 10px; margin-bottom: 14px; padding-left: 20px; }
+                .disclaimer-list li { margin-bottom: 6px; }
+                .disclaimer a { color: #0d6efd; text-decoration: none; }
+            </style>
+
+            @include('reports.partials._vin_data_disclaimer')
         </div>
 
         <div class="card-footer bg-white text-center text-muted" style="font-size:12px">
-            © {{ date('Y') }} VINTrack. Reporte generado con datos de VINData.
+            © {{ date('Y') }} VINTrack. Reporte generado desde el sitio VINTrack.com.mx
         </div>
     </div>
 </div>

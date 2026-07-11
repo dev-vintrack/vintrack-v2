@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Application\Consultas\Notifications\ConsultationNotifierInterface;
 use App\Domain\Consultas\Repositories\ConsultationRepositoryInterface;
 use App\Domain\Credits\Repositories\LedgerRepositoryInterface;
 use App\Domain\Credits\Repositories\WalletRepositoryInterface;
@@ -12,6 +13,7 @@ use App\Infrastructure\Persistence\Eloquent\Credits\LedgerRepository;
 use App\Infrastructure\Persistence\Eloquent\Credits\WalletRepository;
 use App\Infrastructure\Persistence\Eloquent\Providers\ProviderRepository;
 use App\Infrastructure\Persistence\Eloquent\Providers\ProviderServiceRepository;
+use App\Infrastructure\Notifications\MailConsultationNotifier;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -23,6 +25,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(WalletRepositoryInterface::class, WalletRepository::class);
         $this->app->bind(LedgerRepositoryInterface::class, LedgerRepository::class);
         $this->app->bind(ConsultationRepositoryInterface::class, ConsultationRepository::class);
+        $this->app->bind(ConsultationNotifierInterface::class, MailConsultationNotifier::class);
     }
 
     public function boot(): void

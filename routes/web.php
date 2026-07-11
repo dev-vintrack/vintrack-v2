@@ -1,5 +1,6 @@
 <?php
 
+use App\Presentation\Http\Controllers\Web\Admin\AdminPackageController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminProviderController;
 use App\Presentation\Http\Controllers\Web\Admin\CreditPurchaseController;
 use App\Presentation\Http\Controllers\Web\ConsultationController;
@@ -28,5 +29,14 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/credits/purchase', [CreditPurchaseController::class, 'create'])->name('admin.credits.purchase');
         Route::post('/credits/purchase', [CreditPurchaseController::class, 'store'])->name('admin.credits.purchase.store');
+
+        Route::get('/packages', [AdminPackageController::class, 'index'])->name('admin.packages.index');
+        Route::get('/packages/create', [AdminPackageController::class, 'create'])->name('admin.packages.create');
+        Route::post('/packages', [AdminPackageController::class, 'store'])->name('admin.packages.store');
+        Route::get('/packages/{id}/edit', [AdminPackageController::class, 'edit'])->name('admin.packages.edit');
+        Route::put('/packages/{id}', [AdminPackageController::class, 'update'])->name('admin.packages.update');
+        Route::delete('/packages/{id}', [AdminPackageController::class, 'destroy'])->name('admin.packages.destroy');
+        Route::get('/packages/assign', [AdminPackageController::class, 'assignForm'])->name('admin.packages.assign');
+        Route::post('/packages/assign', [AdminPackageController::class, 'assign'])->name('admin.packages.assign.store');
     });
 });

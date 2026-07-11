@@ -12,8 +12,8 @@ use RuntimeException;
 
 class PlacasProviderAdapter implements ProviderAdapterInterface
 {
-    private const DEFAULT_TIMEOUT = 30;
-    private const POLL_MAX_SECONDS = 40;
+    private const DEFAULT_TIMEOUT = 12;
+    private const POLL_MAX_SECONDS = 18;
     private const POLL_INTERVAL_SECONDS = 2;
 
     private Client $client;
@@ -33,6 +33,9 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
 
     public function consult(ConsultationRequest $request): ConsultationResponse
     {
+        // Algunos hosting compartidos matan la petición a los 30s; intentamos darle más tiempo.
+        @set_time_limit(90);
+
         [$ok, $message, $value] = $this->validateInput($request->type(), $request->value());
         if (!$ok) {
             return $this->errorResponse(422, $message);

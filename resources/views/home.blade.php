@@ -101,6 +101,15 @@ const providerSelect = document.getElementById('providerSelect');
 const typeSelect = document.getElementById('typeSelect');
 const typeHidden = document.getElementById('typeHidden');
 
+function escapeHtml(unsafe) {
+    return String(unsafe ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 function syncType() {
     typeHidden.value = typeSelect.value;
 }
@@ -146,7 +155,14 @@ document.getElementById('consultaForm')?.addEventListener('submit', async functi
         });
         const data = await response.json();
         if (data.success) {
-            let html = '<div class="alert alert-success">Consulta exitosa.</div>';
+            let html = '';
+            if (data.banner) {
+                const b = data.banner;
+                html += '<div class="alert" style="background-color:' + b.bg + ';color:' + b.color + ';border:none;">'
+                     + '<strong>' + escapeHtml(b.message) + '</strong></div>';
+            } else {
+                html += '<div class="alert alert-success">Consulta exitosa.</div>';
+            }
             if (data.local_report_url) {
                 html += '<div class="mb-2"><a href="' + data.local_report_url + '" class="btn btn-sm btn-outline-primary" target="_blank">Ver reporte VINTrack</a></div>';
             } else if (data.report_url) {

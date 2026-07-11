@@ -2,6 +2,7 @@
 
 namespace App\Application\Consultas\Services;
 
+use App\Application\Consultas\Notifications\ConsultationNotifierInterface;
 use App\Application\Credits\CommandHandlers\DebitCreditsCommandHandler;
 use App\Application\Credits\Commands\DebitCreditsCommand;
 use App\Domain\Consultas\Entities\Consultation;
@@ -25,7 +26,8 @@ class ConsultationService
         private readonly ProviderAdapterRegistry $adapterRegistry,
         private readonly WalletRepositoryInterface $walletRepository,
         private readonly DebitCreditsCommandHandler $debitHandler,
-        private readonly ConsultationRepositoryInterface $consultationRepository
+        private readonly ConsultationRepositoryInterface $consultationRepository,
+        private readonly ConsultationNotifierInterface $notifier
     ) {
     }
 
@@ -86,7 +88,34 @@ class ConsultationService
         );
         $savedConsultation = $this->consultationRepository->save($consultation);
 
+        if ($response->success()) {
+            $this->dispatchNotifications($userId, $provider->id()->value(), $providerCode, $savedConsultation, $cost);
+        }
+
         return new ConsultationResult($response, $savedConsultation);
+    }
+
+    private function dispatchNotifications(
+        int $userId,
+        int $providerId,
+        string $providerCode,
+        Consultation $consultation,
+        float $cost
+    ): void {
+        if (strtoupper($providerCode) === 'PLACAS' && $consultation->alertaRobo()) {
+            $this->notifier->sendPlacasTheftAlert($userId, $consultation);
+        }
+
+        if ($cost > 0) {
+            $threshold = (float) config('vintrack.low_credit_threshold', 5);
+            $wallet = $this->walletRepository->findByUserAndProvider($userId, $providerId);
+            if ($wallet !== null) {
+                $balance = $wallet->balance()->amount();
+                if ($balance <= $threshold) {
+                    $this->notifier->sendLowCredit($userId, $balance);
+                }
+            }
+        }
     }
 
     private function createUnsavedConsultation(

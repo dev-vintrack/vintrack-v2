@@ -1,26 +1,44 @@
-DEPLOY CHECKLIST - SPRINT 3 (VINData) - PRODUCCION HOSTING
-==========================================================
+DEPLOY CHECKLIST - SPRINT 3 (VINData + Placas branded + alertas + correos)
+================================================================================
+HOSTING COMPARTIDO (cPanel + PHPMyAdmin)
+RESTRICCIONES: sin SSH, sin terminal PHP/artisan/composer, sin git en hosting.
+Solo cPanel (Administrador de archivos) + PHPMyAdmin.
 
-1. Backup de la base de datos en hosting (recomendado).
+---------------------------------------------------------------
+PASO 0. BACKUP (IMPORTANTE)
+---------------------------------------------------------------
+- En PHPMyAdmin: Exportar la BD completa (respaldo por si algo falla).
+- En cPanel: opcional, respaldar la carpeta del proyecto.
 
-2. Pull latest develop branch on hosting:
-   git pull origin develop
+---------------------------------------------------------------
+PASO 1. PREPARAR PAQUETE LOCAL (ya hecho por Cascade)
+---------------------------------------------------------------
+- Ya se ejecuto LOCALMENTE: composer install --no-dev --optimize-autoloader
+  (vendor/ optimizado y sin dependencias dev).
 
-3. Install/update PHP dependencies:
-   composer install --no-dev --optimize-autoloader
+- Comprimir en un ZIP los archivos a subir. Debe incluir:
+    app/
+    bootstrap/ (sin bootstrap/cache/*.php compilados viejos)
+    config/
+    database/
+    public/
+    resources/
+    routes/
+    vendor/
+    artisan, composer.json, composer.lock
+  NO subir: .env (se edita en el hosting), node_modules/, .git/, tests/,
+            *.sql de ayuda, storage/logs/*.
 
-4. Run migrations:
-   php artisan migrate --force
+---------------------------------------------------------------
+PASO 2. SUBIR ARCHIVOS VIA cPanel (Administrador de archivos)
+---------------------------------------------------------------
+- Subir el ZIP a la carpeta del proyecto y extraerlo (sobrescribir).
+- Verificar permisos de storage/ y bootstrap/cache/ (755/775 segun hosting).
 
-5. Seed VINDATA provider and services:
-   php artisan db:seed --class=ProviderSeeder --force
-   OR run the SQL file seed_vindata_hosting.sql in phpMyAdmin / MySQL client.
-
-6. Insertar/actualizar usuario admin (si no existe):
-   php artisan db:seed --class=UserAdminSeeder --force
-   OR run insert_admin.sql en phpMyAdmin / MySQL client.
-
-7. Set environment variables in .env:
+---------------------------------------------------------------
+PASO 3. CONFIGURAR .env EN EL HOSTING (editar con cPanel)
+---------------------------------------------------------------
+# VINData
    VINDATA_API_URL=https://api.vindata.com/v1
    VINDATA_USERNAME=TU_USUARIO
    VINDATA_PASSWORD=TU_PASSWORD
@@ -28,19 +46,59 @@ DEPLOY CHECKLIST - SPRINT 3 (VINData) - PRODUCCION HOSTING
    VINDATA_HTTP_TIMEOUT=60
    VINDATA_TOKEN_TTL_MINUTES=55
 
-   Tambien verificar:
+# Placas.info
    PLACAS_API_URL=https://placas.info/api/v2/consultar/
    PLACAS_API_TOKEN=TU_TOKEN
 
-8. Clear caches:
-   php artisan config:clear
-   php artisan cache:clear
-   php artisan route:clear
-   php artisan view:clear
+# Correo (SMTP) - obligatorio para enviar alertas reales
+   MAIL_MAILER=smtp
+   MAIL_HOST=mail.vintrack.com.mx
+   MAIL_PORT=587
+   MAIL_USERNAME=noreply@vintrack.com.mx
+   MAIL_PASSWORD=TU_PASSWORD_SMTP
+   MAIL_SCHEME=tls
+   MAIL_FROM_ADDRESS="noreply@vintrack.com.mx"
+   MAIL_FROM_NAME="VINTRACK"
 
-9. Verify:
-   - Login page loads con admin@vintrack.com.mx / Vintrack.2024!Admin
-   - Home page shows VINData provider/services
-   - Test a VIN query with VINData (requires real credentials and credits)
+# Alertas y admin
+   ADMIN_EMAIL=admin@vintrack.com.mx
+   CREDITOS_MIN_ALERTA_GENERAL=5
 
-NOTA: En local ahora phpunit.xml usa SQLite :memory: para no borrar la BD MySQL al correr tests.
+---------------------------------------------------------------
+PASO 4. BASE DE DATOS (ejecutar SQL en PHPMyAdmin, en orden)
+---------------------------------------------------------------
+Copiar/pegar el contenido de cada archivo en la pestana SQL de PHPMyAdmin:
+
+  a) migrate_flags_json_hosting.sql   -> agrega columna flags_json a consultations
+  b) seed_vindata_hosting.sql         -> inserta proveedor VINDATA + servicios
+  c) insert_admin.sql                 -> inserta/actualiza usuario admin
+
+Todos son idempotentes y compatibles con PHPMyAdmin (sin ON DUPLICATE KEY UPDATE).
+
+---------------------------------------------------------------
+PASO 5. LIMPIAR CACHES (sin terminal)
+---------------------------------------------------------------
+Como no hay artisan, borrar manualmente con el Administrador de archivos de cPanel:
+  - Vaciar: bootstrap/cache/config.php (borrar el archivo si existe)
+  - Vaciar: bootstrap/cache/routes-v7.php (o routes*.php)
+  - Vaciar contenido de: storage/framework/views/*.php
+  - Vaciar contenido de: storage/framework/cache/data/*
+(Opcional) Si el hosting expone un script web de limpieza, usarlo.
+
+---------------------------------------------------------------
+PASO 6. VERIFICAR
+---------------------------------------------------------------
+   - Cargar el sitio y login: admin@vintrack.com.mx / Vintrack.2024!Admin
+   - El dashboard muestra PLACAS y VINDATA con sus servicios.
+   - Asignar creditos al usuario (admin) para VINDATA y para PLACAS.
+   - Probar consulta VIN con VINDATA (requiere credenciales reales + creditos).
+   - Probar consulta Placa/NIV con PLACAS (requiere token real + creditos).
+     * Debe mostrar banner de color en el dashboard (verde por defecto, rojo si hay alerta).
+     * Debe mostrar el enlace "Ver reporte VINTrack".
+     * El reporte HTML/PDF debe mostrar el mismo banner de color y resaltar filas con alertas.
+   - Si hay alerta de robo/fraude/recuperado, el usuario recibe correo con copia oculta al admin.
+   - Si el saldo queda <= 5 creditos, el usuario recibe correo de "creditos bajos".
+
+NOTA LOCAL: phpunit.xml usa SQLite :memory: para no borrar la BD MySQL al correr tests.
+NOTA: para restaurar dependencias dev en local -> composer install (sin --no-dev).
+NOTA: si el correo SMTP no esta configurado, el sitio sigue funcionando; solo se loguea el error.
