@@ -4,8 +4,7 @@
     <meta charset="utf-8">
     <title>Reporte VINTrack - Placas.info</title>
     @php
-        use App\Presentation\Support\PlacasReportPresenter as P;
-        $titles = P::sectionTitles();
+        $titles = \App\Presentation\Support\PlacasReportPresenter::sectionTitles();
         $bannerBg = $banner['bg'] ?? '#198754';
         $summaryColor = 'green';
         if ($bannerBg === '#dc3545' || str_contains($bannerBg, 'dc3545')) $summaryColor = 'red';
@@ -108,7 +107,7 @@
     @foreach($titles as $key => $title)
         @php
             $data = $sections[$key] ?? null;
-            $rows = P::flatten($data);
+            $rows = \App\Presentation\Support\PlacasReportPresenter::flatten($data);
         @endphp
         @if(!empty($rows))
             @php $anyContent = true; @endphp
@@ -117,8 +116,8 @@
                 <tbody>
                     @foreach($rows as [$rawKey, $value])
                         @php
-                            $label = P::prettyKey($rawKey);
-                            $isAlert = P::isAlertRow($title, $label, (string) $value);
+                            $label = \App\Presentation\Support\PlacasReportPresenter::prettyKey($rawKey);
+                            $isAlert = \App\Presentation\Support\PlacasReportPresenter::isAlertRow($title, $label, (string) $value);
                         @endphp
                         <tr class="{{ $isAlert ? 'row-alert' : '' }}">
                             <th class="k">{{ $label }}</th>

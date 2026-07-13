@@ -1,6 +1,5 @@
 @php
-    use App\Presentation\Support\PlacasReportPresenter as P;
-    $titles = P::sectionTitles();
+    $titles = \App\Presentation\Support\PlacasReportPresenter::sectionTitles();
     $userEmail = $userInfo['email'] ?? '';
     $nombre = $userInfo['nombre'] ?? '';
     $telefono = $userInfo['telefono'] ?? '';
@@ -47,7 +46,7 @@
     @foreach($titles as $key => $title)
         @php
             $data = $sections[$key] ?? null;
-            $rows = P::flatten($data);
+            $rows = \App\Presentation\Support\PlacasReportPresenter::flatten($data);
         @endphp
         @if(!empty($rows))
             <h3 style="margin:14px 0 6px 0; font-size:16px;">{{ $title }}</h3>
@@ -58,8 +57,8 @@
                 <tbody>
                     @foreach($rows as [$rawKey, $value])
                         @php
-                            $label = P::prettyKey($rawKey);
-                            $isAlert = P::isAlertRow($title, $label, (string) $value);
+                            $label = \App\Presentation\Support\PlacasReportPresenter::prettyKey($rawKey);
+                            $isAlert = \App\Presentation\Support\PlacasReportPresenter::isAlertRow($title, $label, (string) $value);
                         @endphp
                         <tr>
                             <th style="width:40%; background:#f2f2f2; padding:8px; text-align:left;">{{ $label }}</th>

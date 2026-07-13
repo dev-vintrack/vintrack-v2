@@ -3,8 +3,7 @@
 @section('title', 'Reporte Placas.info - VINTRACK')
 
 @php
-    use App\Presentation\Support\PlacasReportPresenter as P;
-    $titles = P::sectionTitles();
+    $titles = \App\Presentation\Support\PlacasReportPresenter::sectionTitles();
 @endphp
 
 @section('content')
@@ -60,7 +59,7 @@
                 @foreach($titles as $key => $title)
                     @php
                         $data = $sections[$key] ?? null;
-                        $rows = P::flatten($data);
+                        $rows = \App\Presentation\Support\PlacasReportPresenter::flatten($data);
                     @endphp
                     @if(!empty($rows))
                         @php $anyContent = true; @endphp
@@ -73,8 +72,8 @@
                                             <tbody>
                                                 @foreach($rows as [$rawKey, $value])
                                                     @php
-                                                        $label = P::prettyKey($rawKey);
-                                                        $isAlert = P::isAlertRow($title, $label, (string) $value);
+                                                        $label = \App\Presentation\Support\PlacasReportPresenter::prettyKey($rawKey);
+                                                        $isAlert = \App\Presentation\Support\PlacasReportPresenter::isAlertRow($title, $label, (string) $value);
                                                     @endphp
                                                     <tr @if($isAlert) style="background: rgba(220,53,69,0.12);" @endif>
                                                         <th style="width:40%">{{ $label }}</th>

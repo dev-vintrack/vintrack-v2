@@ -14,27 +14,26 @@
             <a class="navbar-brand" href="{{ route('home') }}">VINTRACK</a>
             @auth
                 @php
-                    use App\Presentation\Support\RoleHelper;
                     $user = Auth::user();
-                    $isAdmin = RoleHelper::canAccessAdmin($user);
+                    $isAdmin = \App\Presentation\Support\RoleHelper::canAccessAdmin($user);
                 @endphp
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item"><a class="nav-link" href="{{ RoleHelper::homeRoute($user) }}">Inicio</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ \App\Presentation\Support\RoleHelper::homeRoute($user) }}">Inicio</a></li>
                         @if($isAdmin)
                             <li class="nav-item"><a class="nav-link" href="{{ route('admin.providers.index') }}">Proveedores</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('admin.packages.index') }}">Paquetes</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('admin.credits.purchase') }}">Comprar Créditos</a></li>
                         @endif
-                        @if(RoleHelper::canManageUsers($user))
+                        @if(\App\Presentation\Support\RoleHelper::canManageUsers($user))
                             <li class="nav-item"><a class="nav-link" href="{{ route('admin.users.index') }}">Usuarios</a></li>
                         @endif
                     </ul>
                     <div class="d-flex align-items-center text-white">
-                        <span class="me-3">{{ $user->name }} ({{ RoleHelper::label($user->rol) }})</span>
+                        <span class="me-3">{{ $user->name }} ({{ \App\Presentation\Support\RoleHelper::label($user->rol) }})</span>
                         <form method="POST" action="{{ route('logout') }}" class="d-inline">
                             @csrf
                             <button type="submit" class="btn btn-outline-light btn-sm">Cerrar sesión</button>
