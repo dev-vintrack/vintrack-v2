@@ -2,27 +2,37 @@
 
 use App\Presentation\Http\Controllers\Web\Admin\AdminPackageController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminProviderController;
+use App\Presentation\Http\Controllers\Web\Admin\AdminUserController;
 use App\Presentation\Http\Controllers\Web\Admin\CreditPurchaseController;
 use App\Presentation\Http\Controllers\Web\ConsultationController;
 use App\Presentation\Http\Controllers\Web\HomeController;
 use App\Presentation\Http\Controllers\Web\LoginController;
+use App\Presentation\Http\Controllers\Web\RegisterController;
 use App\Presentation\Http\Controllers\Web\ReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.post');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+Route::post('/register', [RegisterController::class, 'register'])->name('register.post');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/', function () {
         return redirect()->route('home');
     });
     Route::get('/home', [HomeController::class, 'index'])->name('home');
+    Route::get('/home/cliente', [HomeController::class, 'cliente'])->name('home.cliente');
+    Route::get('/home/perito', [HomeController::class, 'perito'])->name('home.perito');
+    Route::get('/home/oficial', [HomeController::class, 'oficial'])->name('home.oficial');
+    Route::get('/home/ocasional', [HomeController::class, 'ocasional'])->name('home.ocasional');
+    Route::get('/home/pending', [HomeController::class, 'pending'])->name('home.pending');
+
     Route::post('/consult', [ConsultationController::class, 'consult'])->name('consult');
     Route::get('/reports/{id}', [ReportController::class, 'show'])->name('reports.show');
     Route::get('/reports/{id}/pdf', [ReportController::class, 'pdf'])->name('reports.pdf');
 
-    Route::prefix('admin')->middleware(['role:admin'])->group(function () {
+    Route::prefix('admin')->middleware(['role:admin,analista,soporte'])->group(function () {
         Route::get('/providers', [AdminProviderController::class, 'index'])->name('admin.providers.index');
         Route::post('/providers/{id}', [AdminProviderController::class, 'updateProvider'])->name('admin.providers.update');
         Route::post('/providers/{providerId}/services/{serviceId}', [AdminProviderController::class, 'updateService'])->name('admin.services.update');
@@ -38,5 +48,13 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/packages/{id}', [AdminPackageController::class, 'destroy'])->name('admin.packages.destroy');
         Route::get('/packages/assign', [AdminPackageController::class, 'assignForm'])->name('admin.packages.assign');
         Route::post('/packages/assign', [AdminPackageController::class, 'assign'])->name('admin.packages.assign.store');
+    });
+
+    Route::prefix('admin')->middleware(['role:admin,soporte'])->group(function () {
+        Route::get('/users', [AdminUserController::class, 'index'])->name('admin.users.index');
+        Route::get('/users/{id}/edit', [AdminUserController::class, 'edit'])->name('admin.users.edit');
+        Route::put('/users/{id}', [AdminUserController::class, 'update'])->name('admin.users.update');
+        Route::put('/users/{id}/approve', [AdminUserController::class, 'approve'])->name('admin.users.approve');
+        Route::delete('/users/{id}', [AdminUserController::class, 'destroy'])->name('admin.users.destroy');
     });
 });

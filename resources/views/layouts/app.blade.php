@@ -13,14 +13,41 @@
         <div class="container">
             <a class="navbar-brand" href="{{ route('home') }}">VINTRACK</a>
             @auth
-                <div class="d-flex align-items-center text-white">
-                    <span class="me-3">{{ Auth::user()->nombre ?? Auth::user()->name }} ({{ Auth::user()->rol }})</span>
-                    <form method="POST" action="{{ route('logout') }}" class="d-inline">
-                        @csrf
-                        <button type="submit" class="btn btn-outline-light btn-sm">Cerrar sesión</button>
-                    </form>
+                @php
+                    use App\Presentation\Support\RoleHelper;
+                    $user = Auth::user();
+                    $isAdmin = RoleHelper::canAccessAdmin($user);
+                @endphp
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item"><a class="nav-link" href="{{ RoleHelper::homeRoute($user) }}">Inicio</a></li>
+                        @if($isAdmin)
+                            <li class="nav-item"><a class="nav-link" href="{{ route('admin.providers.index') }}">Proveedores</a></li>
+                            <li class="nav-item"><a class="nav-link" href="{{ route('admin.packages.index') }}">Paquetes</a></li>
+                            <li class="nav-item"><a class="nav-link" href="{{ route('admin.credits.purchase') }}">Comprar Créditos</a></li>
+                        @endif
+                        @if(RoleHelper::canManageUsers($user))
+                            <li class="nav-item"><a class="nav-link" href="{{ route('admin.users.index') }}">Usuarios</a></li>
+                        @endif
+                    </ul>
+                    <div class="d-flex align-items-center text-white">
+                        <span class="me-3">{{ $user->name }} ({{ RoleHelper::label($user->rol) }})</span>
+                        <form method="POST" action="{{ route('logout') }}" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-outline-light btn-sm">Cerrar sesión</button>
+                        </form>
+                    </div>
                 </div>
             @endauth
+            @guest
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{{ route('login') }}" class="btn btn-outline-light btn-sm">Iniciar sesión</a>
+                    <a href="{{ route('register') }}" class="btn btn-primary btn-sm">Registrarse</a>
+                </div>
+            @endguest
         </div>
     </nav>
 

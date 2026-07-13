@@ -26,6 +26,7 @@ class User extends Authenticatable
         'rol',
         'activo',
         'approved_at',
+        'status',
     ];
 
     /**

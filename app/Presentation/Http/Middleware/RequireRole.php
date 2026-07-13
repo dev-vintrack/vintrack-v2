@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class RequireRole
 {
-    public function handle(Request $request, Closure $next, string $role): Response
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         $user = Auth::guard('web')->user();
 
@@ -17,7 +17,12 @@ class RequireRole
             return redirect()->route('login');
         }
 
-        if ($user->rol !== $role && $user->rol !== 'admin') {
+        if (! $user->activo) {
+            abort(403, 'Tu cuenta está desactivada.');
+        }
+
+        $allowedRoles = array_merge($roles, ['admin']);
+        if (! in_array($user->rol, $allowedRoles, true)) {
             abort(403, 'No tienes permisos para acceder a esta sección.');
         }
 

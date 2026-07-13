@@ -2,6 +2,7 @@
 
 namespace App\Presentation\Http\Controllers\Web;
 
+use App\Presentation\Support\RoleHelper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,7 +33,23 @@ class LoginController
         if (Auth::guard('web')->attempt($credentials, $remember)) {
             $request->session()->regenerate();
 
-            return redirect()->intended(route('home'));
+            $user = Auth::guard('web')->user();
+
+            if (! $user->activo) {
+                Auth::guard('web')->logout();
+                return redirect()->route('login')->withErrors([
+                    'email' => 'Tu cuenta está desactivada. Contacta a soporte.',
+                ]);
+            }
+
+            if (RoleHelper::requiresApproval($user->rol) && $user->status !== 'active') {
+                Auth::guard('web')->logout();
+                return redirect()->route('login')->withErrors([
+                    'email' => 'Tu solicitud aún está pendiente de aprobación.',
+                ]);
+            }
+
+            return redirect()->intended(RoleHelper::homeRoute($user));
         }
 
         return redirect()->route('login')->withErrors([
