@@ -55,6 +55,11 @@ class Wallet
         return $this->validityEnd;
     }
 
+    public function setValidityEnd(?DateTimeImmutable $validityEnd): void
+    {
+        $this->validityEnd = $validityEnd;
+    }
+
     public function credit(Money $amount): void
     {
         $this->balance = $this->balance->add($amount);

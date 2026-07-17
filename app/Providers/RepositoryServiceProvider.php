@@ -8,11 +8,13 @@ use App\Domain\Credits\Repositories\LedgerRepositoryInterface;
 use App\Domain\Credits\Repositories\WalletRepositoryInterface;
 use App\Domain\Providers\Repositories\ProviderRepositoryInterface;
 use App\Domain\Providers\Repositories\ProviderServiceRepositoryInterface;
+use App\Domain\Vehicles\Repositories\VehicleRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\Consultas\ConsultationRepository;
 use App\Infrastructure\Persistence\Eloquent\Credits\LedgerRepository;
 use App\Infrastructure\Persistence\Eloquent\Credits\WalletRepository;
 use App\Infrastructure\Persistence\Eloquent\Providers\ProviderRepository;
 use App\Infrastructure\Persistence\Eloquent\Providers\ProviderServiceRepository;
+use App\Infrastructure\Persistence\Eloquent\Vehicles\VehicleRepository;
 use App\Infrastructure\Notifications\MailConsultationNotifier;
 use Illuminate\Support\ServiceProvider;
 
@@ -25,6 +27,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(WalletRepositoryInterface::class, WalletRepository::class);
         $this->app->bind(LedgerRepositoryInterface::class, LedgerRepository::class);
         $this->app->bind(ConsultationRepositoryInterface::class, ConsultationRepository::class);
+        $this->app->bind(VehicleRepositoryInterface::class, VehicleRepository::class);
         $this->app->bind(ConsultationNotifierInterface::class, MailConsultationNotifier::class);
     }
 

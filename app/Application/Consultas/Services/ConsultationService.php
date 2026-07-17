@@ -5,6 +5,7 @@ namespace App\Application\Consultas\Services;
 use App\Application\Consultas\Notifications\ConsultationNotifierInterface;
 use App\Application\Credits\CommandHandlers\DebitCreditsCommandHandler;
 use App\Application\Credits\Commands\DebitCreditsCommand;
+use App\Application\Vehicles\Services\VehicleUpserter;
 use App\Domain\Consultas\Entities\Consultation;
 use App\Domain\Consultas\Repositories\ConsultationRepositoryInterface;
 use App\Domain\Consultas\Services\ProviderAdapterRegistry;
@@ -27,7 +28,8 @@ class ConsultationService
         private readonly WalletRepositoryInterface $walletRepository,
         private readonly DebitCreditsCommandHandler $debitHandler,
         private readonly ConsultationRepositoryInterface $consultationRepository,
-        private readonly ConsultationNotifierInterface $notifier
+        private readonly ConsultationNotifierInterface $notifier,
+        private readonly VehicleUpserter $vehicleUpserter
     ) {
     }
 
@@ -89,6 +91,7 @@ class ConsultationService
         $savedConsultation = $this->consultationRepository->save($consultation);
 
         if ($response->success()) {
+            $this->vehicleUpserter->upsertFromConsultation($savedConsultation, $providerCode);
             $this->dispatchNotifications($userId, $provider->id()->value(), $providerCode, $savedConsultation, $cost);
         }
 

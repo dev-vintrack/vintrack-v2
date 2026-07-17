@@ -3,7 +3,8 @@
 @section('title', 'Nuevo Paquete - Admin')
 
 @section('content')
-<div class="container py-4" style="max-width:680px;">
+<div class="row">
+    <div class="col-12">
     <div class="d-flex align-items-center mb-4">
         <a href="{{ route('admin.packages.index') }}" class="btn btn-sm btn-outline-secondary me-3">← Volver</a>
         <h2 class="mb-0">Nuevo Paquete de Créditos</h2>
@@ -69,5 +70,6 @@
             </form>
         </div>
     </div>
+</div>
 </div>
 @endsection

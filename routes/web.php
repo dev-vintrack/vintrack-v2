@@ -1,9 +1,13 @@
 <?php
 
+use App\Presentation\Http\Controllers\Web\Admin\AdminConsultationController;
+use App\Presentation\Http\Controllers\Web\Admin\AdminMenuPermissionController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminPackageController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminProviderController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminUserController;
+use App\Presentation\Http\Controllers\Web\Admin\AdminVehicleController;
 use App\Presentation\Http\Controllers\Web\Admin\CreditPurchaseController;
+use App\Presentation\Http\Controllers\Web\Admin\AdminWalletController;
 use App\Presentation\Http\Controllers\Web\ConsultationController;
 use App\Presentation\Http\Controllers\Web\HomeController;
 use App\Presentation\Http\Controllers\Web\LoginController;
@@ -56,5 +60,19 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/users/{id}', [AdminUserController::class, 'update'])->name('admin.users.update');
         Route::put('/users/{id}/approve', [AdminUserController::class, 'approve'])->name('admin.users.approve');
         Route::delete('/users/{id}', [AdminUserController::class, 'destroy'])->name('admin.users.destroy');
+
+        Route::get('/consultations', [AdminConsultationController::class, 'index'])->name('admin.consultations.index');
+
+        Route::get('/wallets', [AdminWalletController::class, 'index'])->name('admin.wallets.index');
+        Route::get('/wallets/movements', [AdminWalletController::class, 'movements'])->name('admin.wallets.movements');
+
+        Route::get('/packages/active', [AdminPackageController::class, 'active'])->name('admin.packages.active');
+
+        Route::get('/vehicles', [AdminVehicleController::class, 'index'])->name('admin.vehicles.index');
+    });
+
+    Route::prefix('admin')->middleware(['role:admin'])->group(function () {
+        Route::get('/menu-permissions', [AdminMenuPermissionController::class, 'index'])->name('admin.menu-permissions.index');
+        Route::put('/menu-permissions', [AdminMenuPermissionController::class, 'update'])->name('admin.menu-permissions.update');
     });
 });

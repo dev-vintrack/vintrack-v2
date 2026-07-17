@@ -2,7 +2,7 @@
     <div class="col-md-6">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
-                <h5 class="card-title">Proveedores activos</h5>
+                <h5 class="card-title">Costo de la Consulta por proveedor</h5>
                 @forelse ($providers as $p)
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span>{{ $p->name() }} <small class="text-muted">({{ $p->code()->value() }})</small></span>
@@ -20,8 +20,11 @@
             <div class="card-body">
                 <h5 class="card-title">Mis saldos</h5>
                 @forelse ($wallets as $wallet)
+                    @php
+                        $providerName = $providerNames[$wallet->providerId()] ?? 'Proveedor #' . $wallet->providerId();
+                    @endphp
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span>Proveedor #{{ $wallet->providerId() }}</span>
+                        <span>{{ $providerName }}</span>
                         <span class="badge bg-primary fs-6">{{ number_format($wallet->balance()->amount(), 2) }} créditos</span>
                     </div>
                 @empty

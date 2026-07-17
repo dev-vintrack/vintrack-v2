@@ -3,7 +3,8 @@
 @section('title', 'Editar Usuario')
 
 @section('content')
-<div class="container py-4" style="max-width:680px;">
+<div class="row">
+    <div class="col-12">
     <div class="d-flex align-items-center mb-4">
         <a href="{{ route('admin.users.index') }}" class="btn btn-sm btn-outline-secondary me-3">← Volver</a>
         <h2 class="mb-0">Editar Usuario: {{ $user->name }}</h2>
@@ -77,5 +78,6 @@
             </form>
         </div>
     </div>
+</div>
 </div>
 @endsection

@@ -173,4 +173,56 @@ class AdminPackageController
         return redirect()->route('admin.packages.index')
             ->with('status', 'Paquete "' . $package->name . '" asignado correctamente. Créditos acreditados al usuario.');
     }
+
+    public function active(Request $request)
+    {
+        $query = UserPackage::with(['user', 'package', 'assignedBy'])
+            ->orderBy('created_at', 'desc');
+
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->input('user_id'));
+        }
+
+        if ($request->filled('package_id')) {
+            $query->where('credit_package_id', $request->input('package_id'));
+        }
+
+        if ($request->filled('status')) {
+            $now = now();
+            match ($request->input('status')) {
+                'active' => $query->where(function ($q) use ($now) {
+                    $q->whereNull('expires_at')->orWhere('expires_at', '>', $now);
+                }),
+                'expired' => $query->whereNotNull('expires_at')->where('expires_at', '<=', $now),
+                default => null,
+            };
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('assigned_at', '>=', $request->input('date_from'));
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('assigned_at', '<=', $request->input('date_to'));
+        }
+
+        $kpis = $this->buildPackageKpis((clone $query)->get());
+        $userPackages = $query->paginate(20)->withQueryString();
+
+        $users = User::orderBy('name')->get(['id', 'name', 'email']);
+        $packages = CreditPackage::orderBy('name')->get(['id', 'name']);
+        $statuses = ['active' => 'Activo', 'expired' => 'Expirado'];
+
+        return view('admin.packages.active', compact('userPackages', 'users', 'packages', 'statuses', 'kpis'));
+    }
+
+    private function buildPackageKpis($userPackages): array
+    {
+        return [
+            'total' => $userPackages->count(),
+            'active' => $userPackages->filter(fn ($up) => ! $up->isExpired())->count(),
+            'expired' => $userPackages->filter(fn ($up) => $up->isExpired())->count(),
+            'users' => $userPackages->pluck('user_id')->unique()->count(),
+        ];
+    }
 }

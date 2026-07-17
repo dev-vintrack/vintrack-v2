@@ -6,6 +6,7 @@ use App\Application\Credits\CommandHandlers\AddCreditsCommandHandler;
 use App\Application\Credits\Commands\AddCreditsCommand;
 use App\Infrastructure\Persistence\Models\Provider;
 use App\Models\User;
+use DateTimeImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -30,10 +31,16 @@ class CreditPurchaseController
             'user_id' => 'required|exists:users,id',
             'provider_id' => 'required|exists:providers,id',
             'amount' => 'required|numeric|min:0.01',
+            'validity_days' => 'nullable|integer|min:1',
             'reason' => 'required|string|max:255',
         ]);
 
         $correlationId = 'purchase-' . $data['provider_id'] . '-' . $data['user_id'] . '-' . time();
+
+        $validityEnd = null;
+        if (!empty($data['validity_days'])) {
+            $validityEnd = DateTimeImmutable::createFromMutable(now()->addDays((int) $data['validity_days'])->toDateTime());
+        }
 
         $command = new AddCreditsCommand(
             $data['user_id'],
@@ -41,7 +48,8 @@ class CreditPurchaseController
             (float) $data['amount'],
             $data['reason'],
             $correlationId,
-            Auth::id()
+            Auth::id(),
+            $validityEnd
         );
 
         $this->addCreditsHandler->handle($command);

@@ -1,12 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
+<div class="row">
+    <div class="col-12">
     <h1>Agregar Créditos a Usuario</h1>
-
-    @if (session('status'))
-        <div class="alert alert-success">{{ session('status') }}</div>
-    @endif
 
     <div class="card">
         <div class="card-body">
@@ -35,6 +32,11 @@
                     <input type="number" step="0.01" min="0.01" name="amount" id="amount" class="form-control" required>
                 </div>
                 <div class="mb-3">
+                    <label for="validity_days" class="form-label">Días de vigencia</label>
+                    <input type="number" min="1" name="validity_days" id="validity_days" class="form-control" placeholder="Ej. 30">
+                    <div class="form-text">Dejar en blanco para no aplicar vigencia.</div>
+                </div>
+                <div class="mb-3">
                     <label for="reason" class="form-label">Motivo</label>
                     <input type="text" name="reason" id="reason" class="form-control" required>
                 </div>
@@ -42,5 +44,6 @@
             </form>
         </div>
     </div>
+</div>
 </div>
 @endsection

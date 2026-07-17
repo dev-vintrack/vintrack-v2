@@ -12,8 +12,19 @@ class AdminUserController
     {
         $users = User::orderBy('created_at', 'desc')->get();
         $roles = RoleHelper::ROLES;
+        $kpis = $this->buildUserKpis($users);
 
-        return view('admin.users.index', compact('users', 'roles'));
+        return view('admin.users.index', compact('users', 'roles', 'kpis'));
+    }
+
+    private function buildUserKpis($users): array
+    {
+        return [
+            'total' => $users->count(),
+            'active' => $users->where('activo', true)->count(),
+            'pending' => $users->where('status', 'pending')->count(),
+            'admins' => $users->filter(fn ($user) => RoleHelper::isAdmin($user))->count(),
+        ];
     }
 
     public function edit(int $id)

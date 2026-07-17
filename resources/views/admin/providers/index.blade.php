@@ -1,7 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
+<div class="row">
+    <div class="col-12">
     <h1>Administrar Proveedores y Servicios</h1>
 
     @if (session('status'))
@@ -66,5 +67,6 @@
         </div>
     </div>
     @endforeach
+</div>
 </div>
 @endsection

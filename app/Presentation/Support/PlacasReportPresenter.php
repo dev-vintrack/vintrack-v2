@@ -203,6 +203,19 @@ class PlacasReportPresenter
             ];
         }
 
+        $repuveEmpty = self::isEmptySection($sections['repuve'] ?? null);
+        $pgjEmpty = self::isEmptySection($sections['pgj'] ?? null);
+        $avisoEmpty = self::isEmptySection($sections['aviso'] ?? null);
+
+        if ($repuveEmpty && $pgjEmpty && $avisoEmpty) {
+            return [
+                'level' => 'sin_datos_nacional',
+                'bg' => '#6c757d',
+                'color' => '#ffffff',
+                'message' => 'Vehículo sin Datos en el Sistema Nacional',
+            ];
+        }
+
         $repuve = self::firstObject($sections['repuve'] ?? null);
         if (is_array($repuve)) {
             $senas = $repuve['senas'] ?? $repuve['Senas'] ?? $repuve['SENAS'] ?? null;
@@ -261,6 +274,32 @@ class PlacasReportPresenter
         }
 
         return $section;
+    }
+
+    /**
+     * Determina si una sección de respuesta no contiene información relevante.
+     *
+     * @param mixed $section
+     */
+    private static function isEmptySection($section): bool
+    {
+        if ($section === null) {
+            return true;
+        }
+
+        if (!is_array($section)) {
+            return empty($section);
+        }
+
+        if (count($section) === 0) {
+            return true;
+        }
+
+        if (self::isList($section) && count($section) === 1 && is_array($section[0]) && empty($section[0])) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

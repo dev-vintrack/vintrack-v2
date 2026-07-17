@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -52,5 +53,20 @@ class User extends Authenticatable
             'activo' => 'boolean',
             'password' => 'hashed',
         ];
+    }
+
+    public function consultations(): HasMany
+    {
+        return $this->hasMany(\App\Infrastructure\Persistence\Models\Consultation::class, 'user_id');
+    }
+
+    public function wallets(): HasMany
+    {
+        return $this->hasMany(\App\Infrastructure\Persistence\Models\UserProviderWallet::class, 'user_id');
+    }
+
+    public function packages(): HasMany
+    {
+        return $this->hasMany(\App\Infrastructure\Persistence\Models\UserPackage::class, 'user_id');
     }
 }

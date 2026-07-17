@@ -40,6 +40,7 @@
                 elseif (str_contains($bannerBg, 'fd7e14')) $trafficColor = 'orange';
                 elseif (str_contains($bannerBg, 'ffc107')) $trafficColor = 'yellow';
                 elseif (str_contains($bannerBg, '6f42c1')) $trafficColor = 'purple';
+                elseif (str_contains($bannerBg, '6c757d')) $trafficColor = 'gray';
             @endphp
 
             <div style="display:inline-flex; align-items:center; background:#333; border-radius:24px; padding:5px 14px; margin:6px 0 12px 0; gap:8px;">
@@ -48,6 +49,7 @@
                 <span style="display:inline-block; width:22px; height:22px; border-radius:50%; background:{{ $trafficColor === 'yellow' ? '#ffc107' : '#555' }}; {{ $trafficColor === 'yellow' ? 'box-shadow:0 0 8px #ffc107;' : '' }}"></span>
                 <span style="display:inline-block; width:22px; height:22px; border-radius:50%; background:{{ $trafficColor === 'purple' ? '#6f42c1' : '#555' }}; {{ $trafficColor === 'purple' ? 'box-shadow:0 0 8px #6f42c1;' : '' }}"></span>
                 <span style="display:inline-block; width:22px; height:22px; border-radius:50%; background:{{ $trafficColor === 'green'  ? '#198754' : '#555' }}; {{ $trafficColor === 'green'  ? 'box-shadow:0 0 8px #198754;' : '' }}"></span>
+                <span style="display:inline-block; width:22px; height:22px; border-radius:50%; background:{{ $trafficColor === 'gray'   ? '#6c757d' : '#555' }}; {{ $trafficColor === 'gray'   ? 'box-shadow:0 0 8px #6c757d;' : '' }}"></span>
             </div>
 
             <div style="border-left: 4px solid {{ $banner['color'] }}; background-color: {{ $banner['bg'] }}; color: {{ $banner['color'] }}; padding: 10px 14px; margin-bottom: 16px; border-radius: 0 4px 4px 0;">

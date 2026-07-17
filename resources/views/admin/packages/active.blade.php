@@ -1,0 +1,207 @@
+@extends('layouts.app')
+
+@push('styles')
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+@endpush
+
+@section('title', 'Paquetes Activos Asignados')
+
+@section('content')
+<div class="row">
+    <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Paquetes Activos Asignados</h2>
+    </div>
+
+    <h4 class="mb-3">Resumen</h4>
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card shadow border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted">Total Asignados</h6>
+                            <h2 id="kpi-total">{{ number_format($kpis['total'], 0) }}</h2>
+                        </div>
+                        <i class="bi bi-box fs-1 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card shadow border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted">Activos</h6>
+                            <h2 id="kpi-active">{{ number_format($kpis['active'], 0) }}</h2>
+                        </div>
+                        <i class="bi bi-check-circle fs-1 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card shadow border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted">Expirados</h6>
+                            <h2 id="kpi-expired">{{ number_format($kpis['expired'], 0) }}</h2>
+                        </div>
+                        <i class="bi bi-clock-history fs-1 text-secondary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card shadow border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted">Usuarios con Paquetes</h6>
+                            <h2 id="kpi-users">{{ number_format($kpis['users'], 0) }}</h2>
+                        </div>
+                        <i class="bi bi-people fs-1 text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ route('admin.packages.active') }}" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Usuario</label>
+                    <select name="user_id" class="form-select">
+                        <option value="">Todos</option>
+                        @foreach($users as $u)
+                            <option value="{{ $u->id }}" {{ request('user_id') == $u->id ? 'selected' : '' }}>
+                                {{ $u->name }} ({{ $u->email }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Paquete</label>
+                    <select name="package_id" class="form-select">
+                        <option value="">Todos</option>
+                        @foreach($packages as $p)
+                            <option value="{{ $p->id }}" {{ request('package_id') == $p->id ? 'selected' : '' }}>
+                                {{ $p->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Estado</label>
+                    <select name="status" class="form-select">
+                        <option value="">Todos</option>
+                        @foreach($statuses as $key => $label)
+                            <option value="{{ $key }}" {{ request('status') == $key ? 'selected' : '' }}>
+                                {{ $label }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Asignado desde</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Asignado hasta</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
+                </div>
+                <div class="col-md-12 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                    <a href="{{ route('admin.packages.active') }}" class="btn btn-outline-secondary">Limpiar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table id="tablaPaquetes" class="table table-striped mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Paquete</th>
+                            <th>Asignado el</th>
+                            <th>Expira el</th>
+                            <th>Asignado por</th>
+                            <th>Notas</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($userPackages as $userPackage)
+                            <tr>
+                                <td>{{ $userPackage->id }}</td>
+                                <td>{{ $userPackage->user?->name ?? '—' }}</td>
+                                <td>{{ $userPackage->package?->name ?? '—' }}</td>
+                                <td data-order="{{ $userPackage->assigned_at?->toDateTimeString() }}">
+                                    {{ $userPackage->assigned_at?->format('d/m/Y H:i') ?? '—' }}
+                                </td>
+                                <td data-order="{{ $userPackage->expires_at?->toDateTimeString() }}">
+                                    {{ $userPackage->expires_at?->format('d/m/Y H:i') ?? '—' }}
+                                </td>
+                                <td>{{ $userPackage->assignedBy?->name ?? '—' }}</td>
+                                <td>{{ $userPackage->notes ?? '—' }}</td>
+                                <td>
+                                    @if($userPackage->isExpired())
+                                        <span class="badge bg-secondary">Expirado</span>
+                                    @else
+                                        <span class="badge bg-success">Activo</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white border-top-0 d-flex justify-content-center">
+            {{ $userPackages->links() }}
+        </div>
+    </div>
+</div>
+</div>
+@endsection
+
+@push('scripts')
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#tablaPaquetes').DataTable({
+                responsive: true,
+                pageLength: 10,
+                ordering: true,
+                searching: true,
+                lengthMenu: [10, 25, 50, 100],
+                order: [[3, 'desc']],
+                language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' },
+                dom: 'Blfrtip',
+                buttons: [
+                    { extend: 'excelHtml5', text: 'Excel' },
+                    { extend: 'pdfHtml5', text: 'PDF', orientation: 'landscape', pageSize: 'A3' },
+                    { extend: 'copyHtml5', text: 'Copiar' },
+                    { extend: 'print', text: 'Imprimir' }
+                ]
+            });
+        });
+    </script>
+@endpush

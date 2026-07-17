@@ -40,6 +40,11 @@ class AddCreditsCommandHandler
 
         $amount = Money::fromFloat($command->amount);
         $wallet->credit($amount);
+
+        if ($command->validityEnd !== null) {
+            $wallet->setValidityEnd($command->validityEnd);
+        }
+
         $this->walletRepository->save($wallet);
 
         $ledgerEntry = new LedgerEntry(
