@@ -18,5 +18,7 @@ interface ProviderServiceRepositoryInterface
      */
     public function findEnabledByProviderId(int $providerId): array;
 
+    public function findByProviderIdAndKey(int $providerId, string $key): ?ProviderService;
+
     public function save(ProviderService $service): void;
 }

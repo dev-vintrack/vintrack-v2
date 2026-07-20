@@ -42,24 +42,45 @@ class ProviderSeeder extends Seeder
             ]
         );
 
-        $placasServices = [
-            ['key' => 'repuve', 'name' => 'REPUVE', 'credit_cost' => 0],
-            ['key' => 'pgj', 'name' => 'PGJ', 'credit_cost' => 0],
-            ['key' => 'aviso', 'name' => 'Aviso Judicial', 'credit_cost' => 0],
-            ['key' => 'ocra', 'name' => 'OCRA', 'credit_cost' => 0],
-            ['key' => 'carfax', 'name' => 'CARFAX', 'credit_cost' => 0],
-            ['key' => 'rapi', 'name' => 'RAPI', 'credit_cost' => 0],
+        $placasService = ProviderService::updateOrCreate(
+            ['provider_id' => $placas->id, 'key' => 'Placas_Service'],
+            [
+                'name' => 'Placas Service',
+                'credit_cost' => 0,
+                'available_credits' => 0,
+                'enabled' => true,
+            ]
+        );
+
+        $placasSections = [
+            ['code' => 'repuve', 'name' => 'REPUVE'],
+            ['code' => 'pgj', 'name' => 'PGJ'],
+            ['code' => 'aviso', 'name' => 'Aviso Judicial'],
+            ['code' => 'ocra', 'name' => 'OCRA'],
+            ['code' => 'carfax', 'name' => 'CARFAX'],
+            ['code' => 'rapi', 'name' => 'RAPI'],
         ];
 
-        foreach ($placasServices as $service) {
-            ProviderService::updateOrCreate(
-                ['provider_id' => $placas->id, 'key' => $service['key']],
+        $roles = ['admin', 'analista', 'soporte', 'cliente_registrado', 'perito', 'oficial', 'ocasional'];
+        $rapiInactiveFor = ['analista', 'soporte', 'cliente_registrado'];
+
+        foreach ($placasSections as $section) {
+            $sectionModel = \App\Infrastructure\Persistence\Models\ProviderServiceSection::updateOrCreate(
+                ['provider_service_id' => $placasService->id, 'section_code' => $section['code']],
                 [
-                    'name' => $service['name'],
-                    'credit_cost' => $service['credit_cost'],
-                    'enabled' => true,
+                    'section_name' => $section['name'],
+                    'status' => true,
                 ]
             );
+
+            foreach ($roles as $role) {
+                \App\Infrastructure\Persistence\Models\ProviderServiceSectionRole::updateOrCreate(
+                    ['provider_service_section_id' => $sectionModel->id, 'role' => $role],
+                    [
+                        'status' => ! ($section['code'] === 'rapi' && in_array($role, $rapiInactiveFor, true)),
+                    ]
+                );
+            }
         }
 
         $vinDataServices = [
@@ -73,6 +94,7 @@ class ProviderSeeder extends Seeder
                 [
                     'name' => $service['name'],
                     'credit_cost' => $service['credit_cost'],
+                    'available_credits' => 0,
                     'enabled' => true,
                 ]
             );

@@ -12,7 +12,7 @@ class Wallet
     public function __construct(
         private readonly ?WalletId $id,
         private readonly int $userId,
-        private readonly int $providerId,
+        private readonly int $providerServiceId,
         private Money $balance,
         private Money $minAlert,
         private ?DateTimeImmutable $validityStart,
@@ -30,9 +30,9 @@ class Wallet
         return $this->userId;
     }
 
-    public function providerId(): int
+    public function providerServiceId(): int
     {
-        return $this->providerId;
+        return $this->providerServiceId;
     }
 
     public function balance(): Money

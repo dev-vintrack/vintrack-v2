@@ -10,7 +10,7 @@ class AdminVehicleController
 {
     public function index(Request $request): View
     {
-        $vehicles = Vehicle::with('provider')
+        $vehicles = Vehicle::with('service.provider')
             ->orderBy('ultima_consulta_at', 'desc')
             ->paginate(20)
             ->withQueryString();

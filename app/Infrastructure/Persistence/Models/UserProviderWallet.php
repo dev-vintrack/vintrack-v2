@@ -17,6 +17,7 @@ class UserProviderWallet extends Model
     protected $fillable = [
         'user_id',
         'provider_id',
+        'provider_service_id',
         'balance',
         'min_alert',
         'validity_start',
@@ -38,6 +39,11 @@ class UserProviderWallet extends Model
     public function provider(): BelongsTo
     {
         return $this->belongsTo(Provider::class, 'provider_id');
+    }
+
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(ProviderService::class, 'provider_service_id');
     }
 
     public function ledger(): HasMany

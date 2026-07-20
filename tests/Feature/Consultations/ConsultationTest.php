@@ -34,11 +34,12 @@ class ConsultationTest extends TestCase
             'enabled' => true,
         ]);
 
-        ProviderService::create([
+        $service = ProviderService::create([
             'provider_id' => $provider->id,
-            'key' => 'repuve',
-            'name' => 'REPUVE',
-            'credit_cost' => 0,
+            'key' => 'Placas_Service',
+            'name' => 'Placas Service',
+            'credit_cost' => 1,
+            'available_credits' => 0,
             'enabled' => true,
         ]);
 
@@ -49,7 +50,7 @@ class ConsultationTest extends TestCase
                 'provider' => 'PLACAS',
                 'type' => 'placa',
                 'value' => 'ABC1234',
-                'services' => ['repuve'],
+                'services' => ['Placas_Service'],
             ])
             ->assertStatus(402)
             ->assertJson(['success' => false, 'message' => 'Saldo insuficiente de créditos.']);
@@ -72,11 +73,12 @@ class ConsultationTest extends TestCase
             'enabled' => true,
         ]);
 
-        ProviderService::create([
+        $service = ProviderService::create([
             'provider_id' => $provider->id,
-            'key' => 'repuve',
-            'name' => 'REPUVE',
-            'credit_cost' => 0,
+            'key' => 'Placas_Service',
+            'name' => 'Placas Service',
+            'credit_cost' => 1,
+            'available_credits' => 10,
             'enabled' => true,
         ]);
 
@@ -85,7 +87,7 @@ class ConsultationTest extends TestCase
         $this->actingAs($user)
             ->postJson(route('admin.credits.purchase.store'), [
                 'user_id' => $user->id,
-                'provider_id' => $provider->id,
+                'provider_service_id' => $service->id,
                 'amount' => 5,
                 'reason' => 'Test credits',
             ]);
@@ -95,14 +97,14 @@ class ConsultationTest extends TestCase
                 'provider' => 'PLACAS',
                 'type' => 'placa',
                 'value' => 'ABC1234',
-                'services' => ['repuve'],
+                'services' => ['Placas_Service'],
             ]);
 
         $response->assertStatus(200)
             ->assertJson(['success' => true]);
 
         $walletRepo = app(\App\Domain\Credits\Repositories\WalletRepositoryInterface::class);
-        $wallet = $walletRepo->findByUserAndProvider($user->id, $provider->id);
+        $wallet = $walletRepo->findByUserAndService($user->id, $service->id);
         $this->assertEquals(4.0, $wallet->balance()->amount());
     }
 

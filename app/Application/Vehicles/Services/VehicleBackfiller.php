@@ -6,6 +6,7 @@ use App\Domain\Consultas\Entities\Consultation as ConsultationEntity;
 use App\Domain\Consultas\ValueObjects\ConsultationResponse;
 use App\Infrastructure\Persistence\Models\Consultation;
 use App\Infrastructure\Persistence\Models\Provider;
+use App\Infrastructure\Persistence\Models\ProviderService;
 use DateTimeImmutable;
 use Throwable;
 
@@ -86,7 +87,17 @@ class VehicleBackfiller
                             new DateTimeImmutable($consultation->created_at)
                         );
 
-                        $this->vehicleUpserter->upsertFromConsultation($entity, $providerCode);
+                        $providerServiceId = $this->resolveProviderServiceId(
+                            $consultation->provider_id,
+                            $providerCode,
+                            $consultation->services ?? []
+                        );
+
+                        if ($providerServiceId === null) {
+                            throw new \RuntimeException('No se pudo resolver provider_service_id para la consulta');
+                        }
+
+                        $this->vehicleUpserter->upsertFromConsultation($entity, $providerCode, $providerServiceId);
                         $processed++;
                     } catch (Throwable $e) {
                         $errors++;
@@ -99,5 +110,31 @@ class VehicleBackfiller
             });
 
         return ['processed' => $processed, 'errors' => $errors];
+    }
+
+    private function resolveProviderServiceId(int $providerId, string $providerCode, array $services): ?int
+    {
+        $code = strtoupper($providerCode);
+
+        if ($code === 'VINDATA') {
+            $service = ProviderService::where('provider_id', $providerId)->where('key', 'NMVTISPlus')->first();
+            return $service?->id;
+        }
+
+        if ($code === 'PLACAS') {
+            $service = ProviderService::where('provider_id', $providerId)->where('key', 'Placas_Service')->first();
+            return $service?->id;
+        }
+
+        $key = $services[0] ?? null;
+        if ($key) {
+            $service = ProviderService::where('provider_id', $providerId)->where('key', $key)->first();
+            if ($service) {
+                return $service->id;
+            }
+        }
+
+        $service = ProviderService::where('provider_id', $providerId)->first();
+        return $service?->id;
     }
 }

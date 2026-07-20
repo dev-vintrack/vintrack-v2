@@ -9,9 +9,9 @@ use DateTimeImmutable;
 
 class VehicleRepository implements VehicleRepositoryInterface
 {
-    public function findByProviderAndValor(int $providerId, string $valor): ?Vehicle
+    public function findByProviderServiceAndValor(int $providerServiceId, string $valor): ?Vehicle
     {
-        $model = VehicleModel::where('provider_id', $providerId)
+        $model = VehicleModel::where('provider_service_id', $providerServiceId)
             ->where('valor', $valor)
             ->first();
 
@@ -25,10 +25,12 @@ class VehicleRepository implements VehicleRepositoryInterface
     public function save(Vehicle $vehicle): Vehicle
     {
         $model = VehicleModel::firstOrNew([
-            'provider_id' => $vehicle->providerId(),
+            'provider_service_id' => $vehicle->providerServiceId(),
             'valor' => $vehicle->valor(),
         ]);
 
+        $model->provider_id = $vehicle->providerId();
+        $model->provider_service_id = $vehicle->providerServiceId();
         $model->criterio = $vehicle->criterio();
         $model->marca = $vehicle->marca();
         $model->modelo = $vehicle->modelo();
@@ -59,6 +61,7 @@ class VehicleRepository implements VehicleRepositoryInterface
         return new Vehicle(
             $model->id,
             (int) $model->provider_id,
+            (int) $model->provider_service_id,
             $model->criterio,
             $model->valor,
             $model->marca,

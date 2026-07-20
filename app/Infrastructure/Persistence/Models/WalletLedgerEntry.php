@@ -16,6 +16,7 @@ class WalletLedgerEntry extends Model
 
     protected $fillable = [
         'wallet_id',
+        'provider_service_id',
         'delta',
         'reason',
         'meta',
@@ -31,5 +32,10 @@ class WalletLedgerEntry extends Model
     public function wallet(): BelongsTo
     {
         return $this->belongsTo(UserProviderWallet::class, 'wallet_id');
+    }
+
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(ProviderService::class, 'provider_service_id');
     }
 }

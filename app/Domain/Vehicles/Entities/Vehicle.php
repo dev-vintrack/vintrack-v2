@@ -16,6 +16,7 @@ class Vehicle
     public function __construct(
         private readonly ?int $id,
         private readonly int $providerId,
+        private readonly int $providerServiceId,
         private readonly string $criterio,
         private readonly string $valor,
         ?string $marca,
@@ -42,6 +43,11 @@ class Vehicle
     public function providerId(): int
     {
         return $this->providerId;
+    }
+
+    public function providerServiceId(): int
+    {
+        return $this->providerServiceId;
     }
 
     public function criterio(): string

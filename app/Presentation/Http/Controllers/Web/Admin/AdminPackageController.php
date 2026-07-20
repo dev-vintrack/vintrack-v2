@@ -6,7 +6,7 @@ use App\Application\Credits\CommandHandlers\AddCreditsCommandHandler;
 use App\Application\Credits\Commands\AddCreditsCommand;
 use App\Infrastructure\Persistence\Models\CreditPackage;
 use App\Infrastructure\Persistence\Models\CreditPackageItem;
-use App\Infrastructure\Persistence\Models\Provider;
+use App\Infrastructure\Persistence\Models\ProviderService;
 use App\Infrastructure\Persistence\Models\UserPackage;
 use App\Models\User;
 use DateTimeImmutable;
@@ -23,16 +23,20 @@ class AdminPackageController
 
     public function index()
     {
-        $packages = CreditPackage::with('items.provider')->orderBy('name')->get();
+        $packages = CreditPackage::with('items.service')->orderBy('name')->get();
 
         return view('admin.packages.index', compact('packages'));
     }
 
     public function create()
     {
-        $providers = Provider::where('enabled', true)->orderBy('name')->get();
+        $services = ProviderService::with('provider')
+            ->where('enabled', true)
+            ->orderBy('provider_id')
+            ->orderBy('name')
+            ->get();
 
-        return view('admin.packages.create', compact('providers'));
+        return view('admin.packages.create', compact('services'));
     }
 
     public function store(Request $request)
@@ -56,12 +60,12 @@ class AdminPackageController
                 'active'        => $request->boolean('active', true),
             ]);
 
-            foreach ($data['credits'] as $providerId => $credits) {
+            foreach ($data['credits'] as $providerServiceId => $credits) {
                 if ($credits !== null && $credits > 0) {
                     CreditPackageItem::create([
-                        'credit_package_id' => $package->id,
-                        'provider_id'       => $providerId,
-                        'credits'           => $credits,
+                        'credit_package_id'   => $package->id,
+                        'provider_service_id' => $providerServiceId,
+                        'credits'             => $credits,
                     ]);
                 }
             }
@@ -72,12 +76,16 @@ class AdminPackageController
 
     public function edit(int $id)
     {
-        $package   = CreditPackage::with('items')->findOrFail($id);
-        $providers = Provider::where('enabled', true)->orderBy('name')->get();
+        $package = CreditPackage::with('items')->findOrFail($id);
+        $services = ProviderService::with('provider')
+            ->where('enabled', true)
+            ->orderBy('provider_id')
+            ->orderBy('name')
+            ->get();
 
-        $itemsByProvider = $package->items->keyBy('provider_id');
+        $itemsByService = $package->items->keyBy('provider_service_id');
 
-        return view('admin.packages.edit', compact('package', 'providers', 'itemsByProvider'));
+        return view('admin.packages.edit', compact('package', 'services', 'itemsByService'));
     }
 
     public function update(Request $request, int $id)
@@ -103,12 +111,12 @@ class AdminPackageController
             ]);
 
             $package->items()->delete();
-            foreach ($data['credits'] as $providerId => $credits) {
+            foreach ($data['credits'] as $providerServiceId => $credits) {
                 if ($credits !== null && $credits > 0) {
                     CreditPackageItem::create([
-                        'credit_package_id' => $package->id,
-                        'provider_id'       => $providerId,
-                        'credits'           => $credits,
+                        'credit_package_id'   => $package->id,
+                        'provider_service_id' => $providerServiceId,
+                        'credits'             => $credits,
                     ]);
                 }
             }
@@ -140,7 +148,7 @@ class AdminPackageController
             'notes'      => 'nullable|string|max:255',
         ]);
 
-        $package   = CreditPackage::with('items.provider')->findOrFail($data['package_id']);
+        $package   = CreditPackage::with('items.service')->findOrFail($data['package_id']);
         $adminId   = Auth::id();
         $validityDays = (int) $package->validity_days;
         $expiresAt = now()->addDays($validityDays);
@@ -156,10 +164,10 @@ class AdminPackageController
             ]);
 
             foreach ($package->items as $item) {
-                $correlationId = 'pkg-' . $package->id . '-u' . $data['user_id'] . '-p' . $item->provider_id . '-' . time();
+                $correlationId = 'pkg-' . $package->id . '-u' . $data['user_id'] . '-s' . $item->provider_service_id . '-' . time();
                 $command = new AddCreditsCommand(
                     userId: $data['user_id'],
-                    providerId: $item->provider_id,
+                    providerServiceId: $item->provider_service_id,
                     amount: (float) $item->credits,
                     reason: 'Asignación de paquete: ' . $package->name,
                     correlationId: $correlationId,

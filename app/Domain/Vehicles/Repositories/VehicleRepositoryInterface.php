@@ -7,7 +7,7 @@ use DateTimeImmutable;
 
 interface VehicleRepositoryInterface
 {
-    public function findByProviderAndValor(int $providerId, string $valor): ?Vehicle;
+    public function findByProviderServiceAndValor(int $providerServiceId, string $valor): ?Vehicle;
 
     public function save(Vehicle $vehicle): Vehicle;
 

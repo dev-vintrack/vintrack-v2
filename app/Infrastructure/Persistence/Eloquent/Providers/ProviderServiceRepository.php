@@ -33,6 +33,15 @@ class ProviderServiceRepository implements ProviderServiceRepositoryInterface
             ->all();
     }
 
+    public function findByProviderIdAndKey(int $providerId, string $key): ?ProviderService
+    {
+        $model = ProviderServiceModel::where('provider_id', $providerId)
+            ->where('key', $key)
+            ->first();
+
+        return $model ? $this->toEntity($model) : null;
+    }
+
     public function save(ProviderService $service): void
     {
         ProviderServiceModel::updateOrCreate(

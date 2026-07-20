@@ -31,8 +31,8 @@
                         <th>Key</th>
                         <th>Nombre</th>
                         <th>Costo crédito</th>
+                        <th>Inventario</th>
                         <th>Estado</th>
-                        <th>Acción</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -55,12 +55,65 @@
                             </form>
                         </td>
                         <td>
+                            <span class="badge bg-info text-dark">{{ number_format($service->available_credits, 2) }}</span>
+                        </td>
+                        <td>
                             <span class="badge bg-{{ $service->enabled ? 'success' : 'secondary' }}">
                                 {{ $service->enabled ? 'Activo' : 'Inactivo' }}
                             </span>
                         </td>
-                        <td></td>
                     </tr>
+                    @if($service->sections->isNotEmpty())
+                    <tr>
+                        <td colspan="5" class="p-0">
+                            <div class="bg-light p-3 m-2 rounded">
+                                <h6 class="fw-bold mb-3">Secciones de {{ $service->name }}</h6>
+                                <table class="table table-sm table-bordered bg-white mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th style="width:120px;">Sección</th>
+                                            <th style="width:120px;">Global</th>
+                                            @foreach($roles as $roleKey => $roleLabel)
+                                                <th class="text-center" style="font-size:12px;">{{ $roleLabel }}</th>
+                                            @endforeach
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($service->sections as $section)
+                                        <tr>
+                                            <td>{{ $section->section_name }}</td>
+                                            <td>
+                                                <form action="{{ route('admin.sections.update', [$provider->id, $service->id, $section->id]) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    <input type="hidden" name="status" value="{{ $section->status ? '0' : '1' }}">
+                                                    <button type="submit" class="btn btn-{{ $section->status ? 'success' : 'secondary' }} btn-sm">
+                                                        {{ $section->status ? 'Activa' : 'Inactiva' }}
+                                                    </button>
+                                                </form>
+                                            </td>
+                                            @foreach($roles as $roleKey => $roleLabel)
+                                                @php
+                                                    $roleSetting = $section->roleSettings->firstWhere('role', $roleKey);
+                                                    $roleStatus = $roleSetting ? $roleSetting->status : $section->status;
+                                                @endphp
+                                            <td class="text-center">
+                                                <form action="{{ route('admin.section-roles.update', [$provider->id, $service->id, $section->id, $roleKey]) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    <input type="hidden" name="status" value="{{ $roleStatus ? '0' : '1' }}">
+                                                    <button type="submit" class="btn btn-sm btn-{{ $roleStatus ? 'success' : 'secondary' }}">
+                                                        {{ $roleStatus ? 'Sí' : 'No' }}
+                                                    </button>
+                                                </form>
+                                            </td>
+                                            @endforeach
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                    @endif
                     @endforeach
                 </tbody>
             </table>

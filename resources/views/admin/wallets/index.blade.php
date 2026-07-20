@@ -85,12 +85,12 @@
                     </select>
                 </div>
                 <div class="col-md-5">
-                    <label class="form-label">Proveedor</label>
-                    <select name="provider_id" class="form-select">
+                    <label class="form-label">Servicio</label>
+                    <select name="provider_service_id" class="form-select">
                         <option value="">Todos</option>
-                        @foreach($providers as $p)
-                            <option value="{{ $p->id }}" {{ request('provider_id') == $p->id ? 'selected' : '' }}>
-                                {{ $p->name }}
+                        @foreach($services as $s)
+                            <option value="{{ $s->id }}" {{ request('provider_service_id') == $s->id ? 'selected' : '' }}>
+                                {{ $s->provider->name }} - {{ $s->name }}
                             </option>
                         @endforeach
                     </select>
@@ -111,7 +111,7 @@
                         <tr>
                             <th>Usuario</th>
                             <th>Email</th>
-                            <th>Proveedor</th>
+                            <th>Servicio</th>
                             <th>Saldo</th>
                             <th>Alerta Mínima</th>
                             <th>Vigencia Inicio</th>
@@ -123,7 +123,7 @@
                             <tr>
                                 <td>{{ $wallet->user?->name ?? '—' }}</td>
                                 <td>{{ $wallet->user?->email ?? '—' }}</td>
-                                <td>{{ $wallet->provider?->name ?? '—' }}</td>
+                                <td>{{ $wallet->service?->provider?->name ?? '—' }} - {{ $wallet->service?->name ?? '—' }}</td>
                                 <td data-order="{{ $wallet->balance }}">
                                     <span class="badge bg-{{ $wallet->balance <= $wallet->min_alert ? 'warning text-dark' : 'success' }}">
                                         {{ number_format($wallet->balance, 2) }}

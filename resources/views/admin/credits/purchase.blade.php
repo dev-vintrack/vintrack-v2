@@ -19,11 +19,11 @@
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label for="provider_id" class="form-label">Proveedor</label>
-                    <select name="provider_id" id="provider_id" class="form-select" required>
+                    <label for="provider_service_id" class="form-label">Servicio / Producto</label>
+                    <select name="provider_service_id" id="provider_service_id" class="form-select" required>
                         <option value="">Seleccionar...</option>
-                        @foreach ($providers as $provider)
-                            <option value="{{ $provider->id }}">{{ $provider->name }}</option>
+                        @foreach ($services as $service)
+                            <option value="{{ $service->id }}">{{ $service->provider->name }} - {{ $service->name }}</option>
                         @endforeach
                     </select>
                 </div>

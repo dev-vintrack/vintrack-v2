@@ -9,6 +9,7 @@ use App\Domain\Credits\Repositories\WalletRepositoryInterface;
 use App\Domain\Credits\ValueObjects\Amount;
 use App\Domain\Credits\ValueObjects\CorrelationId;
 use App\Domain\Credits\ValueObjects\Money;
+use App\Infrastructure\Persistence\Models\ProviderService;
 use DateTimeImmutable;
 use RuntimeException;
 
@@ -33,12 +34,25 @@ class AddCreditsCommandHandler
             throw new RuntimeException('Duplicate credit add detected.');
         }
 
-        $wallet = $this->walletRepository->findByUserAndProviderOrCreate(
-            $command->userId,
-            $command->providerId
-        );
+        $service = ProviderService::find($command->providerServiceId);
+        if (! $service) {
+            throw new RuntimeException('Servicio no encontrado.');
+        }
 
         $amount = Money::fromFloat($command->amount);
+
+        if ((float) $service->available_credits < $command->amount) {
+            throw new RuntimeException('Inventario insuficiente para asignar estos créditos.');
+        }
+
+        $service->available_credits = (float) $service->available_credits - $command->amount;
+        $service->save();
+
+        $wallet = $this->walletRepository->findByUserAndServiceOrCreate(
+            $command->userId,
+            $command->providerServiceId
+        );
+
         $wallet->credit($amount);
 
         if ($command->validityEnd !== null) {
@@ -50,6 +64,7 @@ class AddCreditsCommandHandler
         $ledgerEntry = new LedgerEntry(
             null,
             $wallet->id()->value(),
+            $command->providerServiceId,
             Amount::fromFloat($command->amount),
             $command->reason,
             [

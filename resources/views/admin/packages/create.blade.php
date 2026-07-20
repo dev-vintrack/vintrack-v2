@@ -51,14 +51,14 @@
                 </div>
 
                 <hr>
-                <h6 class="fw-bold mb-3">Créditos por proveedor</h6>
-                <p class="text-muted" style="font-size:13px;">Ingresa 0 o deja en blanco para no incluir créditos de ese proveedor.</p>
+                <h6 class="fw-bold mb-3">Créditos por servicio</h6>
+                <p class="text-muted" style="font-size:13px;">Ingresa 0 o deja en blanco para no incluir créditos de ese servicio.</p>
 
-                @foreach($providers as $provider)
+                @foreach($services as $service)
                 <div class="mb-3 d-flex align-items-center gap-3">
-                    <label class="form-label mb-0 fw-semibold" style="min-width:140px;">{{ $provider->name }}</label>
-                    <input type="number" name="credits[{{ $provider->id }}]" class="form-control"
-                           step="1" min="0" value="{{ old('credits.'.$provider->id, 0) }}" style="max-width:140px;">
+                    <label class="form-label mb-0 fw-semibold" style="min-width:220px;">{{ $service->provider->name }} - {{ $service->name }}</label>
+                    <input type="number" name="credits[{{ $service->id }}]" class="form-control"
+                           step="1" min="0" value="{{ old('credits.'.$service->id, 0) }}" style="max-width:140px;">
                     <small class="text-muted">créditos</small>
                 </div>
                 @endforeach

@@ -4,6 +4,7 @@ use App\Presentation\Http\Controllers\Web\Admin\AdminConsultationController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminMenuPermissionController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminPackageController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminProviderController;
+use App\Presentation\Http\Controllers\Web\Admin\AdminPurchaseItemController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminUserController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminVehicleController;
 use App\Presentation\Http\Controllers\Web\Admin\CreditPurchaseController;
@@ -40,6 +41,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/providers', [AdminProviderController::class, 'index'])->name('admin.providers.index');
         Route::post('/providers/{id}', [AdminProviderController::class, 'updateProvider'])->name('admin.providers.update');
         Route::post('/providers/{providerId}/services/{serviceId}', [AdminProviderController::class, 'updateService'])->name('admin.services.update');
+        Route::post('/providers/{providerId}/services/{serviceId}/sections/{sectionId}', [AdminProviderController::class, 'updateSection'])->name('admin.sections.update');
+        Route::post('/providers/{providerId}/services/{serviceId}/sections/{sectionId}/roles/{role}', [AdminProviderController::class, 'updateSectionRole'])->name('admin.section-roles.update');
 
         Route::get('/credits/purchase', [CreditPurchaseController::class, 'create'])->name('admin.credits.purchase');
         Route::post('/credits/purchase', [CreditPurchaseController::class, 'store'])->name('admin.credits.purchase.store');
@@ -67,6 +70,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/wallets/movements', [AdminWalletController::class, 'movements'])->name('admin.wallets.movements');
 
         Route::get('/packages/active', [AdminPackageController::class, 'active'])->name('admin.packages.active');
+
+        Route::get('/purchases', [AdminPurchaseItemController::class, 'index'])->name('admin.purchases.index');
+        Route::get('/purchases/create', [AdminPurchaseItemController::class, 'create'])->name('admin.purchases.create');
+        Route::post('/purchases', [AdminPurchaseItemController::class, 'store'])->name('admin.purchases.store');
+        Route::get('/purchases/{id}/edit', [AdminPurchaseItemController::class, 'edit'])->name('admin.purchases.edit');
+        Route::put('/purchases/{id}', [AdminPurchaseItemController::class, 'update'])->name('admin.purchases.update');
+        Route::delete('/purchases/{id}', [AdminPurchaseItemController::class, 'destroy'])->name('admin.purchases.destroy');
 
         Route::get('/vehicles', [AdminVehicleController::class, 'index'])->name('admin.vehicles.index');
     });

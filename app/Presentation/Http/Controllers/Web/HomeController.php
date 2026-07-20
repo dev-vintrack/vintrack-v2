@@ -123,10 +123,17 @@ class HomeController
 
         $servicesByProvider = [];
         $providerNames = [];
+        $serviceNames = [];
         foreach ($providers as $provider) {
             $servicesByProvider[$provider->id()->value()] = $this->serviceRepository
                 ->findEnabledByProviderId($provider->id()->value());
             $providerNames[$provider->id()->value()] = $provider->name();
+        }
+
+        foreach ($servicesByProvider as $serviceList) {
+            foreach ($serviceList as $service) {
+                $serviceNames[$service->id()] = $service->name();
+            }
         }
 
         return [
@@ -134,6 +141,7 @@ class HomeController
             'servicesByProvider' => $servicesByProvider,
             'wallets' => $wallets,
             'providerNames' => $providerNames,
+            'serviceNames' => $serviceNames,
         ];
     }
 }

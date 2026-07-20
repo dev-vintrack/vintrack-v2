@@ -65,7 +65,7 @@
                             <div class="d-flex flex-wrap gap-2 mt-1">
                                 @foreach($package->items as $item)
                                 <span class="badge bg-primary" style="font-size:13px; padding:6px 12px;">
-                                    {{ $item->provider->name ?? 'Proveedor #'.$item->provider_id }}:
+                                    {{ $item->service->provider->name ?? 'Proveedor' }} - {{ $item->service->name ?? 'Servicio' }}:
                                     <strong>{{ number_format($item->credits, 0) }} créditos</strong>
                                 </span>
                                 @endforeach

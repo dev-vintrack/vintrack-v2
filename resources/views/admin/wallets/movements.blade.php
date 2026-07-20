@@ -85,12 +85,12 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Proveedor</label>
-                    <select name="provider_id" class="form-select">
+                    <label class="form-label">Servicio</label>
+                    <select name="provider_service_id" class="form-select">
                         <option value="">Todos</option>
-                        @foreach($providers as $p)
-                            <option value="{{ $p->id }}" {{ request('provider_id') == $p->id ? 'selected' : '' }}>
-                                {{ $p->name }}
+                        @foreach($services as $s)
+                            <option value="{{ $s->id }}" {{ request('provider_service_id') == $s->id ? 'selected' : '' }}>
+                                {{ $s->provider->name }} - {{ $s->name }}
                             </option>
                         @endforeach
                     </select>
@@ -119,7 +119,7 @@
                         <tr>
                             <th>ID</th>
                             <th>Usuario</th>
-                            <th>Proveedor</th>
+                            <th>Servicio</th>
                             <th>Wallet ID</th>
                             <th>Delta</th>
                             <th>Razón</th>
@@ -132,7 +132,7 @@
                             <tr>
                                 <td>{{ $movement->id }}</td>
                                 <td>{{ $movement->wallet?->user?->name ?? '—' }}</td>
-                                <td>{{ $movement->wallet?->provider?->name ?? '—' }}</td>
+                                <td>{{ $movement->wallet?->service?->provider?->name ?? '—' }} - {{ $movement->wallet?->service?->name ?? '—' }}</td>
                                 <td>{{ $movement->wallet_id }}</td>
                                 <td data-order="{{ $movement->delta }}">
                                     <span class="badge bg-{{ $movement->delta >= 0 ? 'success' : 'danger' }}">

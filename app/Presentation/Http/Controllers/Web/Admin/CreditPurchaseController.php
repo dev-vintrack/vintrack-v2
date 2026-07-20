@@ -4,7 +4,7 @@ namespace App\Presentation\Http\Controllers\Web\Admin;
 
 use App\Application\Credits\CommandHandlers\AddCreditsCommandHandler;
 use App\Application\Credits\Commands\AddCreditsCommand;
-use App\Infrastructure\Persistence\Models\Provider;
+use App\Infrastructure\Persistence\Models\ProviderService;
 use App\Models\User;
 use DateTimeImmutable;
 use Illuminate\Http\Request;
@@ -20,22 +20,26 @@ class CreditPurchaseController
     public function create()
     {
         $users = User::orderBy('name')->get();
-        $providers = Provider::where('enabled', true)->get();
+        $services = ProviderService::with('provider')
+            ->where('enabled', true)
+            ->orderBy('provider_id')
+            ->orderBy('name')
+            ->get();
 
-        return view('admin.credits.purchase', compact('users', 'providers'));
+        return view('admin.credits.purchase', compact('users', 'services'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
             'user_id' => 'required|exists:users,id',
-            'provider_id' => 'required|exists:providers,id',
+            'provider_service_id' => 'required|exists:provider_services,id',
             'amount' => 'required|numeric|min:0.01',
             'validity_days' => 'nullable|integer|min:1',
             'reason' => 'required|string|max:255',
         ]);
 
-        $correlationId = 'purchase-' . $data['provider_id'] . '-' . $data['user_id'] . '-' . time();
+        $correlationId = 'purchase-' . $data['provider_service_id'] . '-' . $data['user_id'] . '-' . time();
 
         $validityEnd = null;
         if (!empty($data['validity_days'])) {
@@ -44,7 +48,7 @@ class CreditPurchaseController
 
         $command = new AddCreditsCommand(
             $data['user_id'],
-            $data['provider_id'],
+            $data['provider_service_id'],
             (float) $data['amount'],
             $data['reason'],
             $correlationId,

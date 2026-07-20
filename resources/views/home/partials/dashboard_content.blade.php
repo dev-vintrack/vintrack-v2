@@ -21,10 +21,10 @@
                 <h5 class="card-title">Mis saldos</h5>
                 @forelse ($wallets as $wallet)
                     @php
-                        $providerName = $providerNames[$wallet->providerId()] ?? 'Proveedor #' . $wallet->providerId();
+                        $serviceName = $serviceNames[$wallet->providerServiceId()] ?? 'Servicio #' . $wallet->providerServiceId();
                     @endphp
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span>{{ $providerName }}</span>
+                        <span>{{ $serviceName }}</span>
                         <span class="badge bg-primary fs-6">{{ number_format($wallet->balance()->amount(), 2) }} créditos</span>
                     </div>
                 @empty

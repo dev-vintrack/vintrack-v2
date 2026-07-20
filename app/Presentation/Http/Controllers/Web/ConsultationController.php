@@ -29,7 +29,7 @@ class ConsultationController
 
             $services = $data['services'] ?? match (strtoupper($data['provider'])) {
                 'VINDATA' => ['VHR'],
-                default => ['repuve', 'pgj', 'aviso', 'ocra', 'carfax', 'rapi'],
+                default => ['Placas_Service'],
             };
 
             $result = $this->consultationService->consult(

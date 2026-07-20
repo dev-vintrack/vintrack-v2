@@ -16,6 +16,8 @@ use App\Domain\Credits\ValueObjects\Money;
 use App\Domain\Providers\Repositories\ProviderRepositoryInterface;
 use App\Domain\Providers\Repositories\ProviderServiceRepositoryInterface;
 use App\Domain\Providers\ValueObjects\ProviderCode;
+use App\Infrastructure\Persistence\Models\ProviderServiceSection;
+use App\Models\User;
 use DateTimeImmutable;
 use RuntimeException;
 
@@ -55,14 +57,32 @@ class ConsultationService
             return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, $services, $response));
         }
 
-        $wallet = $this->walletRepository->findByUserAndProviderOrCreate($userId, $provider->id()->value());
-        $cost = $provider->creditCost();
-        if ($cost > 0 && !$wallet->balance()->isGreaterThanOrEqual(Money::fromFloat($cost))) {
-            $response = new ConsultationResponse(false, 402, 'Saldo insuficiente de créditos.', [], null, $this->emptyFlags());
-            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, $requestedServices, $response, $cost));
+        $debitServiceKey = $requestedServices[0];
+        $providerService = $this->serviceRepository->findByProviderIdAndKey(
+            $provider->id()->value(),
+            $debitServiceKey
+        );
+        if (! $providerService) {
+            $response = new ConsultationResponse(false, 500, 'Servicio no encontrado para el proveedor.', [], null, $this->emptyFlags());
+            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, $requestedServices, $response));
         }
 
-        $request = new ConsultationRequest($userId, $providerCode, $value, $type, $requestedServices);
+        $providerServiceId = $providerService->id();
+        $wallet = $this->walletRepository->findByUserAndServiceOrCreate($userId, $providerServiceId);
+        $cost = $providerService->creditCost()->amount();
+        if ($cost > 0 && !$wallet->balance()->isGreaterThanOrEqual(Money::fromFloat($cost))) {
+            $response = new ConsultationResponse(false, 402, 'Saldo insuficiente de créditos.', [], null, $this->emptyFlags());
+            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, [$debitServiceKey], $response, $cost));
+        }
+
+        $adapterServices = $this->buildAdapterServices(
+            strtoupper($providerCode),
+            $providerServiceId,
+            $requestedServices,
+            $userId
+        );
+
+        $request = new ConsultationRequest($userId, $providerCode, $value, $type, $adapterServices);
         $adapter = $this->adapterRegistry->resolve($providerCode);
         $response = $adapter->consult($request);
 
@@ -70,10 +90,11 @@ class ConsultationService
             $correlationId = 'consult-' . $providerCode . '-' . $userId . '-' . time() . '-' . bin2hex(random_bytes(4));
             $debitCommand = new DebitCreditsCommand(
                 $userId,
-                $provider->id()->value(),
+                $providerServiceId,
                 $cost,
                 'Consulta ' . strtoupper($providerCode) . ' ' . strtoupper($type) . ' ' . $value,
-                $correlationId
+                $correlationId,
+                null
             );
             $this->debitHandler->handle($debitCommand);
         }
@@ -83,7 +104,7 @@ class ConsultationService
             $provider->id()->value(),
             $type,
             $value,
-            $requestedServices,
+            [$debitServiceKey],
             $cost,
             $response,
             new DateTimeImmutable()
@@ -91,16 +112,35 @@ class ConsultationService
         $savedConsultation = $this->consultationRepository->save($consultation);
 
         if ($response->success()) {
-            $this->vehicleUpserter->upsertFromConsultation($savedConsultation, $providerCode);
-            $this->dispatchNotifications($userId, $provider->id()->value(), $providerCode, $savedConsultation, $cost);
+            $this->vehicleUpserter->upsertFromConsultation($savedConsultation, $providerCode, $providerServiceId);
+            $this->dispatchNotifications($userId, $providerServiceId, $providerCode, $savedConsultation, $cost);
         }
 
         return new ConsultationResult($response, $savedConsultation);
     }
 
+    private function buildAdapterServices(string $providerCode, int $providerServiceId, array $requestedServices, int $userId): array
+    {
+        if ($providerCode !== 'PLACAS') {
+            return $requestedServices;
+        }
+
+        $user = User::find($userId);
+        $role = $user?->rol ?? 'cliente_registrado';
+
+        return ProviderServiceSection::where('provider_service_id', $providerServiceId)
+            ->where('status', true)
+            ->whereHas('roleSettings', function ($query) use ($role) {
+                $query->where('role', $role)->where('status', true);
+            })
+            ->orderBy('section_code')
+            ->pluck('section_code')
+            ->all();
+    }
+
     private function dispatchNotifications(
         int $userId,
-        int $providerId,
+        int $providerServiceId,
         string $providerCode,
         Consultation $consultation,
         float $cost
@@ -111,7 +151,7 @@ class ConsultationService
 
         if ($cost > 0) {
             $threshold = (float) config('vintrack.low_credit_threshold', 5);
-            $wallet = $this->walletRepository->findByUserAndProvider($userId, $providerId);
+            $wallet = $this->walletRepository->findByUserAndService($userId, $providerServiceId);
             if ($wallet !== null) {
                 $balance = $wallet->balance()->amount();
                 if ($balance <= $threshold) {

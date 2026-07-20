@@ -36,11 +36,12 @@ class VinDataConsultationTest extends TestCase
             'enabled' => true,
         ]);
 
-        ProviderService::create([
+        $service = ProviderService::create([
             'provider_id' => $provider->id,
             'key' => 'VHR',
             'name' => 'Vehicle History Report',
-            'credit_cost' => 0,
+            'credit_cost' => 1,
+            'available_credits' => 10,
             'enabled' => true,
         ]);
 
@@ -49,7 +50,7 @@ class VinDataConsultationTest extends TestCase
         $this->actingAs($user)
             ->postJson(route('admin.credits.purchase.store'), [
                 'user_id' => $user->id,
-                'provider_id' => $provider->id,
+                'provider_service_id' => $service->id,
                 'amount' => 5,
                 'reason' => 'Test credits',
             ]);
@@ -67,7 +68,7 @@ class VinDataConsultationTest extends TestCase
             ->assertJsonPath('local_report_url', fn ($url) => str_contains($url, '/reports/'));
 
         $walletRepo = app(\App\Domain\Credits\Repositories\WalletRepositoryInterface::class);
-        $wallet = $walletRepo->findByUserAndProvider($user->id, $provider->id);
+        $wallet = $walletRepo->findByUserAndService($user->id, $service->id);
         $this->assertEquals(4.0, $wallet->balance()->amount());
     }
 
@@ -88,11 +89,12 @@ class VinDataConsultationTest extends TestCase
             'enabled' => true,
         ]);
 
-        ProviderService::create([
+        $service = ProviderService::create([
             'provider_id' => $provider->id,
             'key' => 'VHR',
             'name' => 'Vehicle History Report',
-            'credit_cost' => 0,
+            'credit_cost' => 1,
+            'available_credits' => 10,
             'enabled' => true,
         ]);
 
@@ -101,7 +103,7 @@ class VinDataConsultationTest extends TestCase
         $this->actingAs($user)
             ->postJson(route('admin.credits.purchase.store'), [
                 'user_id' => $user->id,
-                'provider_id' => $provider->id,
+                'provider_service_id' => $service->id,
                 'amount' => 5,
                 'reason' => 'Test credits',
             ]);
@@ -140,11 +142,12 @@ class VinDataConsultationTest extends TestCase
             'enabled' => true,
         ]);
 
-        ProviderService::create([
+        $service = ProviderService::create([
             'provider_id' => $provider->id,
             'key' => 'VHR',
             'name' => 'Vehicle History Report',
-            'credit_cost' => 0,
+            'credit_cost' => 1,
+            'available_credits' => 10,
             'enabled' => true,
         ]);
 
@@ -153,7 +156,7 @@ class VinDataConsultationTest extends TestCase
         $this->actingAs($user)
             ->postJson(route('admin.credits.purchase.store'), [
                 'user_id' => $user->id,
-                'provider_id' => $provider->id,
+                'provider_service_id' => $service->id,
                 'amount' => 5,
                 'reason' => 'Test credits',
             ]);

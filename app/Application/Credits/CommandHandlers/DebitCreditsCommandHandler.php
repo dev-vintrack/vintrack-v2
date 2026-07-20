@@ -33,7 +33,7 @@ class DebitCreditsCommandHandler
             throw new RuntimeException('Duplicate debit detected.');
         }
 
-        $wallet = $this->walletRepository->findByUserAndProvider($command->userId, $command->providerId);
+        $wallet = $this->walletRepository->findByUserAndService($command->userId, $command->providerServiceId);
         if (!$wallet) {
             throw new RuntimeException('Wallet not found.');
         }
@@ -45,6 +45,7 @@ class DebitCreditsCommandHandler
         $ledgerEntry = new LedgerEntry(
             null,
             $wallet->id()->value(),
+            $command->providerServiceId,
             Amount::fromFloat(-$command->amount),
             $command->reason,
             [

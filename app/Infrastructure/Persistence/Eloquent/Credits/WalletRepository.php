@@ -18,25 +18,28 @@ class WalletRepository implements WalletRepositoryInterface
         return $model ? $this->toEntity($model) : null;
     }
 
-    public function findByUserAndProvider(int $userId, int $providerId): ?Wallet
+    public function findByUserAndService(int $userId, int $providerServiceId): ?Wallet
     {
         $model = WalletModel::where('user_id', $userId)
-            ->where('provider_id', $providerId)
+            ->where('provider_service_id', $providerServiceId)
             ->first();
 
         return $model ? $this->toEntity($model) : null;
     }
 
-    public function findByUserAndProviderOrCreate(int $userId, int $providerId): Wallet
+    public function findByUserAndServiceOrCreate(int $userId, int $providerServiceId): Wallet
     {
-        $wallet = $this->findByUserAndProvider($userId, $providerId);
+        $wallet = $this->findByUserAndService($userId, $providerServiceId);
         if ($wallet) {
             return $wallet;
         }
 
+        $service = \App\Infrastructure\Persistence\Models\ProviderService::find($providerServiceId);
+
         $model = WalletModel::create([
             'user_id' => $userId,
-            'provider_id' => $providerId,
+            'provider_id' => $service?->provider_id,
+            'provider_service_id' => $providerServiceId,
             'balance' => 0,
             'min_alert' => 5,
             'validity_start' => null,
@@ -58,7 +61,7 @@ class WalletRepository implements WalletRepositoryInterface
     {
         $data = [
             'user_id' => $wallet->userId(),
-            'provider_id' => $wallet->providerId(),
+            'provider_service_id' => $wallet->providerServiceId(),
             'balance' => $wallet->balance()->amount(),
             'min_alert' => $wallet->minAlert()->amount(),
             'validity_start' => $wallet->validityStart()?->format('Y-m-d H:i:s'),
@@ -77,7 +80,7 @@ class WalletRepository implements WalletRepositoryInterface
         return new Wallet(
             WalletId::fromInt($model->id),
             $model->user_id,
-            $model->provider_id,
+            $model->provider_service_id,
             Money::fromFloat((float) $model->balance),
             Money::fromFloat((float) $model->min_alert),
             $model->validity_start ? new DateTimeImmutable($model->validity_start) : null,

@@ -67,7 +67,7 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Proveedor</th>
+                            <th>Servicio</th>
                             <th>Criterio</th>
                             <th>Valor</th>
                             <th>Marca</th>
@@ -82,7 +82,14 @@
                         @foreach ($vehicles as $vehicle)
                             <tr class="{{ $vehicle->ultimo_status_robo ? 'table-danger' : '' }}">
                                 <td>{{ $vehicle->id }}</td>
-                                <td>{{ $vehicle->provider?->name ?? '—' }}</td>
+                                <td>
+                                    @if ($vehicle->service)
+                                        {{ $vehicle->service->name }}
+                                        <small class="text-muted d-block">({{ $vehicle->service->provider?->name ?? '—' }})</small>
+                                    @else
+                                        —
+                                    @endif
+                                </td>
                                 <td>{{ strtoupper($vehicle->criterio) }}</td>
                                 <td>{{ $vehicle->valor }}</td>
                                 <td>{{ $vehicle->marca ?? '—' }}</td>

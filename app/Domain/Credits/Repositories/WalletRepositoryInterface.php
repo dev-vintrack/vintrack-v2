@@ -9,9 +9,9 @@ interface WalletRepositoryInterface
 {
     public function findById(WalletId $id): ?Wallet;
 
-    public function findByUserAndProvider(int $userId, int $providerId): ?Wallet;
+    public function findByUserAndService(int $userId, int $providerServiceId): ?Wallet;
 
-    public function findByUserAndProviderOrCreate(int $userId, int $providerId): Wallet;
+    public function findByUserAndServiceOrCreate(int $userId, int $providerServiceId): Wallet;
 
     /**
      * @return Wallet[]

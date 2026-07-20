@@ -14,6 +14,7 @@ class LedgerEntry
     public function __construct(
         private readonly ?int $id,
         private readonly int $walletId,
+        private readonly int $providerServiceId,
         private readonly Amount $delta,
         private readonly string $reason,
         private readonly array $meta,
@@ -30,6 +31,11 @@ class LedgerEntry
     public function walletId(): int
     {
         return $this->walletId;
+    }
+
+    public function providerServiceId(): int
+    {
+        return $this->providerServiceId;
     }
 
     public function delta(): Amount

@@ -14,6 +14,7 @@ class Vehicle extends Model
 
     protected $fillable = [
         'provider_id',
+        'provider_service_id',
         'criterio',
         'valor',
         'marca',
@@ -33,5 +34,10 @@ class Vehicle extends Model
     public function provider(): BelongsTo
     {
         return $this->belongsTo(Provider::class, 'provider_id');
+    }
+
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(ProviderService::class, 'provider_service_id');
     }
 }

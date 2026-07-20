@@ -15,6 +15,7 @@ class LedgerRepository implements LedgerRepositoryInterface
     {
         LedgerModel::create([
             'wallet_id' => $entry->walletId(),
+            'provider_service_id' => $entry->providerServiceId(),
             'delta' => $entry->delta()->value(),
             'reason' => $entry->reason(),
             'meta' => $entry->meta(),
@@ -45,6 +46,7 @@ class LedgerRepository implements LedgerRepositoryInterface
         return new LedgerEntry(
             $model->id,
             $model->wallet_id,
+            $model->provider_service_id,
             Amount::fromFloat((float) $model->delta),
             $model->reason,
             $model->meta ?? [],

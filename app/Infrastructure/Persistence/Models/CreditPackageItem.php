@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CreditPackageItem extends Model
 {
-    protected $fillable = ['credit_package_id', 'provider_id', 'credits'];
+    protected $fillable = ['credit_package_id', 'provider_id', 'provider_service_id', 'credits'];
 
     protected $casts = [
         'credits' => 'decimal:2',
@@ -21,5 +21,10 @@ class CreditPackageItem extends Model
     public function provider(): BelongsTo
     {
         return $this->belongsTo(Provider::class);
+    }
+
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(ProviderService::class, 'provider_service_id');
     }
 }

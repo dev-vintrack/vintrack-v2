@@ -29,17 +29,26 @@ class WalletTest extends TestCase
             'enabled' => true,
         ]);
 
+        $service = \App\Infrastructure\Persistence\Models\ProviderService::create([
+            'provider_id' => $provider->id,
+            'key' => 'Placas_Service',
+            'name' => 'Placas Service',
+            'credit_cost' => 1,
+            'available_credits' => 20,
+            'enabled' => true,
+        ]);
+
         $this->actingAs($user)
             ->postJson(route('admin.credits.purchase.store'), [
                 'user_id' => $user->id,
-                'provider_id' => $provider->id,
+                'provider_service_id' => $service->id,
                 'amount' => 10,
                 'reason' => 'Test credit purchase',
             ])
             ->assertRedirect();
 
         $walletRepo = app(WalletRepositoryInterface::class);
-        $wallet = $walletRepo->findByUserAndProvider($user->id, $provider->id);
+        $wallet = $walletRepo->findByUserAndService($user->id, $service->id);
 
         $this->assertNotNull($wallet);
         $this->assertEquals(10.0, $wallet->balance()->amount());
