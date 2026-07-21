@@ -4,6 +4,7 @@ namespace Tests\Feature\Consultations;
 
 use App\Application\Consultas\Services\ConsultationService;
 use App\Application\Credits\CommandHandlers\DebitCreditsCommandHandler;
+use App\Application\Vehicles\Services\VehicleUpserter;
 use App\Domain\Consultas\Services\ProviderAdapterInterface;
 use App\Domain\Consultas\Services\ProviderAdapterRegistry;
 use App\Domain\Consultas\ValueObjects\ConsultationRequest;
@@ -150,7 +151,8 @@ class ConsultationTest extends TestCase
                 $app->make(\App\Domain\Credits\Repositories\WalletRepositoryInterface::class),
                 $app->make(DebitCreditsCommandHandler::class),
                 $app->make(\App\Domain\Consultas\Repositories\ConsultationRepositoryInterface::class),
-                $app->make(\App\Application\Consultas\Notifications\ConsultationNotifierInterface::class)
+                $app->make(\App\Application\Consultas\Notifications\ConsultationNotifierInterface::class),
+                $app->make(VehicleUpserter::class)
             );
         });
     }

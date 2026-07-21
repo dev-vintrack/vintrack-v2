@@ -9,9 +9,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        $fkExists = DB::select("SELECT 1 FROM information_schema.table_constraints WHERE constraint_schema = DATABASE() AND table_name = 'user_provider_wallets' AND constraint_name = 'user_provider_wallets_provider_id_foreign'");
-        if (! empty($fkExists)) {
-            DB::statement('ALTER TABLE user_provider_wallets DROP FOREIGN KEY user_provider_wallets_provider_id_foreign');
+        if (DB::getDriverName() === 'mysql') {
+            $fkExists = DB::select("SELECT 1 FROM information_schema.table_constraints WHERE constraint_schema = DATABASE() AND table_name = 'user_provider_wallets' AND constraint_name = 'user_provider_wallets_provider_id_foreign'");
+            if (! empty($fkExists)) {
+                DB::statement('ALTER TABLE user_provider_wallets DROP FOREIGN KEY user_provider_wallets_provider_id_foreign');
+            }
         }
 
         Schema::table('user_provider_wallets', function (Blueprint $table) {
@@ -44,14 +46,19 @@ return new class extends Migration
             $table->index('user_id', 'upw_user_id_index');
             $table->dropUnique(['user_id', 'provider_id']);
             $table->unique(['user_id', 'provider_service_id'], 'upw_user_service_unique');
-            $table->unsignedBigInteger('provider_id')->nullable()->change();
+
+            if (DB::getDriverName() === 'mysql') {
+                $table->unsignedBigInteger('provider_id')->nullable()->change();
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('user_provider_wallets', function (Blueprint $table) {
-            $table->dropForeign(['provider_service_id']);
+            if (DB::getDriverName() === 'mysql') {
+                $table->dropForeign(['provider_service_id']);
+            }
             $table->dropColumn('provider_service_id');
             $table->unique(['user_id', 'provider_id'], 'upw_user_provider_unique');
         });

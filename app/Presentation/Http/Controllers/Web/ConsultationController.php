@@ -57,8 +57,8 @@ class ConsultationController
                 $banner = PlacasReportPresenter::computeBanner($sections, $alertaRobo);
             }
 
-            // Usamos siempre un status HTTP que permita body (evita 204/304 que lo vacían).
-            $httpStatus = $response->success() ? 200 : 422;
+            // Usamos el status real del servicio; evitamos 204/304 que vacían el body.
+            $httpStatus = $response->success() ? 200 : $response->httpStatus();
 
             return response()->json([
                 'success' => $response->success(),

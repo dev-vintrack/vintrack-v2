@@ -18,6 +18,8 @@ class AdminMenuPermissionSeeder extends Seeder
         return [
             ['route' => 'home',                      'label' => 'Inicio',                 'icon' => 'house-door'],
             ['route' => 'admin.consultations.index', 'label' => 'Historial de Consultas', 'icon' => 'clipboard-data'],
+            ['route' => 'admin.inventory.index',     'label' => 'Inventario Global',      'icon' => 'boxes'],
+            ['route' => 'admin.purchases.index',     'label' => 'Compras',                'icon' => 'cart'],
             ['route' => 'admin.wallets.movements',   'label' => 'Movimientos Wallet',     'icon' => 'arrow-left-right'],
             ['route' => 'admin.wallets.index',       'label' => 'Créditos por Usuario',   'icon' => 'wallet'],
             ['route' => 'admin.vehicles.index',    'label' => 'Vehículos Registrados',  'icon' => 'car-front'],

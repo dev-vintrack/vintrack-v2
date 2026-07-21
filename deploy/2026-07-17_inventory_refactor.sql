@@ -388,4 +388,47 @@ CALL drop_index_if_exists('vehicles', 'vehicles_provider_valor_unique');
 CALL add_unique_unless_exists('vehicles', 'vehicles_provider_service_valor_unique', 'provider_service_id, valor');
 CALL add_fk_unless_exists('vehicles', 'vehicles_provider_service_id_foreign', 'provider_service_id', 'provider_services', 'id');
 
+-- ============================================================
+-- 9. Movimientos de inventario global
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `inventory_movements` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `provider_service_id` bigint unsigned NOT NULL,
+  `type` varchar(32) NOT NULL,
+  `quantity` decimal(10,2) NOT NULL,
+  `reference_type` varchar(64) NULL,
+  `reference_id` bigint unsigned NULL,
+  `admin_id` bigint unsigned NULL,
+  `notes` text NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `inventory_movements_provider_service_id_index` (`provider_service_id`),
+  KEY `inventory_movements_type_index` (`type`),
+  KEY `inventory_movements_reference_type_reference_id_index` (`reference_type`, `reference_id`),
+  CONSTRAINT `inventory_movements_provider_service_id_foreign` FOREIGN KEY (`provider_service_id`) REFERENCES `provider_services` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `inventory_movements_admin_id_foreign` FOREIGN KEY (`admin_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET @inventory_count = (SELECT COUNT(*) FROM inventory_movements);
+
+INSERT INTO `inventory_movements` (`provider_service_id`, `type`, `quantity`, `reference_type`, `reference_id`, `admin_id`, `notes`, `created_at`, `updated_at`)
+SELECT `id`, 'adjustment', `available_credits`, NULL, NULL, NULL, 'Saldo inicial de inventario', NOW(), NOW()
+FROM `provider_services`
+WHERE @inventory_count = 0 AND `available_credits` > 0;
+
+-- ============================================================
+-- 10. Permiso de menú para Inventario Global
+-- ============================================================
+INSERT IGNORE INTO `admin_menu_permissions` (`role`, `route_name`, `label`, `icon`, `enabled`, `display_order`, `created_at`, `updated_at`)
+VALUES ('admin', 'admin.inventory.index', 'Inventario Global', 'boxes', 1, 1, NOW(), NOW());
+
+-- ============================================================
+-- 11. Permiso de menú para Compras
+-- ============================================================
+INSERT IGNORE INTO `admin_menu_permissions` (`role`, `route_name`, `label`, `icon`, `enabled`, `display_order`, `created_at`, `updated_at`)
+VALUES 
+('admin', 'admin.purchases.index', 'Compras', 'cart', 1, 99, NOW(), NOW()),
+('soporte', 'admin.purchases.index', 'Compras', 'cart', 1, 99, NOW(), NOW());
+
 SET FOREIGN_KEY_CHECKS = 1;

@@ -42,4 +42,9 @@ class ProviderService extends Model
     {
         return $this->hasMany(PurchaseItem::class, 'provider_service_id');
     }
+
+    public function inventoryMovements(): HasMany
+    {
+        return $this->hasMany(InventoryMovement::class, 'provider_service_id');
+    }
 }

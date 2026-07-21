@@ -39,15 +39,27 @@ return new class extends Migration
                 ->update(['provider_service_id' => $nmvtisService->id]);
         }
 
-        DB::statement(<<<'SQL'
-            UPDATE vehicles v
-            SET v.provider_service_id = (
-                SELECT id FROM provider_services
-                WHERE provider_services.provider_id = v.provider_id
-                LIMIT 1
-            )
-            WHERE v.provider_service_id IS NULL
-        SQL);
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement(<<<'SQL'
+                UPDATE vehicles v
+                SET v.provider_service_id = (
+                    SELECT id FROM provider_services
+                    WHERE provider_services.provider_id = v.provider_id
+                    LIMIT 1
+                )
+                WHERE v.provider_service_id IS NULL
+            SQL);
+        } else {
+            DB::statement(<<<'SQL'
+                UPDATE vehicles
+                SET provider_service_id = (
+                    SELECT id FROM provider_services
+                    WHERE provider_services.provider_id = vehicles.provider_id
+                    LIMIT 1
+                )
+                WHERE provider_service_id IS NULL
+            SQL);
+        }
 
         Schema::table('vehicles', function (Blueprint $table) {
             $table->dropUnique('vehicles_provider_valor_unique');
@@ -58,7 +70,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('vehicles', function (Blueprint $table) {
-            $table->dropForeign(['provider_service_id']);
+            if (DB::getDriverName() === 'mysql') {
+                $table->dropForeign(['provider_service_id']);
+            }
             $table->dropUnique('vehicles_provider_service_valor_unique');
             $table->dropColumn('provider_service_id');
         });

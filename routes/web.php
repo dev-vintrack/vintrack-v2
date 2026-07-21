@@ -1,6 +1,7 @@
 <?php
 
 use App\Presentation\Http\Controllers\Web\Admin\AdminConsultationController;
+use App\Presentation\Http\Controllers\Web\Admin\AdminInventoryController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminMenuPermissionController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminPackageController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminProviderController;
@@ -77,6 +78,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/purchases/{id}/edit', [AdminPurchaseItemController::class, 'edit'])->name('admin.purchases.edit');
         Route::put('/purchases/{id}', [AdminPurchaseItemController::class, 'update'])->name('admin.purchases.update');
         Route::delete('/purchases/{id}', [AdminPurchaseItemController::class, 'destroy'])->name('admin.purchases.destroy');
+
+        Route::get('/inventory', [AdminInventoryController::class, 'index'])->name('admin.inventory.index');
+        Route::post('/inventory/adjustment', [AdminInventoryController::class, 'storeAdjustment'])->name('admin.inventory.adjustment.store');
+        Route::post('/inventory/return-expired', [AdminInventoryController::class, 'returnExpired'])->name('admin.inventory.return-expired');
 
         Route::get('/vehicles', [AdminVehicleController::class, 'index'])->name('admin.vehicles.index');
     });

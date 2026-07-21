@@ -3,6 +3,7 @@
 namespace App\Application\Credits\CommandHandlers;
 
 use App\Application\Credits\Commands\AddCreditsCommand;
+use App\Application\Inventory\Services\InventoryMovementService;
 use App\Domain\Credits\Entities\LedgerEntry;
 use App\Domain\Credits\Repositories\LedgerRepositoryInterface;
 use App\Domain\Credits\Repositories\WalletRepositoryInterface;
@@ -10,6 +11,7 @@ use App\Domain\Credits\ValueObjects\Amount;
 use App\Domain\Credits\ValueObjects\CorrelationId;
 use App\Domain\Credits\ValueObjects\Money;
 use App\Infrastructure\Persistence\Models\ProviderService;
+use App\Infrastructure\Persistence\Models\UserProviderWallet;
 use DateTimeImmutable;
 use RuntimeException;
 
@@ -17,7 +19,8 @@ class AddCreditsCommandHandler
 {
     public function __construct(
         private readonly WalletRepositoryInterface $walletRepository,
-        private readonly LedgerRepositoryInterface $ledgerRepository
+        private readonly LedgerRepositoryInterface $ledgerRepository,
+        private readonly InventoryMovementService $inventoryService
     ) {
     }
 
@@ -45,9 +48,6 @@ class AddCreditsCommandHandler
             throw new RuntimeException('Inventario insuficiente para asignar estos créditos.');
         }
 
-        $service->available_credits = (float) $service->available_credits - $command->amount;
-        $service->save();
-
         $wallet = $this->walletRepository->findByUserAndServiceOrCreate(
             $command->userId,
             $command->providerServiceId
@@ -60,6 +60,15 @@ class AddCreditsCommandHandler
         }
 
         $this->walletRepository->save($wallet);
+
+        $this->inventoryService->sale(
+            $command->providerServiceId,
+            $command->amount,
+            UserProviderWallet::class,
+            $wallet->id()->value(),
+            $command->adminId,
+            'Venta de créditos a cliente'
+        );
 
         $ledgerEntry = new LedgerEntry(
             null,

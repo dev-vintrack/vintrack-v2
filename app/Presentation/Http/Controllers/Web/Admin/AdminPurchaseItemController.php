@@ -2,6 +2,7 @@
 
 namespace App\Presentation\Http\Controllers\Web\Admin;
 
+use App\Application\Inventory\Services\InventoryMovementService;
 use App\Infrastructure\Persistence\Models\Provider;
 use App\Infrastructure\Persistence\Models\ProviderService;
 use App\Infrastructure\Persistence\Models\PurchaseItem;
@@ -10,13 +11,27 @@ use Illuminate\Support\Facades\Auth;
 
 class AdminPurchaseItemController
 {
+    public function __construct(
+        private readonly InventoryMovementService $inventoryService
+    ) {
+    }
+
     public function index()
     {
         $purchases = PurchaseItem::with(['provider', 'service.provider', 'admin'])
             ->orderBy('purchase_date', 'desc')
             ->paginate(20);
 
-        return view('admin.purchases.index', compact('purchases'));
+        $totalPurchases = PurchaseItem::count();
+        $activePurchases = PurchaseItem::where('status', 'active')->count();
+        $totalCost = (float) PurchaseItem::sum('total_cost');
+
+        return view('admin.purchases.index', compact(
+            'purchases',
+            'totalPurchases',
+            'activePurchases',
+            'totalCost'
+        ));
     }
 
     public function create()
@@ -47,7 +62,15 @@ class AdminPurchaseItemController
 
         $purchase = PurchaseItem::create($data);
 
-        $this->updateInventory($purchase);
+        if ($purchase->status === 'active') {
+            $this->inventoryService->purchase(
+                $purchase->provider_service_id,
+                (float) $purchase->quantity,
+                $purchase->id,
+                Auth::id(),
+                $purchase->notes
+            );
+        }
 
         return redirect()->route('admin.purchases.index')->with('status', 'Compra registrada correctamente.');
     }
@@ -81,11 +104,11 @@ class AdminPurchaseItemController
 
         $originalStatus = $purchase->status;
         $originalQuantity = (float) $purchase->quantity;
-        $originalServiceId = $purchase->provider_service_id;
+        $originalServiceId = (int) $purchase->provider_service_id;
 
         $purchase->update($data);
 
-        $this->updateInventory($purchase, $originalStatus, $originalQuantity, $originalServiceId);
+        $this->reconcileInventory($purchase, $originalStatus, $originalQuantity, $originalServiceId);
 
         return redirect()->route('admin.purchases.index')->with('status', 'Compra actualizada correctamente.');
     }
@@ -94,66 +117,45 @@ class AdminPurchaseItemController
     {
         $purchase = PurchaseItem::findOrFail($id);
 
-        $this->revertInventory($purchase);
+        if ($purchase->status === 'active') {
+            $this->inventoryService->manualAdjustment(
+                $purchase->provider_service_id,
+                -(float) $purchase->quantity,
+                Auth::id(),
+                "Eliminación de compra #{$purchase->id}"
+            );
+        }
 
         $purchase->delete();
 
         return redirect()->route('admin.purchases.index')->with('status', 'Compra eliminada.');
     }
 
-    private function updateInventory(
+    private function reconcileInventory(
         PurchaseItem $purchase,
-        ?string $originalStatus = null,
-        ?float $originalQuantity = null,
-        ?int $originalServiceId = null
+        string $originalStatus,
+        float $originalQuantity,
+        int $originalServiceId
     ): void {
-        $service = ProviderService::find($purchase->provider_service_id);
-        if (! $service) {
-            return;
+        $adminId = Auth::id();
+
+        if ($originalStatus === 'active') {
+            $this->inventoryService->manualAdjustment(
+                $originalServiceId,
+                -$originalQuantity,
+                $adminId,
+                "Reversión por edición de compra #{$purchase->id}"
+            );
         }
 
-        if ($originalServiceId !== null && $originalServiceId !== $purchase->provider_service_id) {
-            $originalService = ProviderService::find($originalServiceId);
-            if ($originalService && $originalStatus === 'active') {
-                $originalService->available_credits = max(0, (float) $originalService->available_credits - $originalQuantity);
-                $originalService->save();
-            }
-            if ($purchase->status === 'active') {
-                $service->available_credits = (float) $service->available_credits + (float) $purchase->quantity;
-                $service->save();
-            }
-            return;
+        if ($purchase->status === 'active') {
+            $this->inventoryService->purchase(
+                $purchase->provider_service_id,
+                (float) $purchase->quantity,
+                $purchase->id,
+                $adminId,
+                $purchase->notes
+            );
         }
-
-        if ($originalStatus !== null && $originalStatus !== $purchase->status) {
-            if ($purchase->status === 'active') {
-                $service->available_credits = (float) $service->available_credits + (float) $purchase->quantity;
-            } else {
-                $service->available_credits = max(0, (float) $service->available_credits - (float) $purchase->quantity);
-            }
-            $service->save();
-            return;
-        }
-
-        if ($originalQuantity !== null && $originalStatus === 'active' && $purchase->status === 'active') {
-            $delta = (float) $purchase->quantity - $originalQuantity;
-            $service->available_credits = max(0, (float) $service->available_credits + $delta);
-            $service->save();
-        }
-    }
-
-    private function revertInventory(PurchaseItem $purchase): void
-    {
-        if ($purchase->status !== 'active') {
-            return;
-        }
-
-        $service = ProviderService::find($purchase->provider_service_id);
-        if (! $service) {
-            return;
-        }
-
-        $service->available_credits = max(0, (float) $service->available_credits - (float) $purchase->quantity);
-        $service->save();
     }
 }
