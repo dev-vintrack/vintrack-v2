@@ -40,6 +40,10 @@ class AdminPanelAccessTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.menu-permissions.index'))
             ->assertOk();
+
+        $this->actingAs($admin)
+            ->get(route('admin.providers.index'))
+            ->assertOk();
     }
 
     public function test_soporte_can_access_new_admin_views_except_permissions(): void

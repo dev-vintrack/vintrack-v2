@@ -22,10 +22,35 @@
                 @forelse ($wallets as $wallet)
                     @php
                         $serviceName = $serviceNames[$wallet->providerServiceId()] ?? 'Servicio #' . $wallet->providerServiceId();
+                        $minAlertClient = (float) ($serviceMinAlerts[$wallet->providerServiceId()] ?? 0);
+                        $balance = (float) $wallet->balance()->amount();
+                        $isLowClient = $balance <= $minAlertClient;
+                        $validityEnd = $wallet->validityEnd();
+                        if ($validityEnd) {
+                            $daysRemaining = ceil(($validityEnd->getTimestamp() - now()->timestamp) / 86400);
+                            $validityFormatted = $validityEnd->format('d/m/Y H:i');
+                            if ($daysRemaining > 1) {
+                                $daysText = $daysRemaining . ' días restantes';
+                            } elseif ($daysRemaining === 1.0) {
+                                $daysText = '1 día restante';
+                            } elseif ($daysRemaining === 0.0) {
+                                $daysText = 'Vence hoy';
+                            } else {
+                                $daysText = 'Vencido';
+                            }
+                        }
                     @endphp
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span>{{ $serviceName }}</span>
-                        <span class="badge bg-primary fs-6">{{ number_format($wallet->balance()->amount(), 2) }} créditos</span>
+                    <div class="d-flex justify-content-between align-items-start mb-2 p-2 rounded {{ $isLowClient ? 'bg-danger text-white' : 'bg-success text-white' }}">
+                        <div>
+                            <span class="fw-bold">{{ $serviceName }}</span>
+                            @if($isLowClient)
+                                <br><small class="text-white">Saldo próximo a agotarse</small>
+                            @endif
+                            @if($validityEnd)
+                                <br><small class="text-white">Vigencia: {{ $validityFormatted }} ({{ $daysText }})</small>
+                            @endif
+                        </div>
+                        <span class="badge {{ $isLowClient ? 'bg-white text-danger' : 'bg-white text-success' }} fs-6">{{ number_format($balance, 2) }} créditos</span>
                     </div>
                 @empty
                     <p class="text-muted">No tienes saldos registrados.</p>
@@ -35,7 +60,7 @@
     </div>
 </div>
 
-@if (count($providers) > 0)
+@if (count($serviceOptions) > 0)
 <div class="row mt-4">
     <div class="col-md-8">
         <div class="card border-0 shadow-sm">
@@ -43,12 +68,17 @@
                 <h5 class="card-title">Nueva consulta</h5>
                 <form id="consultaForm" action="{{ route('consult') }}" method="POST">
                     @csrf
+                    <input type="hidden" id="providerHidden" name="provider" value="">
+                    <input type="hidden" id="serviceKeyHidden" name="services[]" value="">
                     <div class="mb-3">
-                        <label class="form-label">Proveedor</label>
-                        <select id="providerSelect" name="provider" class="form-select" required>
-                            @foreach ($providers as $p)
-                                <option value="{{ $p->code()->value() }}" data-type="{{ $p->code()->value() === 'VINDATA' ? 'vin' : 'placa' }}">
-                                    {{ $p->name() }} ({{ $p->code()->value() }})
+                        <label class="form-label">Servicio</label>
+                        <select id="serviceSelect" class="form-select" required>
+                            <option value="">Selecciona un servicio...</option>
+                            @foreach ($serviceOptions as $option)
+                                <option value="{{ $option['id'] }}"
+                                        data-provider="{{ $option['provider_code'] }}"
+                                        data-key="{{ $option['key'] }}">
+                                    {{ $option['provider_name'] }} - {{ $option['name'] }}
                                 </option>
                             @endforeach
                         </select>
@@ -66,21 +96,6 @@
                         <label class="form-label">Valor</label>
                         <input type="text" name="value" class="form-control" required>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Servicios</label>
-                        <div id="servicesContainer">
-                            @foreach ($providers as $p)
-                                <div class="provider-services" data-provider="{{ $p->code()->value() }}" style="{{ $loop->first ? '' : 'display:none;' }}">
-                                    @foreach ($servicesByProvider[$p->id()->value()] as $service)
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="services[]" value="{{ $service->key() }}" {{ $loop->first ? 'checked' : '' }}>
-                                            <label class="form-check-label">{{ $service->name() }}</label>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
                     <button type="submit" class="btn btn-primary">Consultar</button>
                 </form>
                 <div id="consultaResult" class="mt-3"></div>
@@ -90,7 +105,9 @@
 </div>
 
 <script>
-const providerSelect = document.getElementById('providerSelect');
+const serviceSelect = document.getElementById('serviceSelect');
+const providerHidden = document.getElementById('providerHidden');
+const serviceKeyHidden = document.getElementById('serviceKeyHidden');
 const typeSelect = document.getElementById('typeSelect');
 const typeHidden = document.getElementById('typeHidden');
 
@@ -107,14 +124,13 @@ function syncType() {
     typeHidden.value = typeSelect.value;
 }
 
-function updateProviderUI() {
-    const provider = providerSelect.value;
-    document.querySelectorAll('.provider-services').forEach(el => {
-        el.style.display = el.dataset.provider === provider ? 'block' : 'none';
-        el.querySelectorAll('input').forEach(input => {
-            input.disabled = el.dataset.provider !== provider;
-        });
-    });
+function updateServiceUI() {
+    const option = serviceSelect.options[serviceSelect.selectedIndex];
+    const provider = option?.dataset.provider ?? '';
+    const serviceKey = option?.dataset.key ?? '';
+
+    providerHidden.value = provider;
+    serviceKeyHidden.value = serviceKey;
 
     if (provider === 'VINDATA') {
         typeSelect.value = 'vin';
@@ -130,8 +146,8 @@ function updateProviderUI() {
 }
 
 typeSelect?.addEventListener('change', syncType);
-providerSelect?.addEventListener('change', updateProviderUI);
-updateProviderUI();
+serviceSelect?.addEventListener('change', updateServiceUI);
+updateServiceUI();
 
 document.getElementById('consultaForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();

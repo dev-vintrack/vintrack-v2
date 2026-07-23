@@ -2,8 +2,10 @@
 
 namespace App\Infrastructure\Persistence\Models;
 
+use App\Models\Role;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AdminMenuPermission extends Model
 {
@@ -12,7 +14,7 @@ class AdminMenuPermission extends Model
     protected $table = 'admin_menu_permissions';
 
     protected $fillable = [
-        'role',
+        'id_rol',
         'route_name',
         'label',
         'icon',
@@ -23,10 +25,21 @@ class AdminMenuPermission extends Model
     protected $casts = [
         'enabled' => 'boolean',
         'display_order' => 'integer',
+        'id_rol' => 'integer',
     ];
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'id_rol', 'id_rol');
+    }
 
     public function scopeEnabled($query)
     {
         return $query->where('enabled', true);
+    }
+
+    public function scopeForRole($query, int $idRol)
+    {
+        return $query->where('id_rol', $idRol);
     }
 }

@@ -5,7 +5,10 @@ use App\Presentation\Http\Controllers\Web\Admin\AdminInventoryController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminMenuPermissionController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminPackageController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminProviderController;
+use App\Presentation\Http\Controllers\Web\Admin\AdminProviderServiceRoleController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminPurchaseItemController;
+use App\Presentation\Http\Controllers\Web\Admin\AdminRoleController;
+use App\Presentation\Http\Controllers\Web\Admin\AdminRoleTypeController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminUserController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminVehicleController;
 use App\Presentation\Http\Controllers\Web\Admin\CreditPurchaseController;
@@ -89,5 +92,19 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('admin')->middleware(['role:admin'])->group(function () {
         Route::get('/menu-permissions', [AdminMenuPermissionController::class, 'index'])->name('admin.menu-permissions.index');
         Route::put('/menu-permissions', [AdminMenuPermissionController::class, 'update'])->name('admin.menu-permissions.update');
+
+        Route::get('/provider-service-roles', [AdminProviderServiceRoleController::class, 'index'])->name('admin.provider-service-roles.index');
+        Route::post('/provider-service-roles/{id_rol}/{provider_service_id}', [AdminProviderServiceRoleController::class, 'update'])->name('admin.provider-service-roles.update');
+
+        Route::resource('role-types', AdminRoleTypeController::class)->names('admin.role-types')->parameters([
+            'role-types' => 'roleType',
+        ]);
+
+        Route::get('/roles', [AdminRoleController::class, 'index'])->name('admin.roles.index');
+        Route::get('/roles/create', [AdminRoleController::class, 'create'])->name('admin.roles.create');
+        Route::post('/roles', [AdminRoleController::class, 'store'])->name('admin.roles.store');
+        Route::get('/roles/{id_rol}/edit', [AdminRoleController::class, 'edit'])->name('admin.roles.edit');
+        Route::put('/roles/{id_rol}', [AdminRoleController::class, 'update'])->name('admin.roles.update');
+        Route::delete('/roles/{id_rol}', [AdminRoleController::class, 'destroy'])->name('admin.roles.destroy');
     });
 });

@@ -101,8 +101,8 @@
                                 <td>{{ $user->email }}</td>
                                 <td>{{ $user->telefono ?? '—' }}</td>
                                 <td>
-                                    <span class="badge bg-{{ \App\Presentation\Support\RoleHelper::isAdmin($user) ? 'danger' : 'info' }}">
-                                        {{ $roles[$user->rol] ?? $user->rol }}
+                                    <span class="badge bg-{{ $user->role?->roleType?->color ?? 'secondary' }}">
+                                        {{ $user->role?->descripcion ?? $roles[$user->rol] ?? $user->rol }}
                                     </span>
                                 </td>
                                 <td>

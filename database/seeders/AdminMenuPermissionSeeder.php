@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Infrastructure\Persistence\Models\AdminMenuPermission;
+use App\Models\Role;
 use App\Presentation\Support\RoleHelper;
 use Illuminate\Database\Seeder;
 
@@ -29,6 +30,9 @@ class AdminMenuPermissionSeeder extends Seeder
             ['route' => 'admin.providers.index',     'label' => 'Proveedores',            'icon' => 'hdd-network'],
             ['route' => 'admin.users.index',         'label' => 'Usuarios',               'icon' => 'people'],
             ['route' => 'admin.menu-permissions.index', 'label' => 'Permisos de Menú',    'icon' => 'sliders'],
+            ['route' => 'admin.provider-service-roles.index', 'label' => 'Servicios por Rol', 'icon' => 'hand-thumbs-up'],
+            ['route' => 'admin.roles.index',         'label' => 'Roles',                  'icon' => 'person-gear'],
+            ['route' => 'admin.role-types.index',    'label' => 'Tipos de Rol',           'icon' => 'tags'],
         ];
     }
 
@@ -37,13 +41,14 @@ class AdminMenuPermissionSeeder extends Seeder
         $items = $this->menuItems();
 
         foreach (array_keys(RoleHelper::ROLES) as $role) {
+            $roleModel = Role::firstOrCreateByName($role);
             $order = 0;
             foreach ($items as $item) {
                 $enabled = $this->isEnabledByDefault($role, $item['route']);
 
                 AdminMenuPermission::firstOrCreate(
                     [
-                        'role' => $role,
+                        'id_rol' => $roleModel->id_rol,
                         'route_name' => $item['route'],
                     ],
                     [
@@ -77,6 +82,8 @@ class AdminMenuPermissionSeeder extends Seeder
         if ($role === 'soporte') {
             return ! in_array($route, [
                 'admin.menu-permissions.index',
+                'admin.provider-service-roles.index',
+                'admin.roles.index',
                 'home',
             ], true);
         }

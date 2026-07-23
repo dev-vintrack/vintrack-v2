@@ -431,4 +431,33 @@ VALUES
 ('admin', 'admin.purchases.index', 'Compras', 'cart', 1, 99, NOW(), NOW()),
 ('soporte', 'admin.purchases.index', 'Compras', 'cart', 1, 99, NOW(), NOW());
 
+-- ============================================================
+-- 12. Alertas mínimas por servicio (cliente y admin)
+-- ============================================================
+SET @min_alert_client_exists = (SELECT COUNT(*)
+                                FROM `information_schema`.`COLUMNS`
+                                WHERE `TABLE_SCHEMA` = DATABASE()
+                                  AND `TABLE_NAME` = 'provider_services'
+                                  AND `COLUMN_NAME` = 'min_alert_client');
+
+SET @min_alert_admin_exists = (SELECT COUNT(*)
+                               FROM `information_schema`.`COLUMNS`
+                               WHERE `TABLE_SCHEMA` = DATABASE()
+                                 AND `TABLE_NAME` = 'provider_services'
+                                 AND `COLUMN_NAME` = 'min_alert_admin');
+
+SET @sql_min_alert_client = IF(@min_alert_client_exists = 0,
+    'ALTER TABLE `provider_services` ADD COLUMN `min_alert_client` DECIMAL(10,2) NOT NULL DEFAULT 5 AFTER `available_credits`',
+    'SELECT 1');
+PREPARE stmt_min_alert_client FROM @sql_min_alert_client;
+EXECUTE stmt_min_alert_client;
+DEALLOCATE PREPARE stmt_min_alert_client;
+
+SET @sql_min_alert_admin = IF(@min_alert_admin_exists = 0,
+    'ALTER TABLE `provider_services` ADD COLUMN `min_alert_admin` DECIMAL(10,2) NOT NULL DEFAULT 5 AFTER `min_alert_client`',
+    'SELECT 1');
+PREPARE stmt_min_alert_admin FROM @sql_min_alert_admin;
+EXECUTE stmt_min_alert_admin;
+DEALLOCATE PREPARE stmt_min_alert_admin;
+
 SET FOREIGN_KEY_CHECKS = 1;

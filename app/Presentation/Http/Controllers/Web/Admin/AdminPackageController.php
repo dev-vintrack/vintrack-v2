@@ -9,6 +9,7 @@ use App\Infrastructure\Persistence\Models\CreditPackageItem;
 use App\Infrastructure\Persistence\Models\ProviderService;
 use App\Infrastructure\Persistence\Models\UserPackage;
 use App\Models\User;
+use App\Presentation\Support\RoleHelper;
 use DateTimeImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,19 +29,25 @@ class AdminPackageController
         return view('admin.packages.index', compact('packages'));
     }
 
-    public function create()
+    private function allowedServices()
     {
-        $services = ProviderService::with('provider')
+        return ProviderService::with('provider')
             ->where('enabled', true)
+            ->whereIn('id', RoleHelper::allowedServiceIds(Auth::user()?->id_rol))
             ->orderBy('provider_id')
             ->orderBy('name')
             ->get();
+    }
 
-        return view('admin.packages.create', compact('services'));
+    public function create()
+    {
+        return view('admin.packages.create', ['services' => $this->allowedServices()]);
     }
 
     public function store(Request $request)
     {
+        $allowedServiceIds = RoleHelper::allowedServiceIds(Auth::user()?->id_rol);
+
         $data = $request->validate([
             'name'          => 'required|string|max:100',
             'description'   => 'nullable|string|max:500',
@@ -50,6 +57,8 @@ class AdminPackageController
             'credits'       => 'required|array|min:1',
             'credits.*'     => 'nullable|numeric|min:0',
         ]);
+
+        $this->validateCredits($data, $allowedServiceIds);
 
         DB::transaction(function () use ($data, $request) {
             $package = CreditPackage::create([
@@ -77,12 +86,7 @@ class AdminPackageController
     public function edit(int $id)
     {
         $package = CreditPackage::with('items')->findOrFail($id);
-        $services = ProviderService::with('provider')
-            ->where('enabled', true)
-            ->orderBy('provider_id')
-            ->orderBy('name')
-            ->get();
-
+        $services = $this->allowedServices();
         $itemsByService = $package->items->keyBy('provider_service_id');
 
         return view('admin.packages.edit', compact('package', 'services', 'itemsByService'));
@@ -90,6 +94,8 @@ class AdminPackageController
 
     public function update(Request $request, int $id)
     {
+        $allowedServiceIds = RoleHelper::allowedServiceIds(Auth::user()?->id_rol);
+
         $data = $request->validate([
             'name'          => 'required|string|max:100',
             'description'   => 'nullable|string|max:500',
@@ -99,6 +105,8 @@ class AdminPackageController
             'credits'       => 'required|array|min:1',
             'credits.*'     => 'nullable|numeric|min:0',
         ]);
+
+        $this->validateCredits($data, $allowedServiceIds);
 
         DB::transaction(function () use ($data, $request, $id) {
             $package = CreditPackage::findOrFail($id);
@@ -125,6 +133,15 @@ class AdminPackageController
         return redirect()->route('admin.packages.index')->with('status', 'Paquete actualizado correctamente.');
     }
 
+    private function validateCredits(array $data, array $allowedServiceIds): void
+    {
+        foreach (array_keys($data['credits'] ?? []) as $providerServiceId) {
+            if (! in_array((int) $providerServiceId, $allowedServiceIds, true)) {
+                abort(403, 'Servicio no permitido para tu rol.');
+            }
+        }
+    }
+
     public function destroy(int $id)
     {
         CreditPackage::findOrFail($id)->delete();
@@ -134,10 +151,26 @@ class AdminPackageController
 
     public function assignForm()
     {
-        $packages = CreditPackage::where('active', true)->orderBy('name')->get();
-        $users    = User::orderBy('name')->get();
+        $packages = CreditPackage::where('active', true)
+            ->with('items')
+            ->orderBy('name')
+            ->get();
+        $users = User::orderBy('name')->get();
 
-        return view('admin.packages.assign', compact('packages', 'users'));
+        $userAllowedPackageIds = $users->mapWithKeys(function ($user) use ($packages) {
+            $allowedServiceIds = RoleHelper::allowedServiceIds($user->id_rol);
+
+            $allowedPackageIds = $packages
+                ->filter(fn ($package) => $package->items->every(
+                    fn ($item) => in_array((int) $item->provider_service_id, $allowedServiceIds, true)
+                ))
+                ->pluck('id')
+                ->all();
+
+            return [$user->id => $allowedPackageIds];
+        })->all();
+
+        return view('admin.packages.assign', compact('packages', 'users', 'userAllowedPackageIds'));
     }
 
     public function assign(Request $request)
@@ -148,7 +181,16 @@ class AdminPackageController
             'notes'      => 'nullable|string|max:255',
         ]);
 
-        $package   = CreditPackage::with('items.service')->findOrFail($data['package_id']);
+        $user    = User::findOrFail($data['user_id']);
+        $package = CreditPackage::with('items.service')->findOrFail($data['package_id']);
+
+        $allowedServiceIds = RoleHelper::allowedServiceIds($user->id_rol);
+        foreach ($package->items as $item) {
+            if (! in_array((int) $item->provider_service_id, $allowedServiceIds, true)) {
+                abort(403, 'El paquete incluye servicios no permitidos para el rol del usuario seleccionado.');
+            }
+        }
+
         $adminId   = Auth::id();
         $validityDays = (int) $package->validity_days;
         $expiresAt = now()->addDays($validityDays);

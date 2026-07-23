@@ -30,7 +30,7 @@
                     <tr>
                         <th>Key</th>
                         <th>Nombre</th>
-                        <th>Costo crédito</th>
+                        <th>Costo / Alertas</th>
                         <th>Inventario</th>
                         <th>Estado</th>
                     </tr>
@@ -41,26 +41,40 @@
                         <td>{{ $service->key }}</td>
                         <td>{{ $service->name }}</td>
                         <td>
-                            <form action="{{ route('admin.services.update', [$provider->id, $service->id]) }}" method="POST" class="row g-2 align-items-center">
+                            <form action="{{ route('admin.services.update', [$provider->id, $service->id]) }}" method="POST" class="row g-2 align-items-end">
                                 @csrf
+                                <input type="hidden" name="enabled" value="{{ $service->enabled ? '1' : '0' }}">
                                 <div class="col-auto">
-                                    <input type="number" step="0.01" min="0" name="credit_cost" value="{{ $service->credit_cost }}" class="form-control form-control-sm" style="width:100px">
+                                    <label class="form-label mb-0" style="font-size:11px">Costo</label>
+                                    <input type="number" step="0.01" min="0" name="credit_cost" value="{{ $service->credit_cost }}" class="form-control form-control-sm" style="width:75px">
                                 </div>
-                                <input type="hidden" name="enabled" value="{{ $service->enabled ? '0' : '1' }}">
                                 <div class="col-auto">
-                                    <button type="submit" class="btn btn-{{ $service->enabled ? 'danger' : 'success' }} btn-sm">
-                                        {{ $service->enabled ? 'Desactivar' : 'Activar' }}
-                                    </button>
+                                    <label class="form-label mb-0" style="font-size:11px">Mín. Cliente</label>
+                                    <input type="number" step="0.01" min="0" name="min_alert_client" value="{{ $service->min_alert_client }}" class="form-control form-control-sm" style="width:75px">
+                                </div>
+                                <div class="col-auto">
+                                    <label class="form-label mb-0" style="font-size:11px">Mín. Admin</label>
+                                    <input type="number" step="0.01" min="0" name="min_alert_admin" value="{{ $service->min_alert_admin }}" class="form-control form-control-sm" style="width:75px">
+                                </div>
+                                <div class="col-auto">
+                                    <button type="submit" class="btn btn-primary btn-sm">Guardar</button>
                                 </div>
                             </form>
                         </td>
                         <td>
                             <span class="badge bg-info text-dark">{{ number_format($service->available_credits, 2) }}</span>
                         </td>
-                        <td>
-                            <span class="badge bg-{{ $service->enabled ? 'success' : 'secondary' }}">
-                                {{ $service->enabled ? 'Activo' : 'Inactivo' }}
-                            </span>
+                        <td class="align-middle">
+                            <form action="{{ route('admin.services.update', [$provider->id, $service->id]) }}" method="POST" class="d-inline">
+                                @csrf
+                                <input type="hidden" name="enabled" value="{{ $service->enabled ? '0' : '1' }}">
+                                <input type="hidden" name="credit_cost" value="{{ $service->credit_cost }}">
+                                <input type="hidden" name="min_alert_client" value="{{ $service->min_alert_client }}">
+                                <input type="hidden" name="min_alert_admin" value="{{ $service->min_alert_admin }}">
+                                <button type="submit" class="btn btn-{{ $service->enabled ? 'danger' : 'success' }} btn-sm">
+                                    {{ $service->enabled ? 'Desactivar' : 'Activar' }}
+                                </button>
+                            </form>
                         </td>
                     </tr>
                     @if($service->sections->isNotEmpty())
@@ -93,7 +107,8 @@
                                             </td>
                                             @foreach($roles as $roleKey => $roleLabel)
                                                 @php
-                                                    $roleSetting = $section->roleSettings->firstWhere('role', $roleKey);
+                                                    $roleId = $roleIds[$roleKey] ?? null;
+                                                    $roleSetting = $roleId ? $section->roleSettings->firstWhere('id_rol', $roleId) : null;
                                                     $roleStatus = $roleSetting ? $roleSetting->status : $section->status;
                                                 @endphp
                                             <td class="text-center">

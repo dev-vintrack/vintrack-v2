@@ -6,10 +6,12 @@ use App\Domain\Credits\Repositories\WalletRepositoryInterface;
 use App\Domain\Providers\Repositories\ProviderRepositoryInterface;
 use App\Domain\Providers\Repositories\ProviderServiceRepositoryInterface;
 use App\Domain\Providers\ValueObjects\ProviderCode;
+use App\Infrastructure\Persistence\Models\ProviderService as ProviderServiceModel;
 use App\Presentation\Support\RoleHelper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+
 
 class HomeController
 {
@@ -62,7 +64,7 @@ class HomeController
             return $redirect;
         }
 
-        return view('home.ocasional');
+        return view('home.ocasional', $this->dashboardData());
     }
 
     public function pending(): View|RedirectResponse
@@ -113,28 +115,49 @@ class HomeController
         $user = Auth::user();
         $providers = $this->providerRepository->findEnabled();
 
-        if ($user && $user->rol === 'cliente_registrado') {
-            $providers = array_filter($providers, function ($provider) {
-                return strtolower($provider->code()->value()) === 'placas';
-            });
-        }
-
         $wallets = $this->walletRepository->findByUser(Auth::id());
 
         $servicesByProvider = [];
         $providerNames = [];
-        $serviceNames = [];
+        $providerCodes = [];
+        $serviceOptions = [];
         foreach ($providers as $provider) {
             $servicesByProvider[$provider->id()->value()] = $this->serviceRepository
                 ->findEnabledByProviderId($provider->id()->value());
             $providerNames[$provider->id()->value()] = $provider->name();
+            $providerCodes[$provider->id()->value()] = $provider->code()->value();
         }
 
-        foreach ($servicesByProvider as $serviceList) {
+        foreach ($servicesByProvider as $providerId => $serviceList) {
             foreach ($serviceList as $service) {
-                $serviceNames[$service->id()] = $service->name();
+                $serviceOptions[] = [
+                    'id' => $service->id(),
+                    'name' => $service->name(),
+                    'provider_id' => $providerId,
+                    'provider_code' => $providerCodes[$providerId] ?? '',
+                    'provider_name' => $providerNames[$providerId] ?? '',
+                    'key' => $service->key(),
+                ];
             }
         }
+
+        $allowedServiceIds = RoleHelper::allowedServiceIds($user?->id_rol);
+        $serviceOptions = array_values(array_filter($serviceOptions, fn ($option) => in_array($option['id'], $allowedServiceIds, true)));
+
+        $activeProviderIds = array_unique(array_map(fn ($option) => $option['provider_id'], $serviceOptions));
+        $providers = array_values(array_filter($providers, fn ($provider) => in_array($provider->id()->value(), $activeProviderIds, true)));
+
+        $walletServiceIds = array_unique(array_map(fn ($wallet) => $wallet->providerServiceId(), $wallets));
+        $serviceNames = $walletServiceIds
+            ? ProviderServiceModel::whereIn('id', $walletServiceIds)
+                ->pluck('name', 'id')
+                ->all()
+            : [];
+        $serviceMinAlerts = $walletServiceIds
+            ? ProviderServiceModel::whereIn('id', $walletServiceIds)
+                ->pluck('min_alert_client', 'id')
+                ->all()
+            : [];
 
         return [
             'providers' => $providers,
@@ -142,6 +165,8 @@ class HomeController
             'wallets' => $wallets,
             'providerNames' => $providerNames,
             'serviceNames' => $serviceNames,
+            'serviceMinAlerts' => $serviceMinAlerts,
+            'serviceOptions' => $serviceOptions,
         ];
     }
 }

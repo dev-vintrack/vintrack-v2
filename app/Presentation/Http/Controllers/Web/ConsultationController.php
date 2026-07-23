@@ -3,7 +3,9 @@
 namespace App\Presentation\Http\Controllers\Web;
 
 use App\Application\Consultas\Services\ConsultationService;
+use App\Infrastructure\Persistence\Models\ProviderService;
 use App\Presentation\Support\PlacasReportPresenter;
+use App\Presentation\Support\RoleHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -31,6 +33,25 @@ class ConsultationController
                 'VINDATA' => ['VHR'],
                 default => ['Placas_Service'],
             };
+
+            $providerService = ProviderService::whereHas('provider', function ($query) use ($data) {
+                $query->where('code', $data['provider']);
+            })
+                ->where('key', $services[0] ?? '')
+                ->first();
+
+            if (! $providerService || ! RoleHelper::isServiceAllowed(Auth::user()?->id_rol, $providerService->id)) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 403,
+                    'message' => 'Servicio no permitido para tu rol.',
+                    'data' => [],
+                    'report_url' => null,
+                    'local_report_url' => null,
+                    'theft_flags' => [],
+                    'banner' => null,
+                ], 403);
+            }
 
             $result = $this->consultationService->consult(
                 Auth::id(),

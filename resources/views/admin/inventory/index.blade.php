@@ -56,13 +56,19 @@
 
         <div class="row mb-4">
             @foreach ($balances as $service)
+                @php
+                    $lowAdmin = (float) $service->available_credits <= (float) $service->min_alert_admin;
+                @endphp
                 <div class="col-md-4 col-sm-6 mb-3">
-                    <div class="card shadow border-0 h-100">
+                    <div class="card shadow border-0 h-100 {{ $lowAdmin ? 'bg-danger text-white' : '' }}">
                         <div class="card-body">
-                            <h6 class="text-muted">{{ $service->name }}</h6>
-                            <small class="text-muted d-block">{{ $service->provider?->name ?? '—' }}</small>
+                            <h6 class="{{ $lowAdmin ? '' : 'text-muted' }}">{{ $service->name }}</h6>
+                            <small class="{{ $lowAdmin ? 'text-white-50' : 'text-muted' }} d-block">{{ $service->provider?->name ?? '—' }}</small>
                             <h3 class="mt-2">{{ number_format($service->available_credits, 2) }}</h3>
-                            <small class="text-muted">créditos disponibles</small>
+                            <small class="{{ $lowAdmin ? 'text-white-50' : 'text-muted' }}">créditos disponibles</small>
+                            @if($lowAdmin)
+                                <small class="d-block fw-bold">Créditos por agotarse</small>
+                            @endif
                         </div>
                     </div>
                 </div>

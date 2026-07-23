@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -24,6 +25,7 @@ class User extends Authenticatable
         'password',
         'nombre',
         'telefono',
+        'id_rol',
         'rol',
         'activo',
         'approved_at',
@@ -51,8 +53,30 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'approved_at' => 'datetime',
             'activo' => 'boolean',
+            'id_rol' => 'integer',
             'password' => 'hashed',
         ];
+    }
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'id_rol', 'id_rol');
+    }
+
+    public function getRolAttribute(): ?string
+    {
+        return $this->role?->nombre;
+    }
+
+    public function setRolAttribute(?string $value): void
+    {
+        if ($value === null) {
+            $this->attributes['id_rol'] = null;
+            return;
+        }
+
+        $role = Role::firstOrCreateByName($value);
+        $this->attributes['id_rol'] = $role?->id_rol;
     }
 
     public function consultations(): HasMany

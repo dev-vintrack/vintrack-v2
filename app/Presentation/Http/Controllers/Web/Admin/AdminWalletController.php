@@ -6,7 +6,9 @@ use App\Infrastructure\Persistence\Models\ProviderService;
 use App\Infrastructure\Persistence\Models\UserProviderWallet;
 use App\Infrastructure\Persistence\Models\WalletLedgerEntry;
 use App\Models\User;
+use App\Presentation\Support\RoleHelper;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AdminWalletController
 {
@@ -28,7 +30,11 @@ class AdminWalletController
         $wallets = $query->paginate(20)->withQueryString();
 
         $users = User::orderBy('name')->get(['id', 'name', 'email']);
-        $services = ProviderService::with('provider')->orderBy('provider_id')->orderBy('name')->get();
+        $services = ProviderService::with('provider')
+            ->whereIn('id', RoleHelper::allowedServiceIds(Auth::user()?->id_rol))
+            ->orderBy('provider_id')
+            ->orderBy('name')
+            ->get();
 
         return view('admin.wallets.index', compact('wallets', 'users', 'services', 'kpis'));
     }
@@ -75,7 +81,11 @@ class AdminWalletController
         $movements = $query->get();
 
         $users = User::orderBy('name')->get(['id', 'name', 'email']);
-        $services = ProviderService::with('provider')->orderBy('provider_id')->orderBy('name')->get();
+        $services = ProviderService::with('provider')
+            ->whereIn('id', RoleHelper::allowedServiceIds(Auth::user()?->id_rol))
+            ->orderBy('provider_id')
+            ->orderBy('name')
+            ->get();
 
         return view('admin.wallets.movements', compact('movements', 'users', 'services', 'kpis'));
     }

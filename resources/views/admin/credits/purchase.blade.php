@@ -46,4 +46,32 @@
     </div>
 </div>
 </div>
+
+@push('scripts')
+<script>
+    const userAllowedServices = @json($userAllowedServices);
+    const userSelect = document.getElementById('user_id');
+    const serviceSelect = document.getElementById('provider_service_id');
+
+    function filterServicesByUser() {
+        const userId = userSelect.value;
+        const allowed = userAllowedServices[userId] || [];
+
+        serviceSelect.querySelectorAll('option[value]').forEach(option => {
+            if (option.value === '') return;
+            const allowedForUser = allowed.includes(parseInt(option.value, 10));
+            option.hidden = !allowedForUser;
+            option.disabled = !allowedForUser;
+        });
+
+        const selected = serviceSelect.querySelector('option:checked');
+        if (selected && selected.value !== '' && !allowed.includes(parseInt(selected.value, 10))) {
+            serviceSelect.value = '';
+        }
+    }
+
+    userSelect?.addEventListener('change', filterServicesByUser);
+    filterServicesByUser();
+</script>
+@endpush
 @endsection

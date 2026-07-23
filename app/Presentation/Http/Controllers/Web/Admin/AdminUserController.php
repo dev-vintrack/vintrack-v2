@@ -2,6 +2,7 @@
 
 namespace App\Presentation\Http\Controllers\Web\Admin;
 
+use App\Models\Role;
 use App\Models\User;
 use App\Presentation\Support\RoleHelper;
 use Illuminate\Http\Request;
@@ -10,8 +11,8 @@ class AdminUserController
 {
     public function index()
     {
-        $users = User::orderBy('created_at', 'desc')->get();
-        $roles = RoleHelper::ROLES;
+        $users = User::with('role.roleType')->orderBy('created_at', 'desc')->get();
+        $roles = Role::pluck('descripcion', 'nombre')->all();
         $kpis = $this->buildUserKpis($users);
 
         return view('admin.users.index', compact('users', 'roles', 'kpis'));
@@ -30,7 +31,7 @@ class AdminUserController
     public function edit(int $id)
     {
         $user  = User::findOrFail($id);
-        $roles = RoleHelper::ROLES;
+        $roles = Role::pluck('descripcion', 'nombre')->all();
 
         return view('admin.users.edit', compact('user', 'roles'));
     }
@@ -41,7 +42,7 @@ class AdminUserController
             'name'     => 'required|string|max:128',
             'email'    => 'required|string|email|max:255|unique:users,email,' . $id,
             'telefono' => 'required|string|max:32',
-            'rol'      => 'required|in:' . implode(',', array_keys(RoleHelper::ROLES)),
+            'rol'      => 'required|exists:roles,nombre',
             'activo'   => 'required|boolean',
             'status'   => 'required|in:active,pending',
         ]);

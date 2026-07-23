@@ -6,6 +6,7 @@ use App\Application\Inventory\Services\InventoryMovementService;
 use App\Infrastructure\Persistence\Models\Provider;
 use App\Infrastructure\Persistence\Models\ProviderService;
 use App\Infrastructure\Persistence\Models\PurchaseItem;
+use App\Presentation\Support\RoleHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -34,23 +35,31 @@ class AdminPurchaseItemController
         ));
     }
 
-    public function create()
+    private function allowedServices()
     {
-        $providers = Provider::where('enabled', true)->orderBy('name')->get();
-        $services = ProviderService::with('provider')
+        return ProviderService::with('provider')
             ->where('enabled', true)
+            ->whereIn('id', RoleHelper::allowedServiceIds(Auth::user()?->id_rol))
             ->orderBy('provider_id')
             ->orderBy('name')
             ->get();
+    }
+
+    public function create()
+    {
+        $providers = Provider::where('enabled', true)->orderBy('name')->get();
+        $services = $this->allowedServices();
 
         return view('admin.purchases.create', compact('providers', 'services'));
     }
 
     public function store(Request $request)
     {
+        $allowedServiceIds = RoleHelper::allowedServiceIds(Auth::user()?->id_rol);
+
         $data = $request->validate([
             'provider_id' => 'required|exists:providers,id',
-            'provider_service_id' => 'required|exists:provider_services,id',
+            'provider_service_id' => ['required', 'exists:provider_services,id', 'in:' . implode(',', $allowedServiceIds)],
             'quantity' => 'required|numeric|min:0.01',
             'unit_cost' => 'required|numeric|min:0',
             'purchase_date' => 'required|date',
@@ -79,11 +88,7 @@ class AdminPurchaseItemController
     {
         $purchase = PurchaseItem::findOrFail($id);
         $providers = Provider::where('enabled', true)->orderBy('name')->get();
-        $services = ProviderService::with('provider')
-            ->where('enabled', true)
-            ->orderBy('provider_id')
-            ->orderBy('name')
-            ->get();
+        $services = $this->allowedServices();
 
         return view('admin.purchases.edit', compact('purchase', 'providers', 'services'));
     }
@@ -91,10 +96,11 @@ class AdminPurchaseItemController
     public function update(Request $request, int $id)
     {
         $purchase = PurchaseItem::findOrFail($id);
+        $allowedServiceIds = RoleHelper::allowedServiceIds(Auth::user()?->id_rol);
 
         $data = $request->validate([
             'provider_id' => 'required|exists:providers,id',
-            'provider_service_id' => 'required|exists:provider_services,id',
+            'provider_service_id' => ['required', 'exists:provider_services,id', 'in:' . implode(',', $allowedServiceIds)],
             'quantity' => 'required|numeric|min:0.01',
             'unit_cost' => 'required|numeric|min:0',
             'purchase_date' => 'required|date',

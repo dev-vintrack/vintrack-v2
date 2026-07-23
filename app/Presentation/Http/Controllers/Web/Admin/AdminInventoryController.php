@@ -6,6 +6,7 @@ use App\Application\Inventory\Services\InventoryMovementService;
 use App\Application\Inventory\Services\ReturnExpiredCreditsService;
 use App\Infrastructure\Persistence\Models\InventoryMovement;
 use App\Infrastructure\Persistence\Models\ProviderService;
+use App\Presentation\Support\RoleHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -19,8 +20,10 @@ class AdminInventoryController
 
     public function index(Request $request)
     {
+        $allowedServiceIds = RoleHelper::allowedServiceIds(Auth::user()?->id_rol);
+
         $services = ProviderService::with('provider')
-            ->where('enabled', true)
+            ->whereIn('id', $allowedServiceIds)
             ->orderBy('provider_id')
             ->orderBy('name')
             ->get();
@@ -43,6 +46,7 @@ class AdminInventoryController
         $movements = $movementsQuery->paginate(25)->withQueryString();
 
         $balances = ProviderService::with('provider')
+            ->whereIn('id', $allowedServiceIds)
             ->selectRaw('provider_services.*, (
                 SELECT COALESCE(SUM(quantity), 0)
                 FROM inventory_movements
@@ -69,8 +73,10 @@ class AdminInventoryController
 
     public function storeAdjustment(Request $request)
     {
+        $allowedServiceIds = RoleHelper::allowedServiceIds(Auth::user()?->id_rol);
+
         $data = $request->validate([
-            'provider_service_id' => 'required|exists:provider_services,id',
+            'provider_service_id' => ['required', 'exists:provider_services,id', 'in:' . implode(',', $allowedServiceIds)],
             'quantity' => 'required|numeric|not_in:0',
             'notes' => 'required|string|max:500',
         ]);

@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use App\Infrastructure\Persistence\Models\Provider;
 use App\Infrastructure\Persistence\Models\ProviderService;
+use App\Infrastructure\Persistence\Models\ProviderServiceRole;
+use App\Models\Role;
 use Illuminate\Database\Seeder;
 
 class ProviderSeeder extends Seeder
@@ -52,6 +54,8 @@ class ProviderSeeder extends Seeder
             ]
         );
 
+        $this->ensureServiceRoles($placasService);
+
         $placasSections = [
             ['code' => 'repuve', 'name' => 'REPUVE'],
             ['code' => 'pgj', 'name' => 'PGJ'],
@@ -61,7 +65,7 @@ class ProviderSeeder extends Seeder
             ['code' => 'rapi', 'name' => 'RAPI'],
         ];
 
-        $roles = ['admin', 'analista', 'soporte', 'cliente_registrado', 'perito', 'oficial', 'ocasional'];
+        $roleNames = ['admin', 'analista', 'soporte', 'cliente_registrado', 'perito', 'oficial', 'ocasional'];
         $rapiInactiveFor = ['analista', 'soporte', 'cliente_registrado'];
 
         foreach ($placasSections as $section) {
@@ -73,11 +77,12 @@ class ProviderSeeder extends Seeder
                 ]
             );
 
-            foreach ($roles as $role) {
+            foreach ($roleNames as $roleName) {
+                $role = Role::firstOrCreateByName($roleName);
                 \App\Infrastructure\Persistence\Models\ProviderServiceSectionRole::updateOrCreate(
-                    ['provider_service_section_id' => $sectionModel->id, 'role' => $role],
+                    ['provider_service_section_id' => $sectionModel->id, 'id_rol' => $role->id_rol],
                     [
-                        'status' => ! ($section['code'] === 'rapi' && in_array($role, $rapiInactiveFor, true)),
+                        'status' => ! ($section['code'] === 'rapi' && in_array($roleName, $rapiInactiveFor, true)),
                     ]
                 );
             }
@@ -89,7 +94,7 @@ class ProviderSeeder extends Seeder
         ];
 
         foreach ($vinDataServices as $service) {
-            ProviderService::updateOrCreate(
+            $serviceModel = ProviderService::updateOrCreate(
                 ['provider_id' => $vindata->id, 'key' => $service['key']],
                 [
                     'name' => $service['name'],
@@ -97,6 +102,21 @@ class ProviderSeeder extends Seeder
                     'available_credits' => 0,
                     'enabled' => true,
                 ]
+            );
+
+            $this->ensureServiceRoles($serviceModel);
+        }
+    }
+
+    private function ensureServiceRoles(ProviderService $service): void
+    {
+        foreach (Role::all() as $role) {
+            ProviderServiceRole::firstOrCreate(
+                [
+                    'id_rol' => $role->id_rol,
+                    'provider_service_id' => $service->id,
+                ],
+                ['status' => true]
             );
         }
     }

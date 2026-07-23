@@ -113,7 +113,6 @@
                             <th>Email</th>
                             <th>Servicio</th>
                             <th>Saldo</th>
-                            <th>Alerta Mínima</th>
                             <th>Vigencia Inicio</th>
                             <th>Vigencia Fin</th>
                         </tr>
@@ -128,9 +127,6 @@
                                     <span class="badge bg-{{ $wallet->balance <= $wallet->min_alert ? 'warning text-dark' : 'success' }}">
                                         {{ number_format($wallet->balance, 2) }}
                                     </span>
-                                </td>
-                                <td data-order="{{ $wallet->min_alert }}">
-                                    {{ number_format($wallet->min_alert, 2) }}
                                 </td>
                                 <td data-order="{{ $wallet->validity_start?->toDateTimeString() }}">
                                     {{ $wallet->validity_start?->format('d/m/Y H:i') ?? '—' }}
@@ -180,7 +176,7 @@
                     { extend: 'print', text: 'Imprimir' }
                 ],
                 columnDefs: [
-                    { targets: [3, 4], type: 'num' }
+                    { targets: [3], type: 'num' }
                 ]
             });
         });

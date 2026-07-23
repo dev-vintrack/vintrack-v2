@@ -2,6 +2,7 @@
 
 namespace App\Infrastructure\Persistence\Models;
 
+use App\Models\Role;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -36,7 +37,13 @@ class ProviderServiceSection extends Model
 
     public function isActiveForRole(string $role): bool
     {
-        $setting = $this->roleSettings()->where('role', $role)->first();
+        $roleId = Role::idForName($role);
+
+        if (! $roleId) {
+            return $this->status;
+        }
+
+        $setting = $this->roleSettings()->where('id_rol', $roleId)->first();
 
         return $setting ? $setting->status : $this->status;
     }

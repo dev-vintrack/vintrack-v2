@@ -70,16 +70,49 @@
 </div>
 
 <script>
+const userAllowedPackageIds = @json($userAllowedPackageIds);
+const userSelect = document.querySelector('select[name="user_id"]');
+const packageSelect = document.getElementById('package_id');
+
+function filterPackagesByUser() {
+    const userId = userSelect.value;
+    const allowed = userAllowedPackageIds[userId] || [];
+
+    packageSelect.querySelectorAll('option[value]').forEach(option => {
+        if (option.value === '') return;
+        const allowedForUser = allowed.includes(parseInt(option.value, 10));
+        option.hidden = !allowedForUser;
+        option.disabled = !allowedForUser;
+    });
+
+    const selected = packageSelect.querySelector('option:checked');
+    if (selected && selected.value !== '' && !allowed.includes(parseInt(selected.value, 10))) {
+        packageSelect.value = '';
+    }
+
+    showPackageDetail(packageSelect);
+}
+
 function showPackageDetail(sel) {
     var opt = sel.options[sel.selectedIndex];
+    var div = document.getElementById('package-detail');
+
+    if (!opt || opt.value === '') {
+        div.innerHTML = '';
+        return;
+    }
+
     var detail = opt.dataset.detail || '';
     var days   = opt.dataset.days   || '';
-    var div    = document.getElementById('package-detail');
+
     if (detail) {
         div.innerHTML = '<strong>Incluye:</strong> ' + detail + ' &nbsp;|&nbsp; <strong>Vigencia:</strong> ' + days + ' días';
     } else {
         div.innerHTML = '';
     }
 }
+
+userSelect?.addEventListener('change', filterPackagesByUser);
+filterPackagesByUser();
 </script>
 @endsection

@@ -3,6 +3,7 @@
 namespace App\Presentation\Http\Controllers\Web\Admin;
 
 use App\Infrastructure\Persistence\Models\AdminMenuPermission;
+use App\Models\Role;
 use App\Presentation\Support\RoleHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -11,12 +12,13 @@ class AdminMenuPermissionController
 {
     public function index()
     {
-        $permissions = AdminMenuPermission::orderBy('role')
+        $permissions = AdminMenuPermission::with('role')
+            ->orderBy('id_rol')
             ->orderBy('display_order')
             ->get()
-            ->groupBy('role');
+            ->groupBy(fn ($permission) => $permission->role?->nombre ?? 'sin_rol');
 
-        $roles = RoleHelper::ROLES;
+        $roles = Role::pluck('descripcion', 'nombre')->all();
 
         return view('admin.menu-permissions.index', compact('permissions', 'roles'));
     }

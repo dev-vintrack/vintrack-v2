@@ -6,6 +6,7 @@ use App\Application\Credits\CommandHandlers\AddCreditsCommandHandler;
 use App\Application\Credits\Commands\AddCreditsCommand;
 use App\Infrastructure\Persistence\Models\ProviderService;
 use App\Models\User;
+use App\Presentation\Support\RoleHelper;
 use DateTimeImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,7 +27,11 @@ class CreditPurchaseController
             ->orderBy('name')
             ->get();
 
-        return view('admin.credits.purchase', compact('users', 'services'));
+        $userAllowedServices = $users->mapWithKeys(
+            fn ($user) => [$user->id => RoleHelper::allowedServiceIds($user->id_rol)]
+        )->all();
+
+        return view('admin.credits.purchase', compact('users', 'services', 'userAllowedServices'));
     }
 
     public function store(Request $request)
@@ -38,6 +43,13 @@ class CreditPurchaseController
             'validity_days' => 'nullable|integer|min:1',
             'reason' => 'required|string|max:255',
         ]);
+
+        $user = User::findOrFail($data['user_id']);
+        $providerService = ProviderService::findOrFail($data['provider_service_id']);
+
+        if (! $providerService->enabled || ! RoleHelper::isServiceAllowed($user->id_rol, $providerService->id)) {
+            abort(403, 'Servicio no permitido para el rol del usuario seleccionado.');
+        }
 
         $correlationId = 'purchase-' . $data['provider_service_id'] . '-' . $data['user_id'] . '-' . time();
 

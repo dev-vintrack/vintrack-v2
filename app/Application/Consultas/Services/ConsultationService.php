@@ -17,6 +17,7 @@ use App\Domain\Providers\Repositories\ProviderRepositoryInterface;
 use App\Domain\Providers\Repositories\ProviderServiceRepositoryInterface;
 use App\Domain\Providers\ValueObjects\ProviderCode;
 use App\Infrastructure\Persistence\Models\ProviderServiceSection;
+use App\Models\Role;
 use App\Models\User;
 use DateTimeImmutable;
 use RuntimeException;
@@ -126,12 +127,15 @@ class ConsultationService
         }
 
         $user = User::find($userId);
-        $role = $user?->rol ?? 'cliente_registrado';
+        $roleName = $user?->rol ?? 'cliente_registrado';
+        $roleId = Role::idForName($roleName);
 
         return ProviderServiceSection::where('provider_service_id', $providerServiceId)
             ->where('status', true)
-            ->whereHas('roleSettings', function ($query) use ($role) {
-                $query->where('role', $role)->where('status', true);
+            ->when($roleId, function ($query, $roleId) {
+                $query->whereHas('roleSettings', function ($query) use ($roleId) {
+                    $query->where('id_rol', $roleId)->where('status', true);
+                });
             })
             ->orderBy('section_code')
             ->pluck('section_code')
