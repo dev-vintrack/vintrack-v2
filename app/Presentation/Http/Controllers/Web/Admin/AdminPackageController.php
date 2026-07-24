@@ -144,7 +144,18 @@ class AdminPackageController
 
     public function destroy(int $id)
     {
-        CreditPackage::findOrFail($id)->delete();
+        $package = CreditPackage::findOrFail($id);
+
+        $hasActiveAssignment = $package->userPackages()
+            ->whereHas('user', fn ($query) => $query->where('activo', true)->where('status', 'active'))
+            ->exists();
+
+        if ($hasActiveAssignment) {
+            return redirect()->route('admin.packages.index')
+                ->with('status', 'No puedes eliminar un paquete si tiene una venta o asignación para un usuario activo.');
+        }
+
+        $package->delete();
 
         return redirect()->route('admin.packages.index')->with('status', 'Paquete eliminado.');
     }
@@ -201,6 +212,7 @@ class AdminPackageController
                 'credit_package_id' => $package->id,
                 'assigned_at'       => now(),
                 'expires_at'        => $expiresAt,
+                'status'            => 'active',
                 'assigned_by'       => $adminId,
                 'notes'             => $data['notes'] ?? null,
             ]);
@@ -226,6 +238,8 @@ class AdminPackageController
 
     public function active(Request $request)
     {
+        UserPackage::syncExpiredStatuses();
+
         $query = UserPackage::with(['user', 'package', 'assignedBy'])
             ->orderBy('created_at', 'desc');
 
@@ -238,14 +252,7 @@ class AdminPackageController
         }
 
         if ($request->filled('status')) {
-            $now = now();
-            match ($request->input('status')) {
-                'active' => $query->where(function ($q) use ($now) {
-                    $q->whereNull('expires_at')->orWhere('expires_at', '>', $now);
-                }),
-                'expired' => $query->whereNotNull('expires_at')->where('expires_at', '<=', $now),
-                default => null,
-            };
+            $query->where('status', $request->input('status'));
         }
 
         if ($request->filled('date_from')) {
@@ -270,8 +277,8 @@ class AdminPackageController
     {
         return [
             'total' => $userPackages->count(),
-            'active' => $userPackages->filter(fn ($up) => ! $up->isExpired())->count(),
-            'expired' => $userPackages->filter(fn ($up) => $up->isExpired())->count(),
+            'active' => $userPackages->where('status', 'active')->count(),
+            'expired' => $userPackages->where('status', 'expired')->count(),
             'users' => $userPackages->pluck('user_id')->unique()->count(),
         ];
     }

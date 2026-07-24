@@ -60,6 +60,7 @@ class AddCreditsCommandHandler
         }
 
         $this->walletRepository->save($wallet);
+        UserProviderWallet::where('id', $wallet->id()?->value())->update(['status' => 'active']);
 
         $this->inventoryService->sale(
             $command->providerServiceId,

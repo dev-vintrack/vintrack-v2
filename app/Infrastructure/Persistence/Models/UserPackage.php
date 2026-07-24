@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserPackage extends Model
 {
-    protected $fillable = ['user_id', 'credit_package_id', 'assigned_at', 'expires_at', 'assigned_by', 'notes'];
+    protected $fillable = ['user_id', 'credit_package_id', 'assigned_at', 'expires_at', 'status', 'assigned_by', 'notes'];
 
     protected $casts = [
         'assigned_at' => 'datetime',
@@ -30,8 +30,16 @@ class UserPackage extends Model
         return $this->belongsTo(User::class, 'assigned_by');
     }
 
+    public static function syncExpiredStatuses(): void
+    {
+        static::where('status', 'active')
+            ->whereNotNull('expires_at')
+            ->where('expires_at', '<=', now())
+            ->update(['status' => 'expired']);
+    }
+
     public function isExpired(): bool
     {
-        return $this->expires_at !== null && $this->expires_at->isPast();
+        return $this->status === 'expired';
     }
 }

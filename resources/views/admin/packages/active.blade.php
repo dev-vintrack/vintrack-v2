@@ -153,11 +153,9 @@
                                 <td>{{ $userPackage->assignedBy?->name ?? '—' }}</td>
                                 <td>{{ $userPackage->notes ?? '—' }}</td>
                                 <td>
-                                    @if($userPackage->isExpired())
-                                        <span class="badge bg-secondary">Expirado</span>
-                                    @else
-                                        <span class="badge bg-success">Activo</span>
-                                    @endif
+                                    <span class="badge bg-{{ $userPackage->status === 'active' ? 'success' : 'secondary' }}">
+                                        {{ $userPackage->status === 'active' ? 'Activo' : 'Expirado' }}
+                                    </span>
                                 </td>
                             </tr>
                         @endforeach

@@ -12,7 +12,7 @@
 
     <div class="card border-0 shadow-sm">
         <div class="card-body">
-            <form action="{{ route('admin.purchases.store') }}" method="POST">
+            <form action="{{ route('admin.purchases.store') }}" method="POST" onsubmit="return confirm('¿Esta seguro de que ya se efectuo la compra real?, ¿Ya tiene su comprobante?')">
                 @csrf
 
                 <div class="mb-3">

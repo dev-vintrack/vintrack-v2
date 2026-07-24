@@ -115,6 +115,7 @@
                             <th>Saldo</th>
                             <th>Vigencia Inicio</th>
                             <th>Vigencia Fin</th>
+                            <th>Estado</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -133,6 +134,11 @@
                                 </td>
                                 <td data-order="{{ $wallet->validity_end?->toDateTimeString() }}">
                                     {{ $wallet->validity_end?->format('d/m/Y H:i') ?? '—' }}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ $wallet->status === 'active' ? 'success' : 'secondary' }}">
+                                        {{ $wallet->status === 'active' ? 'Activo' : 'Expirado' }}
+                                    </span>
                                 </td>
                             </tr>
                         @endforeach

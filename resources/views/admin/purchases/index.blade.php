@@ -84,7 +84,6 @@
                                 <th>Costo Total</th>
                                 <th>Fecha</th>
                                 <th>Estado</th>
-                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -101,14 +100,6 @@
                                         <span class="badge bg-{{ $purchase->status === 'active' ? 'success' : 'secondary' }}">
                                             {{ $purchase->status === 'active' ? 'Activa' : 'Cancelada' }}
                                         </span>
-                                    </td>
-                                    <td>
-                                        <a href="{{ route('admin.purchases.edit', $purchase->id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
-                                        <form action="{{ route('admin.purchases.destroy', $purchase->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar esta compra?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button class="btn btn-sm btn-outline-danger">Eliminar</button>
-                                        </form>
                                     </td>
                                 </tr>
                             @endforeach

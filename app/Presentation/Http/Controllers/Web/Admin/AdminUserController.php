@@ -88,7 +88,14 @@ class AdminUserController
 
     public function destroy(int $id)
     {
-        User::findOrFail($id)->delete();
+        $user = User::findOrFail($id);
+
+        if ($user->packages()->exists() || $user->wallets()->exists() || $user->consultations()->exists()) {
+            return redirect()->route('admin.users.index')
+                ->with('status', 'No puedes eliminar un usuario si tiene una compra, servicio o consulta relacionada.');
+        }
+
+        $user->delete();
 
         return redirect()->route('admin.users.index')->with('status', 'Usuario eliminado.');
     }

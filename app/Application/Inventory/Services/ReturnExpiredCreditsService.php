@@ -28,6 +28,8 @@ class ReturnExpiredCreditsService
      */
     public function run(): array
     {
+        UserProviderWallet::syncExpiredStatuses();
+
         $processed = 0;
         $errors = 0;
         $returned = 0.0;
@@ -53,6 +55,7 @@ class ReturnExpiredCreditsService
                 $wallet->debit(Money::fromFloat($balance));
                 $wallet->setValidityEnd(null);
                 $this->walletRepository->save($wallet);
+                UserProviderWallet::where('id', $walletModel->id)->update(['status' => 'expired']);
 
                 $ledgerEntry = new \App\Domain\Credits\Entities\LedgerEntry(
                     null,

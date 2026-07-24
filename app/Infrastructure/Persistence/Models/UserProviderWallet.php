@@ -22,6 +22,7 @@ class UserProviderWallet extends Model
         'min_alert',
         'validity_start',
         'validity_end',
+        'status',
     ];
 
     protected $casts = [
@@ -30,6 +31,14 @@ class UserProviderWallet extends Model
         'validity_start' => 'datetime',
         'validity_end' => 'datetime',
     ];
+
+    public static function syncExpiredStatuses(): void
+    {
+        static::where('status', 'active')
+            ->whereNotNull('validity_end')
+            ->where('validity_end', '<=', now())
+            ->update(['status' => 'expired']);
+    }
 
     public function user(): BelongsTo
     {

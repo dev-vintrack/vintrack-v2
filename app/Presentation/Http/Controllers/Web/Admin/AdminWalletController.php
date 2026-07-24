@@ -14,6 +14,8 @@ class AdminWalletController
 {
     public function index(Request $request)
     {
+        UserProviderWallet::syncExpiredStatuses();
+
         $query = UserProviderWallet::with(['user', 'service.provider'])
             ->orderBy('user_id')
             ->orderBy('provider_service_id');

@@ -62,9 +62,9 @@ class AdminRoleTypeController
 
     public function destroy(RoleType $roleType)
     {
-
-        if ($roleType->roles()->exists()) {
-            return redirect()->route('admin.role-types.index')->with('status', 'No se puede eliminar un tipo de rol que tenga roles asignados.');
+        if ($roleType->roles()->where('status', true)->exists()) {
+            return redirect()->route('admin.role-types.index')
+                ->with('status', 'No puedes eliminar un tipo de rol si existe al menos un rol activo que lo use.');
         }
 
         $roleType->delete();

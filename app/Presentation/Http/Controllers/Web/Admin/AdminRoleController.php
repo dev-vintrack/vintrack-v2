@@ -97,6 +97,17 @@ class AdminRoleController
     public function destroy(int $id_rol)
     {
         $role = Role::findOrFail($id_rol);
+
+        $hasActiveUser = $role->users()
+            ->where('activo', true)
+            ->where('status', 'active')
+            ->exists();
+
+        if ($hasActiveUser) {
+            return redirect()->route('admin.roles.index')
+                ->with('status', 'No puedes eliminar un rol si existe al menos un usuario activo que lo use.');
+        }
+
         $role->delete();
 
         return redirect()->route('admin.roles.index')

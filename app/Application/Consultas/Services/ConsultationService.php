@@ -17,6 +17,7 @@ use App\Domain\Providers\Repositories\ProviderRepositoryInterface;
 use App\Domain\Providers\Repositories\ProviderServiceRepositoryInterface;
 use App\Domain\Providers\ValueObjects\ProviderCode;
 use App\Infrastructure\Persistence\Models\ProviderServiceSection;
+use App\Infrastructure\Persistence\Models\UserProviderWallet;
 use App\Models\Role;
 use App\Models\User;
 use DateTimeImmutable;
@@ -69,8 +70,13 @@ class ConsultationService
         }
 
         $providerServiceId = $providerService->id();
+        UserProviderWallet::syncExpiredStatuses();
         $wallet = $this->walletRepository->findByUserAndServiceOrCreate($userId, $providerServiceId);
         $cost = $providerService->creditCost()->amount();
+        if (! $wallet->isValidAt(new DateTimeImmutable())) {
+            $response = new ConsultationResponse(false, 402, 'Los créditos para este servicio han expirado.', [], null, $this->emptyFlags());
+            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, [$debitServiceKey], $response, $cost));
+        }
         if ($cost > 0 && !$wallet->balance()->isGreaterThanOrEqual(Money::fromFloat($cost))) {
             $response = new ConsultationResponse(false, 402, 'Saldo insuficiente de créditos.', [], null, $this->emptyFlags());
             return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, [$debitServiceKey], $response, $cost));
