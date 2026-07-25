@@ -11,6 +11,7 @@ class AddCreditsCommand
         public readonly string $reason,
         public readonly string $correlationId,
         public readonly ?int $adminId = null,
+        public readonly ?\DateTimeImmutable $validityStart = null,
         public readonly ?\DateTimeImmutable $validityEnd = null
     ) {
     }

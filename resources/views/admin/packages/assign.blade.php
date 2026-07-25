@@ -25,9 +25,13 @@
             <form action="{{ route('admin.packages.assign.store') }}" method="POST">
                 @csrf
 
+                <div class="alert alert-info" style="font-size:13px;">
+                    <strong>Beneficio para el Usuario:</strong> Si el usuario cuenta con Saldo previo y activa un Paquete de créditos Nuevo, su Vigencia se ajustará automáticamente a la duración del paquete que acaba de comprar.
+                </div>
+
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Usuario <span class="text-danger">*</span></label>
-                    <select name="user_id" class="form-select" required>
+                    <select name="user_id" id="user_id" class="form-select" required>
                         <option value="">— Selecciona un usuario —</option>
                         @foreach($users as $user)
                             <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
@@ -35,6 +39,24 @@
                             </option>
                         @endforeach
                     </select>
+                </div>
+
+                <div id="wallet-summary" class="mb-3" style="display:none;">
+                    <label class="form-label fw-semibold">Saldos actuales del usuario</label>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered table-striped align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nombre del Servicio</th>
+                                    <th>Saldo actual de créditos</th>
+                                    <th>Vigencia Inicial</th>
+                                    <th>Vigencia Final</th>
+                                </tr>
+                            </thead>
+                            <tbody id="wallet-summary-body">
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div class="mb-3">
@@ -112,7 +134,65 @@ function showPackageDetail(sel) {
     }
 }
 
-userSelect?.addEventListener('change', filterPackagesByUser);
+const walletSummary = document.getElementById('wallet-summary');
+const walletSummaryBody = document.getElementById('wallet-summary-body');
+
+async function loadUserWallets() {
+    const userId = userSelect.value;
+    walletSummaryBody.innerHTML = '';
+
+    if (!userId) {
+        walletSummary.style.display = 'none';
+        return;
+    }
+
+    try {
+        const response = await fetch('{{ route('admin.packages.user-wallets') }}?user_id=' + encodeURIComponent(userId), {
+            headers: { 'Accept': 'application/json' },
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al consultar los wallets');
+        }
+
+        const data = await response.json();
+        const wallets = data.wallets || [];
+
+        if (wallets.length === 0) {
+            walletSummaryBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">El usuario no tiene saldos previos registrados.</td></tr>';
+        } else {
+            wallets.forEach(wallet => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${escapeHtml(wallet.service_name)}</td>
+                    <td>${Number(wallet.balance).toFixed(2)}</td>
+                    <td>${wallet.validity_start || '—'}</td>
+                    <td>${wallet.validity_end || '—'}</td>
+                `;
+                walletSummaryBody.appendChild(row);
+            });
+        }
+
+        walletSummary.style.display = 'block';
+    } catch (error) {
+        console.error(error);
+        walletSummaryBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">No se pudieron cargar los saldos del usuario.</td></tr>';
+        walletSummary.style.display = 'block';
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+userSelect?.addEventListener('change', () => {
+    filterPackagesByUser();
+    loadUserWallets();
+});
+
 filterPackagesByUser();
+loadUserWallets();
 </script>
 @endsection

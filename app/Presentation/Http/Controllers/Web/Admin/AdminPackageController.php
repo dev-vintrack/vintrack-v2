@@ -8,9 +8,11 @@ use App\Infrastructure\Persistence\Models\CreditPackage;
 use App\Infrastructure\Persistence\Models\CreditPackageItem;
 use App\Infrastructure\Persistence\Models\ProviderService;
 use App\Infrastructure\Persistence\Models\UserPackage;
+use App\Infrastructure\Persistence\Models\UserProviderWallet;
 use App\Models\User;
 use App\Presentation\Support\RoleHelper;
 use DateTimeImmutable;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -202,15 +204,18 @@ class AdminPackageController
             }
         }
 
-        $adminId   = Auth::id();
+        $adminId      = Auth::id();
         $validityDays = (int) $package->validity_days;
-        $expiresAt = now()->addDays($validityDays);
+        $assignedAt   = now();
+        $expiresAt    = $assignedAt->copy()->addDays($validityDays);
+        $validityStart = DateTimeImmutable::createFromMutable($assignedAt->toDateTime());
+        $validityEnd   = DateTimeImmutable::createFromMutable($expiresAt->toDateTime());
 
-        DB::transaction(function () use ($data, $package, $adminId, $expiresAt) {
+        DB::transaction(function () use ($data, $package, $adminId, $assignedAt, $expiresAt, $validityStart, $validityEnd) {
             UserPackage::create([
                 'user_id'           => $data['user_id'],
                 'credit_package_id' => $package->id,
-                'assigned_at'       => now(),
+                'assigned_at'       => $assignedAt,
                 'expires_at'        => $expiresAt,
                 'status'            => 'active',
                 'assigned_by'       => $adminId,
@@ -226,7 +231,8 @@ class AdminPackageController
                     reason: 'Asignación de paquete: ' . $package->name,
                     correlationId: $correlationId,
                     adminId: $adminId,
-                    validityEnd: DateTimeImmutable::createFromMutable($expiresAt->toDateTime()),
+                    validityStart: $validityStart,
+                    validityEnd: $validityEnd,
                 );
                 $this->addCreditsHandler->handle($command);
             }
@@ -234,6 +240,26 @@ class AdminPackageController
 
         return redirect()->route('admin.packages.index')
             ->with('status', 'Paquete "' . $package->name . '" asignado correctamente. Créditos acreditados al usuario.');
+    }
+
+    public function userWallets(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $wallets = UserProviderWallet::with('service.provider')
+            ->where('user_id', $data['user_id'])
+            ->get()
+            ->map(fn ($wallet) => [
+                'service_name' => $wallet->service?->name ?? 'Servicio #' . $wallet->provider_service_id,
+                'balance' => (float) $wallet->balance,
+                'validity_start' => $wallet->validity_start?->format('d/m/Y H:i'),
+                'validity_end' => $wallet->validity_end?->format('d/m/Y H:i'),
+            ])
+            ->all();
+
+        return response()->json(['wallets' => $wallets]);
     }
 
     public function active(Request $request)

@@ -49,6 +49,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/providers/{providerId}/services/{serviceId}/sections/{sectionId}/roles/{role}', [AdminProviderController::class, 'updateSectionRole'])->name('admin.section-roles.update');
 
         Route::get('/credits/purchase', [CreditPurchaseController::class, 'create'])->name('admin.credits.purchase');
+        Route::get('/credits/wallet-info', [CreditPurchaseController::class, 'walletInfo'])->name('admin.credits.wallet-info');
         Route::post('/credits/purchase', [CreditPurchaseController::class, 'store'])->name('admin.credits.purchase.store');
 
         Route::get('/packages', [AdminPackageController::class, 'index'])->name('admin.packages.index');
@@ -59,6 +60,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/packages/{id}', [AdminPackageController::class, 'destroy'])->name('admin.packages.destroy');
         Route::get('/packages/assign', [AdminPackageController::class, 'assignForm'])->name('admin.packages.assign');
         Route::post('/packages/assign', [AdminPackageController::class, 'assign'])->name('admin.packages.assign.store');
+        Route::get('/packages/user-wallets', [AdminPackageController::class, 'userWallets'])->name('admin.packages.user-wallets');
     });
 
     Route::prefix('admin')->middleware(['role:admin,soporte'])->group(function () {

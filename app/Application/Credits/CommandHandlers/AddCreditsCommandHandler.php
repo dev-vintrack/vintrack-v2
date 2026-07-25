@@ -56,7 +56,14 @@ class AddCreditsCommandHandler
         $wallet->credit($amount);
 
         if ($command->validityEnd !== null) {
-            $wallet->setValidityEnd($command->validityEnd);
+            $currentValidityEnd = $wallet->validityEnd();
+
+            if ($currentValidityEnd === null || $command->validityEnd > $currentValidityEnd) {
+                if ($command->validityStart !== null) {
+                    $wallet->setValidityStart($command->validityStart);
+                }
+                $wallet->setValidityEnd($command->validityEnd);
+            }
         }
 
         $this->walletRepository->save($wallet);

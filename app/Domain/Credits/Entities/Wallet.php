@@ -55,6 +55,11 @@ class Wallet
         return $this->validityEnd;
     }
 
+    public function setValidityStart(?DateTimeImmutable $validityStart): void
+    {
+        $this->validityStart = $validityStart;
+    }
+
     public function setValidityEnd(?DateTimeImmutable $validityEnd): void
     {
         $this->validityEnd = $validityEnd;
