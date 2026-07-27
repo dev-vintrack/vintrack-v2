@@ -54,6 +54,14 @@ class RoleHelper
      */
     public static function menuItemsFor(User $user): array
     {
+        if (self::isCustomer($user) && in_array($user->rol, ['cliente_registrado', 'perito', 'oficial'], true)) {
+            return [
+                ['route_name' => 'customer.credits', 'label' => 'Mis créditos', 'icon' => 'wallet2'],
+                ['route_name' => 'customer.movements', 'label' => 'Mis movimientos', 'icon' => 'arrow-left-right'],
+                ['route_name' => 'customer.consultations', 'label' => 'Mis consultas', 'icon' => 'clock-history'],
+            ];
+        }
+
         if (! self::isAdmin($user)) {
             return [];
         }

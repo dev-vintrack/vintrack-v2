@@ -201,7 +201,7 @@
                 <ul class="nav flex-column">
                     @if(! \App\Presentation\Support\RoleHelper::isAdmin($user))
                         <li class="nav-item mb-2">
-                            <a class="nav-link text-white {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ \App\Presentation\Support\RoleHelper::homeRoute($user) }}" title="Inicio">
+                            <a class="nav-link text-white {{ request()->routeIs('home', 'home.*') ? 'active' : '' }}" href="{{ \App\Presentation\Support\RoleHelper::homeRoute($user) }}" title="Inicio">
                                 <i class="bi bi-house-door me-2"></i>
                                 <span class="menu-text">Inicio</span>
                             </a>

@@ -14,6 +14,7 @@ use App\Presentation\Http\Controllers\Web\Admin\AdminVehicleController;
 use App\Presentation\Http\Controllers\Web\Admin\CreditPurchaseController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminWalletController;
 use App\Presentation\Http\Controllers\Web\ConsultationController;
+use App\Presentation\Http\Controllers\Web\CustomerAccountController;
 use App\Presentation\Http\Controllers\Web\HomeController;
 use App\Presentation\Http\Controllers\Web\LoginController;
 use App\Presentation\Http\Controllers\Web\RegisterController;
@@ -40,6 +41,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/consult', [ConsultationController::class, 'consult'])->name('consult');
     Route::get('/reports/{id}', [ReportController::class, 'show'])->name('reports.show');
     Route::get('/reports/{id}/pdf', [ReportController::class, 'pdf'])->name('reports.pdf');
+
+    Route::prefix('mi-cuenta')->middleware(['active.customer'])->group(function () {
+        Route::get('/creditos', [CustomerAccountController::class, 'credits'])->name('customer.credits');
+        Route::get('/movimientos', [CustomerAccountController::class, 'movements'])->name('customer.movements');
+        Route::get('/consultas', [CustomerAccountController::class, 'consultations'])->name('customer.consultations');
+    });
 
     Route::prefix('admin')->middleware(['role:admin,analista,soporte'])->group(function () {
         Route::get('/providers', [AdminProviderController::class, 'index'])->name('admin.providers.index');

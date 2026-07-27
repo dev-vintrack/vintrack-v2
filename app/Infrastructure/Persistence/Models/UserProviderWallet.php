@@ -32,9 +32,10 @@ class UserProviderWallet extends Model
         'validity_end' => 'datetime',
     ];
 
-    public static function syncExpiredStatuses(): void
+    public static function syncExpiredStatuses(?int $userId = null): void
     {
         static::where('status', 'active')
+            ->when($userId !== null, fn ($query) => $query->where('user_id', $userId))
             ->whereNotNull('validity_end')
             ->where('validity_end', '<=', now())
             ->update(['status' => 'expired']);

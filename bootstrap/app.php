@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth' => \App\Presentation\Http\Middleware\Authenticate::class,
             'role' => \App\Presentation\Http\Middleware\RequireRole::class,
+            'active.customer' => \App\Presentation\Http\Middleware\RequireActiveCustomer::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
