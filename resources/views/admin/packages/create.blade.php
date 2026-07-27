@@ -33,12 +33,25 @@
 
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Precio ($) <span class="text-danger">*</span></label>
-                        <input type="number" name="price" class="form-control" step="0.01" min="0" value="{{ old('price', 0) }}" required>
+                        <label class="form-label fw-semibold">
+                            Precio ($) <span class="text-danger">*</span>
+                            <small class="text-muted ms-2">Precio Mínimo: ${{ number_format((float) $config->min_price_package, 2) }}</small>
+                        </label>
+                        <input type="number" name="price" class="form-control"
+                               step="{{ $config->step_price_package }}" min="{{ $config->min_price_package }}" max="{{ $config->max_price_package }}"
+                               value="{{ old('price', $config->min_price_package) }}" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Vigencia (días) <span class="text-danger">*</span></label>
-                        <input type="number" name="validity_days" class="form-control" min="1" value="{{ old('validity_days', 30) }}" required>
+                        <label class="form-label fw-semibold d-block">Vigencia (días) <span class="text-danger">*</span></label>
+                        <div class="d-flex flex-wrap gap-3">
+                            @foreach($validityOptions as $days)
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="validity_days" id="validity_days_{{ $days }}"
+                                       value="{{ $days }}" {{ (int) old('validity_days', $validityOptions[0]) === $days ? 'checked' : '' }} required>
+                                <label class="form-check-label" for="validity_days_{{ $days }}">{{ $days }}</label>
+                            </div>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
 
@@ -52,13 +65,14 @@
 
                 <hr>
                 <h6 class="fw-bold mb-3">Créditos por servicio</h6>
-                <p class="text-muted" style="font-size:13px;">Ingresa 0 o deja en blanco para no incluir créditos de ese servicio.</p>
+                <p class="text-muted" style="font-size:13px;">Deja en blanco para no incluir créditos de ese servicio.</p>
 
                 @foreach($services as $service)
                 <div class="mb-3 d-flex align-items-center gap-3">
                     <label class="form-label mb-0 fw-semibold" style="min-width:220px;">{{ $service->provider->name }} - {{ $service->name }}</label>
                     <input type="number" name="credits[{{ $service->id }}]" class="form-control"
-                           step="1" min="0" value="{{ old('credits.'.$service->id, 0) }}" style="max-width:140px;">
+                           step="{{ $config->step_purchase_input }}" min="{{ $config->min_purchase_user }}" max="{{ $config->max_purchase_user }}"
+                           value="{{ old('credits.'.$service->id) }}" style="max-width:140px;">
                     <small class="text-muted">créditos</small>
                 </div>
                 @endforeach

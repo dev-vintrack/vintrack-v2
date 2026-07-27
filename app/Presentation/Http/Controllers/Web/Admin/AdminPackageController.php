@@ -6,6 +6,7 @@ use App\Application\Credits\CommandHandlers\AddCreditsCommandHandler;
 use App\Application\Credits\Commands\AddCreditsCommand;
 use App\Infrastructure\Persistence\Models\CreditPackage;
 use App\Infrastructure\Persistence\Models\CreditPackageItem;
+use App\Infrastructure\Persistence\Models\GlobalConfiguration;
 use App\Infrastructure\Persistence\Models\ProviderService;
 use App\Infrastructure\Persistence\Models\UserPackage;
 use App\Infrastructure\Persistence\Models\UserProviderWallet;
@@ -43,21 +44,30 @@ class AdminPackageController
 
     public function create()
     {
-        return view('admin.packages.create', ['services' => $this->allowedServices()]);
+        $config = GlobalConfiguration::settings();
+        $validityOptions = $this->validityOptions($config);
+
+        return view('admin.packages.create', [
+            'services' => $this->allowedServices(),
+            'config' => $config,
+            'validityOptions' => $validityOptions,
+        ]);
     }
 
     public function store(Request $request)
     {
         $allowedServiceIds = RoleHelper::allowedServiceIds(Auth::user()?->id_rol);
+        $config = GlobalConfiguration::settings();
+        $validityOptions = $this->validityOptions($config);
 
         $data = $request->validate([
             'name'          => 'required|string|max:100',
             'description'   => 'nullable|string|max:500',
-            'price'         => 'required|numeric|min:0',
-            'validity_days' => 'required|integer|min:1',
+            'price'         => 'required|numeric|min:' . $config->min_price_package . '|max:' . $config->max_price_package . '|multiple_of:' . $config->step_price_package,
+            'validity_days' => 'required|integer|in:' . implode(',', $validityOptions),
             'active'        => 'nullable|boolean',
             'credits'       => 'required|array|min:1',
-            'credits.*'     => 'nullable|numeric|min:0',
+            'credits.*'     => 'nullable|numeric|min:' . $config->min_purchase_user . '|max:' . $config->max_purchase_user . '|multiple_of:' . $config->step_purchase_input,
         ]);
 
         $this->validateCredits($data, $allowedServiceIds);
@@ -133,6 +143,18 @@ class AdminPackageController
         });
 
         return redirect()->route('admin.packages.index')->with('status', 'Paquete actualizado correctamente.');
+    }
+
+    private function validityOptions(GlobalConfiguration $config): array
+    {
+        $options = [];
+        $step = max(1, (int) $config->step_validity_input);
+
+        for ($days = (int) $config->min_validity_days; $days <= (int) $config->max_validity_days; $days += $step) {
+            $options[] = $days;
+        }
+
+        return $options;
     }
 
     private function validateCredits(array $data, array $allowedServiceIds): void
