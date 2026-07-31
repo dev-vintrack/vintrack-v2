@@ -77,7 +77,7 @@ class ReportController
     {
         $provider = $this->providerRepository->findById(ProviderId::fromInt($consultation->providerId()));
 
-        return $provider !== null && strtoupper($provider->code()->value()) === 'PLACAS';
+        return $provider !== null && $provider->adapterCode() === 'placas';
     }
 
     /**

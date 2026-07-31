@@ -9,7 +9,7 @@ class ConsultationRequest
      */
     public function __construct(
         private readonly int $userId,
-        private readonly string $providerCode,
+        private readonly string $adapterCode,
         private readonly string $value,
         private readonly string $type,
         private readonly array $services
@@ -21,9 +21,9 @@ class ConsultationRequest
         return $this->userId;
     }
 
-    public function providerCode(): string
+    public function adapterCode(): string
     {
-        return $this->providerCode;
+        return $this->adapterCode;
     }
 
     public function value(): string

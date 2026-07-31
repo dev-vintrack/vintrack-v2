@@ -5,7 +5,6 @@ namespace App\Presentation\Http\Controllers\Web;
 use App\Domain\Credits\Repositories\WalletRepositoryInterface;
 use App\Domain\Providers\Repositories\ProviderRepositoryInterface;
 use App\Domain\Providers\Repositories\ProviderServiceRepositoryInterface;
-use App\Domain\Providers\ValueObjects\ProviderCode;
 use App\Infrastructure\Persistence\Models\ProviderService as ProviderServiceModel;
 use App\Presentation\Support\RoleHelper;
 use Illuminate\Http\RedirectResponse;
@@ -119,13 +118,13 @@ class HomeController
 
         $servicesByProvider = [];
         $providerNames = [];
-        $providerCodes = [];
+        $providerAdapterCodes = [];
         $serviceOptions = [];
         foreach ($providers as $provider) {
             $servicesByProvider[$provider->id()->value()] = $this->serviceRepository
                 ->findEnabledByProviderId($provider->id()->value());
             $providerNames[$provider->id()->value()] = $provider->name();
-            $providerCodes[$provider->id()->value()] = $provider->code()->value();
+            $providerAdapterCodes[$provider->id()->value()] = $provider->adapterCode();
         }
 
         foreach ($servicesByProvider as $providerId => $serviceList) {
@@ -134,7 +133,7 @@ class HomeController
                     'id' => $service->id(),
                     'name' => $service->name(),
                     'provider_id' => $providerId,
-                    'provider_code' => $providerCodes[$providerId] ?? '',
+                    'provider_adapter_code' => $providerAdapterCodes[$providerId] ?? '',
                     'provider_name' => $providerNames[$providerId] ?? '',
                     'key' => $service->key(),
                 ];

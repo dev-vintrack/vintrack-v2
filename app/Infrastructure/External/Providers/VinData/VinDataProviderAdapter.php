@@ -26,9 +26,9 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
         ]);
     }
 
-    public function supports(string $providerCode): bool
+    public function supports(string $adapterCode): bool
     {
-        return strtoupper($providerCode) === 'VINDATA';
+        return strtolower($adapterCode) === 'vindata';
     }
 
     public function consult(ConsultationRequest $request): ConsultationResponse

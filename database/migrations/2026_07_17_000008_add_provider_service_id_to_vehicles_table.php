@@ -17,12 +17,12 @@ return new class extends Migration
                 ->nullOnDelete();
         });
 
-        $placasProvider = DB::table('providers')->where('code', 'PLACAS')->first();
+        $placasProvider = DB::table('providers')->where('adapter_code', 'placas')->first();
         $placasService = $placasProvider
             ? DB::table('provider_services')->where('provider_id', $placasProvider->id)->where('key', 'Placas_Service')->first()
             : null;
 
-        $vinProvider = DB::table('providers')->where('code', 'VINDATA')->first();
+        $vinProvider = DB::table('providers')->where('adapter_code', 'vindata')->first();
         $nmvtisService = $vinProvider
             ? DB::table('provider_services')->where('provider_id', $vinProvider->id)->where('key', 'NMVTISPlus')->first()
             : null;

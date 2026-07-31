@@ -12,6 +12,8 @@ interface ProviderRepositoryInterface
 
     public function findByCode(ProviderCode $code): ?Provider;
 
+    public function findByAdapterCode(string $adapterCode): ?Provider;
+
     public function findByCodeOrFail(ProviderCode $code): Provider;
 
     /**

@@ -29,6 +29,7 @@ class ConsultationTest extends TestCase
 
         $provider = Provider::create([
             'code' => 'PLACAS',
+            'adapter_code' => 'placas',
             'name' => 'Placas.info',
             'base_url' => 'https://placas.info/api/v2/consultar/',
             'policies_json' => ['creditCost' => 1.0],
@@ -48,7 +49,7 @@ class ConsultationTest extends TestCase
 
         $this->actingAs($user)
             ->postJson(route('consult'), [
-                'provider' => 'PLACAS',
+                'provider_id' => $provider->id,
                 'type' => 'placa',
                 'value' => 'ABC1234',
                 'services' => ['Placas_Service'],
@@ -68,6 +69,7 @@ class ConsultationTest extends TestCase
 
         $provider = Provider::create([
             'code' => 'PLACAS',
+            'adapter_code' => 'placas',
             'name' => 'Placas.info',
             'base_url' => 'https://placas.info/api/v2/consultar/',
             'policies_json' => ['creditCost' => 1.0],
@@ -89,13 +91,14 @@ class ConsultationTest extends TestCase
             ->postJson(route('admin.credits.purchase.store'), [
                 'user_id' => $user->id,
                 'provider_service_id' => $service->id,
-                'amount' => 5,
+                'amount' => 10,
+                'validity_days' => 30,
                 'reason' => 'Test credits',
             ]);
 
         $response = $this->actingAs($user)
             ->postJson(route('consult'), [
-                'provider' => 'PLACAS',
+                'provider_id' => $provider->id,
                 'type' => 'placa',
                 'value' => 'ABC1234',
                 'services' => ['Placas_Service'],
@@ -106,15 +109,15 @@ class ConsultationTest extends TestCase
 
         $walletRepo = app(\App\Domain\Credits\Repositories\WalletRepositoryInterface::class);
         $wallet = $walletRepo->findByUserAndService($user->id, $service->id);
-        $this->assertEquals(4.0, $wallet->balance()->amount());
+        $this->assertEquals(9.0, $wallet->balance()->amount());
     }
 
     private function mockAdapter(): void
     {
         $fakeAdapter = new class implements ProviderAdapterInterface {
-            public function supports(string $providerCode): bool
+            public function supports(string $adapterCode): bool
             {
-                return strtoupper($providerCode) === 'PLACAS';
+                return strtolower($adapterCode) === 'placas';
             }
 
             public function consult(ConsultationRequest $request): ConsultationResponse

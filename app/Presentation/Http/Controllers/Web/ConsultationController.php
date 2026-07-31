@@ -3,6 +3,7 @@
 namespace App\Presentation\Http\Controllers\Web;
 
 use App\Application\Consultas\Services\ConsultationService;
+use App\Infrastructure\Persistence\Models\Provider;
 use App\Infrastructure\Persistence\Models\ProviderService;
 use App\Presentation\Support\PlacasReportPresenter;
 use App\Presentation\Support\RoleHelper;
@@ -22,21 +23,22 @@ class ConsultationController
     {
         try {
             $data = $request->validate([
-                'provider' => 'required|string|max:32',
+                'provider_id' => 'required|integer|exists:providers,id',
                 'type' => 'required|string|in:placa,niv,vin',
                 'value' => 'required|string|max:32',
                 'services' => 'nullable|array',
                 'services.*' => 'string|max:32',
             ]);
 
-            $services = $data['services'] ?? match (strtoupper($data['provider'])) {
-                'VINDATA' => ['VHR'],
+            $provider = Provider::findOrFail($data['provider_id']);
+            $adapterCode = strtolower($provider->adapter_code);
+
+            $services = $data['services'] ?? match ($adapterCode) {
+                'vindata' => ['VHR'],
                 default => ['Placas_Service'],
             };
 
-            $providerService = ProviderService::whereHas('provider', function ($query) use ($data) {
-                $query->where('code', $data['provider']);
-            })
+            $providerService = ProviderService::where('provider_id', $provider->id)
                 ->where('key', $services[0] ?? '')
                 ->first();
 
@@ -55,7 +57,7 @@ class ConsultationController
 
             $result = $this->consultationService->consult(
                 Auth::id(),
-                $data['provider'],
+                $provider->id,
                 $data['type'],
                 $data['value'],
                 $services
@@ -72,7 +74,7 @@ class ConsultationController
             }
 
             $banner = null;
-            if ($response->success() && strtoupper($data['provider']) === 'PLACAS') {
+            if ($response->success() && $adapterCode === 'placas') {
                 $sections = PlacasReportPresenter::sections($responseData);
                 $alertaRobo = in_array(1, array_map('intval', $response->theftFlags()), true);
                 $banner = PlacasReportPresenter::computeBanner($sections, $alertaRobo);

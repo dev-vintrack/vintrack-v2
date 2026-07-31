@@ -147,6 +147,7 @@ class CustomerAccountPrivacyTest extends TestCase
     {
         $provider = Provider::create([
             'code' => 'TEST-' . fake()->unique()->numerify('#####'),
+            'adapter_code' => 'test-' . fake()->unique()->numerify('#####'),
             'name' => 'Proveedor de prueba',
             'base_url' => 'https://example.test',
             'enabled' => true,

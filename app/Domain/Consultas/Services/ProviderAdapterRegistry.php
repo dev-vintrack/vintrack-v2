@@ -16,14 +16,14 @@ class ProviderAdapterRegistry
         $this->adapters[] = $adapter;
     }
 
-    public function resolve(string $providerCode): ProviderAdapterInterface
+    public function resolve(string $adapterCode): ProviderAdapterInterface
     {
         foreach ($this->adapters as $adapter) {
-            if ($adapter->supports($providerCode)) {
+            if ($adapter->supports($adapterCode)) {
                 return $adapter;
             }
         }
 
-        throw new RuntimeException("No adapter found for provider [{$providerCode}].");
+        throw new RuntimeException("No adapter found for provider [{$adapterCode}].");
     }
 }

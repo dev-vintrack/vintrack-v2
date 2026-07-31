@@ -7,15 +7,15 @@ class VehicleDataExtractor
     /**
      * @return array{marca: string|null, modelo: string|null, anio: string|null}
      */
-    public static function extract(array $responseJson, string $providerCode): array
+    public static function extract(array $responseJson, string $adapterCode): array
     {
-        $providerCode = strtoupper($providerCode);
+        $adapterCode = strtolower($adapterCode);
 
-        if ($providerCode === 'PLACAS') {
+        if ($adapterCode === 'placas') {
             return self::extractFromPlacas($responseJson);
         }
 
-        if ($providerCode === 'VINDATA') {
+        if ($adapterCode === 'vindata') {
             return self::extractFromVinData($responseJson);
         }
 

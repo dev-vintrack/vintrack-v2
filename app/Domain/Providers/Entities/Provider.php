@@ -13,6 +13,7 @@ class Provider
     public function __construct(
         private readonly ProviderId $id,
         private readonly ProviderCode $code,
+        private readonly string $adapterCode,
         private readonly string $name,
         private readonly ?string $baseUrl,
         private readonly array $policies,
@@ -28,6 +29,11 @@ class Provider
     public function code(): ProviderCode
     {
         return $this->code;
+    }
+
+    public function adapterCode(): string
+    {
+        return $this->adapterCode;
     }
 
     public function name(): string

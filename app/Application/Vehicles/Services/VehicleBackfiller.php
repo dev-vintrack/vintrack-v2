@@ -22,7 +22,7 @@ class VehicleBackfiller
      */
     public function run(int $chunkSize = 500): array
     {
-        $providerCodes = Provider::pluck('code', 'id')->all();
+        $providerAdapterCodes = Provider::pluck('adapter_code', 'id')->all();
 
         $processed = 0;
         $errors = 0;
@@ -53,10 +53,10 @@ class VehicleBackfiller
                 'created_at',
             ])
             ->orderBy('id')
-            ->chunk($chunkSize, function ($consultations) use ($providerCodes, &$processed, &$errors) {
+            ->chunk($chunkSize, function ($consultations) use ($providerAdapterCodes, &$processed, &$errors) {
                 foreach ($consultations as $consultation) {
                     try {
-                        $providerCode = $providerCodes[$consultation->provider_id] ?? 'VINDATA';
+                        $adapterCode = $providerAdapterCodes[$consultation->provider_id] ?? 'vindata';
 
                         $theftFlags = [
                             'repuve_robo' => (int) $consultation->repuve_robo,
@@ -89,7 +89,7 @@ class VehicleBackfiller
 
                         $providerServiceId = $this->resolveProviderServiceId(
                             $consultation->provider_id,
-                            $providerCode,
+                            $adapterCode,
                             $consultation->services ?? []
                         );
 
@@ -97,7 +97,7 @@ class VehicleBackfiller
                             throw new \RuntimeException('No se pudo resolver provider_service_id para la consulta');
                         }
 
-                        $this->vehicleUpserter->upsertFromConsultation($entity, $providerCode, $providerServiceId);
+                        $this->vehicleUpserter->upsertFromConsultation($entity, $adapterCode, $providerServiceId);
                         $processed++;
                     } catch (Throwable $e) {
                         $errors++;
@@ -112,16 +112,16 @@ class VehicleBackfiller
         return ['processed' => $processed, 'errors' => $errors];
     }
 
-    private function resolveProviderServiceId(int $providerId, string $providerCode, array $services): ?int
+    private function resolveProviderServiceId(int $providerId, string $adapterCode, array $services): ?int
     {
-        $code = strtoupper($providerCode);
+        $adapterCode = strtolower($adapterCode);
 
-        if ($code === 'VINDATA') {
+        if ($adapterCode === 'vindata') {
             $service = ProviderService::where('provider_id', $providerId)->where('key', 'NMVTISPlus')->first();
             return $service?->id;
         }
 
-        if ($code === 'PLACAS') {
+        if ($adapterCode === 'placas') {
             $service = ProviderService::where('provider_id', $providerId)->where('key', 'Placas_Service')->first();
             return $service?->id;
         }

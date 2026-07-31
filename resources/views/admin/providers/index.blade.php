@@ -13,7 +13,7 @@
     <div class="card mb-4">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="card-title mb-0">{{ $provider->name }} ({{ $provider->code }})</h4>
+                <h4 class="card-title mb-0">{{ $provider->name }} <small class="text-muted">({{ $provider->adapter_code }})</small></h4>
                 <form action="{{ route('admin.providers.update', $provider->id) }}" method="POST" class="d-inline">
                     @csrf
                     <input type="hidden" name="enabled" value="{{ $provider->enabled ? '0' : '1' }}">

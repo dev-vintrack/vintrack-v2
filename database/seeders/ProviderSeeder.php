@@ -13,8 +13,9 @@ class ProviderSeeder extends Seeder
     public function run(): void
     {
         $placas = Provider::firstOrCreate(
-            ['code' => 'PLACAS'],
+            ['adapter_code' => 'placas'],
             [
+                'code' => 'PLACAS',
                 'name' => 'Placas.info',
                 'base_url' => 'https://placas.info/api/v2/consultar/',
                 'policies_json' => [
@@ -29,8 +30,9 @@ class ProviderSeeder extends Seeder
         );
 
         $vindata = Provider::firstOrCreate(
-            ['code' => 'VINDATA'],
+            ['adapter_code' => 'vindata'],
             [
+                'code' => 'VINDATA',
                 'name' => 'VINData',
                 'base_url' => 'https://api.vindata.com/v1',
                 'policies_json' => [

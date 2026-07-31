@@ -14,6 +14,7 @@ class Provider extends Model
 
     protected $fillable = [
         'code',
+        'adapter_code',
         'name',
         'base_url',
         'policies_json',

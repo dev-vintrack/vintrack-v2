@@ -14,13 +14,13 @@ class VehicleUpserter
     ) {
     }
 
-    public function upsertFromConsultation(Consultation $consultation, string $providerCode, int $providerServiceId): void
+    public function upsertFromConsultation(Consultation $consultation, string $adapterCode, int $providerServiceId): void
     {
         if (!$consultation->success()) {
             return;
         }
 
-        $extracted = VehicleDataExtractor::extract($consultation->responseJson(), $providerCode);
+        $extracted = VehicleDataExtractor::extract($consultation->responseJson(), $adapterCode);
 
         $vehicle = $this->vehicleRepository->findByProviderServiceAndValor(
             $providerServiceId,

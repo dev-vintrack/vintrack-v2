@@ -23,6 +23,7 @@ class WalletTest extends TestCase
 
         $provider = Provider::create([
             'code' => 'PLACAS',
+            'adapter_code' => 'placas',
             'name' => 'Placas.info',
             'base_url' => 'https://placas.info/api/v2/consultar/',
             'policies_json' => ['creditCost' => 1.0],
@@ -43,6 +44,7 @@ class WalletTest extends TestCase
                 'user_id' => $user->id,
                 'provider_service_id' => $service->id,
                 'amount' => 10,
+                'validity_days' => 30,
                 'reason' => 'Test credit purchase',
             ])
             ->assertRedirect();

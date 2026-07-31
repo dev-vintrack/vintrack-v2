@@ -7,7 +7,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        $placasProvider = DB::table('providers')->where('code', 'PLACAS')->first();
+        $placasProvider = DB::table('providers')->where('adapter_code', 'placas')->first();
         if (! $placasProvider) {
             return;
         }

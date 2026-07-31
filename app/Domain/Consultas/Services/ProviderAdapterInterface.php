@@ -9,5 +9,5 @@ interface ProviderAdapterInterface
 {
     public function consult(ConsultationRequest $request): ConsultationResponse;
 
-    public function supports(string $providerCode): bool;
+    public function supports(string $adapterCode): bool;
 }

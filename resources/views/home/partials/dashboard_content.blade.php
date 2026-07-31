@@ -5,7 +5,7 @@
                 <h5 class="card-title">Costo de la Consulta por proveedor</h5>
                 @forelse ($providers as $p)
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span>{{ $p->name() }} <small class="text-muted">({{ $p->code()->value() }})</small></span>
+                        <span>{{ $p->name() }} <small class="text-muted">({{ $p->adapterCode() }})</small></span>
                         <span class="badge bg-primary">{{ number_format($p->creditCost(), 2) }} créditos</span>
                     </div>
                 @empty
@@ -68,7 +68,7 @@
                 <h5 class="card-title">Nueva consulta</h5>
                 <form id="consultaForm" action="{{ route('consult') }}" method="POST">
                     @csrf
-                    <input type="hidden" id="providerHidden" name="provider" value="">
+                    <input type="hidden" id="providerHidden" name="provider_id" value="">
                     <input type="hidden" id="serviceKeyHidden" name="services[]" value="">
                     <div class="mb-3">
                         <label class="form-label">Servicio</label>
@@ -76,7 +76,8 @@
                             <option value="">Selecciona un servicio...</option>
                             @foreach ($serviceOptions as $option)
                                 <option value="{{ $option['id'] }}"
-                                        data-provider="{{ $option['provider_code'] }}"
+                                        data-provider-id="{{ $option['provider_id'] }}"
+                                        data-provider-adapter-code="{{ $option['provider_adapter_code'] }}"
                                         data-key="{{ $option['key'] }}">
                                     {{ $option['provider_name'] }} - {{ $option['name'] }}
                                 </option>
@@ -126,13 +127,14 @@ function syncType() {
 
 function updateServiceUI() {
     const option = serviceSelect.options[serviceSelect.selectedIndex];
-    const provider = option?.dataset.provider ?? '';
+    const providerId = option?.dataset.providerId ?? '';
+    const providerAdapterCode = option?.dataset.providerAdapterCode ?? '';
     const serviceKey = option?.dataset.key ?? '';
 
-    providerHidden.value = provider;
+    providerHidden.value = providerId;
     serviceKeyHidden.value = serviceKey;
 
-    if (provider === 'VINDATA') {
+    if (providerAdapterCode === 'vindata') {
         typeSelect.value = 'vin';
         typeSelect.disabled = true;
     } else {

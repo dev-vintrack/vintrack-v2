@@ -26,9 +26,9 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
         ]);
     }
 
-    public function supports(string $providerCode): bool
+    public function supports(string $adapterCode): bool
     {
-        return strtoupper($providerCode) === 'PLACAS';
+        return strtolower($adapterCode) === 'placas';
     }
 
     public function consult(ConsultationRequest $request): ConsultationResponse

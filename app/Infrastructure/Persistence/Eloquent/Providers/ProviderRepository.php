@@ -25,6 +25,13 @@ class ProviderRepository implements ProviderRepositoryInterface
         return $model ? $this->toEntity($model) : null;
     }
 
+    public function findByAdapterCode(string $adapterCode): ?ProviderEntity
+    {
+        $model = ProviderModel::where('adapter_code', $adapterCode)->first();
+
+        return $model ? $this->toEntity($model) : null;
+    }
+
     public function findByCodeOrFail(ProviderCode $code): ProviderEntity
     {
         $entity = $this->findByCode($code);
@@ -49,6 +56,7 @@ class ProviderRepository implements ProviderRepositoryInterface
         return new ProviderEntity(
             ProviderId::fromInt($model->id),
             ProviderCode::fromString($model->code),
+            $model->adapter_code,
             $model->name,
             $model->base_url,
             $model->policies_json ?? [],

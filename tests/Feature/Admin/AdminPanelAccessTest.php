@@ -60,6 +60,7 @@ class AdminPanelAccessTest extends TestCase
         $admin = User::factory()->create(['rol' => 'admin']);
         $provider = Provider::create([
             'code' => 'NOTIFY-TEST',
+            'adapter_code' => 'notify-test',
             'name' => 'Proveedor de prueba',
             'base_url' => 'https://example.test',
             'enabled' => true,

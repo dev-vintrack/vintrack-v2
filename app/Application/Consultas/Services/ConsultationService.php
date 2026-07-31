@@ -15,7 +15,7 @@ use App\Domain\Credits\Repositories\WalletRepositoryInterface;
 use App\Domain\Credits\ValueObjects\Money;
 use App\Domain\Providers\Repositories\ProviderRepositoryInterface;
 use App\Domain\Providers\Repositories\ProviderServiceRepositoryInterface;
-use App\Domain\Providers\ValueObjects\ProviderCode;
+use App\Domain\Providers\ValueObjects\ProviderId;
 use App\Infrastructure\Persistence\Models\ProviderServiceSection;
 use App\Infrastructure\Persistence\Models\UserProviderWallet;
 use App\Models\Role;
@@ -39,13 +39,12 @@ class ConsultationService
 
     public function consult(
         int $userId,
-        string $providerCode,
+        int $providerId,
         string $type,
         string $value,
         array $services
     ): ConsultationResult {
-        $providerCodeVo = ProviderCode::fromString($providerCode);
-        $provider = $this->providerRepository->findByCode($providerCodeVo);
+        $provider = $this->providerRepository->findById(ProviderId::fromInt($providerId));
         if (!$provider || !$provider->isEnabled()) {
             $response = new ConsultationResponse(false, 403, 'Proveedor no disponible.', [], null, $this->emptyFlags());
             return new ConsultationResult($response, $this->createUnsavedConsultation($userId, 0, $type, $value, $services, $response));
@@ -70,6 +69,7 @@ class ConsultationService
         }
 
         $providerServiceId = $providerService->id();
+        $adapterCode = $provider->adapterCode();
         UserProviderWallet::syncExpiredStatuses();
         $wallet = $this->walletRepository->findByUserAndServiceOrCreate($userId, $providerServiceId);
         $cost = $providerService->creditCost()->amount();
@@ -83,23 +83,23 @@ class ConsultationService
         }
 
         $adapterServices = $this->buildAdapterServices(
-            strtoupper($providerCode),
+            strtolower($adapterCode),
             $providerServiceId,
             $requestedServices,
             $userId
         );
 
-        $request = new ConsultationRequest($userId, $providerCode, $value, $type, $adapterServices);
-        $adapter = $this->adapterRegistry->resolve($providerCode);
+        $request = new ConsultationRequest($userId, $adapterCode, $value, $type, $adapterServices);
+        $adapter = $this->adapterRegistry->resolve($adapterCode);
         $response = $adapter->consult($request);
 
         if ($response->success() && $cost > 0) {
-            $correlationId = 'consult-' . $providerCode . '-' . $userId . '-' . time() . '-' . bin2hex(random_bytes(4));
+            $correlationId = 'consult-' . $adapterCode . '-' . $userId . '-' . time() . '-' . bin2hex(random_bytes(4));
             $debitCommand = new DebitCreditsCommand(
                 $userId,
                 $providerServiceId,
                 $cost,
-                'Consulta ' . strtoupper($providerCode) . ' ' . strtoupper($type) . ' ' . $value,
+                'Consulta ' . $adapterCode . ' ' . strtoupper($type) . ' ' . $value,
                 $correlationId,
                 null
             );
@@ -119,16 +119,16 @@ class ConsultationService
         $savedConsultation = $this->consultationRepository->save($consultation);
 
         if ($response->success()) {
-            $this->vehicleUpserter->upsertFromConsultation($savedConsultation, $providerCode, $providerServiceId);
-            $this->dispatchNotifications($userId, $providerServiceId, $providerCode, $savedConsultation);
+            $this->vehicleUpserter->upsertFromConsultation($savedConsultation, $adapterCode, $providerServiceId);
+            $this->dispatchNotifications($userId, $providerServiceId, $adapterCode, $savedConsultation);
         }
 
         return new ConsultationResult($response, $savedConsultation);
     }
 
-    private function buildAdapterServices(string $providerCode, int $providerServiceId, array $requestedServices, int $userId): array
+    private function buildAdapterServices(string $adapterCode, int $providerServiceId, array $requestedServices, int $userId): array
     {
-        if ($providerCode !== 'PLACAS') {
+        if ($adapterCode !== 'placas') {
             return $requestedServices;
         }
 
@@ -151,10 +151,10 @@ class ConsultationService
     private function dispatchNotifications(
         int $userId,
         int $providerServiceId,
-        string $providerCode,
+        string $adapterCode,
         Consultation $consultation
     ): void {
-        if (strtoupper($providerCode) === 'PLACAS' && $consultation->alertaRobo()) {
+        if (strtolower($adapterCode) === 'placas' && $consultation->alertaRobo()) {
             $this->notifier->sendPlacasTheftAlert($userId, $providerServiceId, $consultation);
         }
     }

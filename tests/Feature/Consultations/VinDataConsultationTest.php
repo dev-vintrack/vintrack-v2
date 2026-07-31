@@ -31,6 +31,7 @@ class VinDataConsultationTest extends TestCase
 
         $provider = Provider::create([
             'code' => 'VINDATA',
+            'adapter_code' => 'vindata',
             'name' => 'VINData',
             'base_url' => 'https://api.vindata.com/v1',
             'policies_json' => ['creditCost' => 1.0],
@@ -52,13 +53,14 @@ class VinDataConsultationTest extends TestCase
             ->postJson(route('admin.credits.purchase.store'), [
                 'user_id' => $user->id,
                 'provider_service_id' => $service->id,
-                'amount' => 5,
+                'amount' => 10,
+                'validity_days' => 30,
                 'reason' => 'Test credits',
             ]);
 
         $response = $this->actingAs($user)
             ->postJson(route('consult'), [
-                'provider' => 'VINDATA',
+                'provider_id' => $provider->id,
                 'type' => 'vin',
                 'value' => '1HGCM82633A123456',
                 'services' => ['VHR'],
@@ -70,7 +72,7 @@ class VinDataConsultationTest extends TestCase
 
         $walletRepo = app(\App\Domain\Credits\Repositories\WalletRepositoryInterface::class);
         $wallet = $walletRepo->findByUserAndService($user->id, $service->id);
-        $this->assertEquals(4.0, $wallet->balance()->amount());
+        $this->assertEquals(9.0, $wallet->balance()->amount());
     }
 
     public function test_report_view_returns_branded_html_for_vindata_consultation(): void
@@ -84,6 +86,7 @@ class VinDataConsultationTest extends TestCase
 
         $provider = Provider::create([
             'code' => 'VINDATA',
+            'adapter_code' => 'vindata',
             'name' => 'VINData',
             'base_url' => 'https://api.vindata.com/v1',
             'policies_json' => ['creditCost' => 1.0],
@@ -105,13 +108,14 @@ class VinDataConsultationTest extends TestCase
             ->postJson(route('admin.credits.purchase.store'), [
                 'user_id' => $user->id,
                 'provider_service_id' => $service->id,
-                'amount' => 5,
+                'amount' => 10,
+                'validity_days' => 30,
                 'reason' => 'Test credits',
             ]);
 
         $consultResponse = $this->actingAs($user)
             ->postJson(route('consult'), [
-                'provider' => 'VINDATA',
+                'provider_id' => $provider->id,
                 'type' => 'vin',
                 'value' => '1HGCM82633A123456',
                 'services' => ['VHR'],
@@ -137,6 +141,7 @@ class VinDataConsultationTest extends TestCase
 
         $provider = Provider::create([
             'code' => 'VINDATA',
+            'adapter_code' => 'vindata',
             'name' => 'VINData',
             'base_url' => 'https://api.vindata.com/v1',
             'policies_json' => ['creditCost' => 1.0],
@@ -158,13 +163,14 @@ class VinDataConsultationTest extends TestCase
             ->postJson(route('admin.credits.purchase.store'), [
                 'user_id' => $user->id,
                 'provider_service_id' => $service->id,
-                'amount' => 5,
+                'amount' => 10,
+                'validity_days' => 30,
                 'reason' => 'Test credits',
             ]);
 
         $consultResponse = $this->actingAs($user)
             ->postJson(route('consult'), [
-                'provider' => 'VINDATA',
+                'provider_id' => $provider->id,
                 'type' => 'vin',
                 'value' => '1HGCM82633A123456',
                 'services' => ['VHR'],
@@ -181,9 +187,9 @@ class VinDataConsultationTest extends TestCase
     private function mockAdapter(): void
     {
         $fakeAdapter = new class implements ProviderAdapterInterface {
-            public function supports(string $providerCode): bool
+            public function supports(string $adapterCode): bool
             {
-                return strtoupper($providerCode) === 'VINDATA';
+                return strtolower($adapterCode) === 'vindata';
             }
 
             public function consult(ConsultationRequest $request): ConsultationResponse

@@ -226,7 +226,7 @@ CALL add_column_unless_exists('provider_services', 'available_credits', 'decimal
 -- 3. Crear servicio consolidado Placas_Service y secciones/roles
 -- ============================================================
 
-SET @placas_provider_id = (SELECT id FROM providers WHERE code = 'PLACAS' LIMIT 1);
+SET @placas_provider_id = (SELECT id FROM providers WHERE adapter_code = 'placas' LIMIT 1);
 
 INSERT INTO `provider_services` (`provider_id`, `key`, `name`, `credit_cost`, `available_credits`, `enabled`, `created_at`, `updated_at`)
 SELECT @placas_provider_id, 'Placas_Service', 'Placas Service', 0, 0, 1, NOW(), NOW()
@@ -290,7 +290,7 @@ WHERE provider_id = @placas_provider_id
 -- ============================================================
 CALL add_column_unless_exists('user_provider_wallets', 'provider_service_id', 'bigint unsigned NULL AFTER `provider_id`');
 
-SET @vindata_provider_id = (SELECT id FROM providers WHERE code = 'VINDATA' LIMIT 1);
+SET @vindata_provider_id = (SELECT id FROM providers WHERE adapter_code = 'vindata' LIMIT 1);
 SET @nmvtis_service_id = (SELECT id FROM provider_services WHERE provider_id = @vindata_provider_id AND `key` = 'NMVTISPlus' LIMIT 1);
 
 UPDATE `user_provider_wallets`
