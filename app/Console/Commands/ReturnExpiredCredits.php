@@ -37,6 +37,7 @@ class ReturnExpiredCredits extends Command
         try {
             $result = $service->run();
 
+            $log->info("Avisos de próximo vencimiento evaluados: {$result['expiringCandidates']}");
             $log->info("Candidatos encontrados: {$result['candidates']}");
             $log->info("Procesados: {$result['processed']}");
             $log->info("Reintegrados: " . number_format($result['returned'], 2));
@@ -48,6 +49,7 @@ class ReturnExpiredCredits extends Command
                 }
             }
 
+            $this->info("Avisos de próximo vencimiento evaluados: {$result['expiringCandidates']}");
             $this->info("Procesados: {$result['processed']}");
             $this->info("Reintegrados: " . number_format($result['returned'], 2));
             if ($result['errors'] > 0) {

@@ -120,7 +120,7 @@ class ConsultationService
 
         if ($response->success()) {
             $this->vehicleUpserter->upsertFromConsultation($savedConsultation, $providerCode, $providerServiceId);
-            $this->dispatchNotifications($userId, $providerServiceId, $providerCode, $savedConsultation, $cost);
+            $this->dispatchNotifications($userId, $providerServiceId, $providerCode, $savedConsultation);
         }
 
         return new ConsultationResult($response, $savedConsultation);
@@ -152,22 +152,10 @@ class ConsultationService
         int $userId,
         int $providerServiceId,
         string $providerCode,
-        Consultation $consultation,
-        float $cost
+        Consultation $consultation
     ): void {
         if (strtoupper($providerCode) === 'PLACAS' && $consultation->alertaRobo()) {
-            $this->notifier->sendPlacasTheftAlert($userId, $consultation);
-        }
-
-        if ($cost > 0) {
-            $threshold = (float) config('vintrack.low_credit_threshold', 5);
-            $wallet = $this->walletRepository->findByUserAndService($userId, $providerServiceId);
-            if ($wallet !== null) {
-                $balance = $wallet->balance()->amount();
-                if ($balance <= $threshold) {
-                    $this->notifier->sendLowCredit($userId, $balance);
-                }
-            }
+            $this->notifier->sendPlacasTheftAlert($userId, $providerServiceId, $consultation);
         }
     }
 

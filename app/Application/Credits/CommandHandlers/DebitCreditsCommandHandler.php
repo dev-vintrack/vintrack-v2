@@ -3,6 +3,7 @@
 namespace App\Application\Credits\CommandHandlers;
 
 use App\Application\Credits\Commands\DebitCreditsCommand;
+use App\Application\Notifications\Services\CustomerMailNotificationService;
 use App\Domain\Credits\Entities\LedgerEntry;
 use App\Domain\Credits\Repositories\LedgerRepositoryInterface;
 use App\Domain\Credits\Repositories\WalletRepositoryInterface;
@@ -16,7 +17,8 @@ class DebitCreditsCommandHandler
 {
     public function __construct(
         private readonly WalletRepositoryInterface $walletRepository,
-        private readonly LedgerRepositoryInterface $ledgerRepository
+        private readonly LedgerRepositoryInterface $ledgerRepository,
+        private readonly CustomerMailNotificationService $notifications
     ) {
     }
 
@@ -56,5 +58,12 @@ class DebitCreditsCommandHandler
         );
 
         $this->ledgerRepository->save($ledgerEntry);
+
+        $this->notifications->notifyBalanceAfterDebit(
+            $command->userId,
+            $command->providerServiceId,
+            $wallet->balance()->amount(),
+            $command->correlationId
+        );
     }
 }

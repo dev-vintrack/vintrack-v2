@@ -1,0 +1,191 @@
+/* HERO */
+.about-hero {
+    position: relative;
+    height: 80vh;
+    background: url('../images/vintrack-servicios2.png') center/cover no-repeat;
+}
+
+.about-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, rgba(2,6,23,0.85), rgba(2,6,23,0.4));
+}
+
+.about-hero .container {
+    position: relative;
+    z-index: 2;
+}
+
+.section-title {
+    color: #0f172a;
+}
+
+/* CARDS */
+.service-card {
+    background: #1e293b;
+    color: #ffffff;
+    border: none;
+    border-radius: 15px;
+    padding: 20px;
+    transition: 0.3s;
+    text-align: center;
+    height: 100%;
+}
+
+.service-card h4 {
+    color: #ffffff;
+    margin-bottom: 0.75rem;
+}
+
+.service-card p {
+    color: #cbd5e1;
+    margin-bottom: 0;
+}
+
+.service-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+}
+
+.service-icon {
+    font-size: 40px;
+    color: #0d6efd;
+    margin-bottom: 15px;
+    display: inline-block;
+}
+
+/* SECCIÓN OSCURA */
+.services-dark {
+    background: linear-gradient(135deg, #0f172a, #020617);
+    padding: 80px 0;
+    color: #ffffff;
+}
+
+.services-dark h3 {
+    color: #ffffff;
+    margin-bottom: 1rem;
+}
+
+.services-dark p,
+.services-dark li {
+    color: #cbd5e1;
+}
+
+/* CTA */
+.services-cta {
+    padding: 80px 0;
+    background: linear-gradient(135deg, #0d6efd, #2563eb);
+    text-align: center;
+    color: #ffffff;
+}
+
+/* BOTÓN GLOW */
+.glow-btn {
+    border-radius: 50px;
+    padding: 10px 25px;
+    transition: 0.3s;
+}
+
+.glow-btn:hover {
+    box-shadow: 0 0 20px rgba(255,255,255,0.8);
+}
+
+/* PRICING */
+.pricing-section {
+    background: linear-gradient(to bottom, #ffffff, #f1f5f9);
+    padding: 80px 0;
+}
+
+.pricing-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 30px;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.pricing-card:hover {
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.15);
+}
+
+.price {
+    font-size: 40px;
+    font-weight: 800;
+    margin: 20px 0;
+}
+
+.price span {
+    font-size: 16px;
+    color: #64748b;
+}
+
+.pricing-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+    flex-grow: 1;
+}
+
+.pricing-card ul li {
+    margin: 10px 0;
+    color: #334155;
+}
+
+/* PLAN DESTACADO */
+.pricing-card.featured {
+    border: 2px solid #0d6efd;
+    transform: scale(1.05);
+    box-shadow: 0 20px 40px rgba(13,110,253,0.25);
+}
+
+.pricing-card.featured:hover {
+    transform: scale(1.08);
+}
+
+/* BADGE */
+.badge-popular {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0d6efd;
+    color: white;
+    padding: 5px 15px;
+    font-size: 12px;
+    border-radius: 20px;
+}
+
+.pricing-section h2,
+.pricing-section h4,
+.pricing-section p {
+    color: #0f172a;
+}
+
+.btn-comenzar {
+    display: inline-block;
+    padding: 12px 30px;
+    border-radius: 50px;
+    border: 2px solid rgba(255,255,255,0.8);
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(8px);
+    transition: all 0.4s ease;
+}
+
+.btn-comenzar:hover {
+    background: rgba(255,255,255,0.15);
+    color: #ffffff;
+    border-color: #ffffff;
+    box-shadow: 0 0 10px rgba(255,255,255,0.3), 0 0 25px rgba(255,255,255,0.2);
+    transform: scale(1.05);
+}

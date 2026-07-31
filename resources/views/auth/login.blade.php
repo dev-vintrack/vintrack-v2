@@ -1,38 +1,57 @@
-@extends('layouts.app')
+@extends('layouts.auth')
 
 @section('title', 'Iniciar sesión - VINTRACK')
 
 @section('content')
-<div class="row justify-content-center">
-    <div class="col-md-5">
-        <div class="card shadow-sm">
-            <div class="card-body p-4">
-                <h3 class="text-center mb-4">Iniciar sesión</h3>
+    <h2 class="text-center mb-4">Iniciar sesión</h2>
 
-                <form method="POST" action="{{ route('login.post') }}">
-                    @csrf
+    <form method="POST" action="{{ route('login.post') }}" id="loginForm">
+        @csrf
 
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Correo electrónico</label>
-                        <input type="email" name="email" id="email" class="form-control" value="{{ old('email') }}" required autofocus>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Contraseña</label>
-                        <input type="password" name="password" id="password" class="form-control" required>
-                    </div>
-
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" name="remember" id="remember" class="form-check-input" value="1">
-                        <label for="remember" class="form-check-label">Recordarme</label>
-                    </div>
-
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Ingresar</button>
-                    </div>
-                </form>
-            </div>
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" value="{{ old('email') }}" required autofocus>
         </div>
-    </div>
-</div>
+
+        <div class="mb-3 position-relative">
+            <label class="form-label">Contraseña</label>
+            <input type="password" id="password" name="password" class="form-control" required>
+            <span onclick="togglePassword()" class="position-absolute" style="right:10px; top:38px; cursor:pointer; color:#999;">
+                <i class="bi bi-eye-fill" id="eyeIcon"></i>
+            </span>
+        </div>
+
+        <div class="mb-3 form-check">
+            <input type="checkbox" name="remember" class="form-check-input" id="remember" value="1">
+            <label class="form-check-label" for="remember">Mantener sesión</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100" id="btnLogin">Ingresar</button>
+
+        <div class="text-center mt-3">
+            <a href="{{ route('password.request') }}" class="text-light text-decoration-none">¿Olvidaste tu contraseña?</a>
+        </div>
+
+        <div class="text-center mt-3">
+            <a href="{{ route('register') }}" class="btn btn-outline-light w-100">Nuevo registro</a>
+        </div>
+    </form>
 @endsection
+
+@push('scripts')
+<script>
+    function togglePassword() {
+        const input = document.getElementById('password');
+        const icon = document.getElementById('eyeIcon');
+        input.type = input.type === 'password' ? 'text' : 'password';
+        icon.classList.toggle('bi-eye-fill');
+        icon.classList.toggle('bi-eye-slash-fill');
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', function () {
+        const btn = document.getElementById('btnLogin');
+        btn.disabled = true;
+        btn.innerText = 'Validando...';
+    });
+</script>
+@endpush

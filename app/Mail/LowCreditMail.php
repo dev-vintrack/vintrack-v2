@@ -2,6 +2,8 @@
 
 namespace App\Mail;
 
+use App\Infrastructure\Persistence\Models\ProviderService;
+use App\Infrastructure\Persistence\Models\UserProviderWallet;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -14,8 +16,10 @@ class LowCreditMail extends Mailable
     use SerializesModels;
 
     public function __construct(
-        public string $userEmail,
-        public float $balance
+        public readonly UserProviderWallet $wallet,
+        public readonly ProviderService $service,
+        public readonly float $balance,
+        public readonly float $threshold
     ) {
     }
 
@@ -30,10 +34,6 @@ class LowCreditMail extends Mailable
     {
         return new Content(
             view: 'emails.low_credit',
-            with: [
-                'userEmail' => $this->userEmail,
-                'balance' => $this->balance,
-            ],
         );
     }
 }

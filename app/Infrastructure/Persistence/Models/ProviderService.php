@@ -58,6 +58,11 @@ class ProviderService extends Model
         return $this->hasMany(ProviderServiceRole::class, 'provider_service_id');
     }
 
+    public function notificationPolicies(): HasMany
+    {
+        return $this->hasMany(NotificationPolicy::class, 'provider_service_id');
+    }
+
     protected static function booted(): void
     {
         static::created(function (ProviderService $service) {
@@ -69,6 +74,10 @@ class ProviderService extends Model
                     ],
                     ['status' => true]
                 );
+            }
+
+            if (\Illuminate\Support\Facades\Schema::hasTable('notification_policies')) {
+                NotificationPolicy::createDefaultsFor($service);
             }
         });
     }

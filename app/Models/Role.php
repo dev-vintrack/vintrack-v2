@@ -55,6 +55,11 @@ class Role extends Model
         return $this->hasMany(\App\Infrastructure\Persistence\Models\AdminMenuPermission::class, 'id_rol', 'id_rol');
     }
 
+    public function customerMenuPermissions(): HasMany
+    {
+        return $this->hasMany(\App\Infrastructure\Persistence\Models\CustomerMenuPermission::class, 'id_rol', 'id_rol');
+    }
+
     public function sectionRoles(): HasMany
     {
         return $this->hasMany(\App\Infrastructure\Persistence\Models\ProviderServiceSectionRole::class, 'id_rol', 'id_rol');

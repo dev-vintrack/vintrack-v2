@@ -15,6 +15,12 @@ class CustomerAccountPrivacyTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(\Database\Seeders\CustomerMenuPermissionSeeder::class);
+    }
+
     public function test_customer_pages_only_show_authenticated_users_records(): void
     {
         [$provider, $service] = $this->createService();

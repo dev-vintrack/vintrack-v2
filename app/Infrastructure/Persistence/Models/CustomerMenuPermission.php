@@ -1,0 +1,45 @@
+<?php
+
+namespace App\Infrastructure\Persistence\Models;
+
+use App\Models\Role;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class CustomerMenuPermission extends Model
+{
+    use HasFactory;
+
+    protected $table = 'customer_menu_permissions';
+
+    protected $fillable = [
+        'id_rol',
+        'route_name',
+        'label',
+        'icon',
+        'enabled',
+        'display_order',
+    ];
+
+    protected $casts = [
+        'enabled' => 'boolean',
+        'display_order' => 'integer',
+        'id_rol' => 'integer',
+    ];
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'id_rol', 'id_rol');
+    }
+
+    public function scopeEnabled($query)
+    {
+        return $query->where('enabled', true);
+    }
+
+    public function scopeForRole($query, int $idRol)
+    {
+        return $query->where('id_rol', $idRol);
+    }
+}

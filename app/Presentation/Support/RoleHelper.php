@@ -3,6 +3,7 @@
 namespace App\Presentation\Support;
 
 use App\Infrastructure\Persistence\Models\AdminMenuPermission;
+use App\Infrastructure\Persistence\Models\CustomerMenuPermission;
 use App\Infrastructure\Persistence\Models\ProviderServiceRole;
 use App\Models\Role;
 use App\Models\User;
@@ -55,11 +56,16 @@ class RoleHelper
     public static function menuItemsFor(User $user): array
     {
         if (self::isCustomer($user) && in_array($user->rol, ['cliente_registrado', 'perito', 'oficial'], true)) {
-            return [
-                ['route_name' => 'customer.credits', 'label' => 'Mis créditos', 'icon' => 'wallet2'],
-                ['route_name' => 'customer.movements', 'label' => 'Mis movimientos', 'icon' => 'arrow-left-right'],
-                ['route_name' => 'customer.consultations', 'label' => 'Mis consultas', 'icon' => 'clock-history'],
-            ];
+            return CustomerMenuPermission::where('id_rol', $user->id_rol)
+                ->where('enabled', true)
+                ->orderBy('display_order')
+                ->get(['route_name', 'label', 'icon'])
+                ->map(fn ($item) => [
+                    'route_name' => $item->route_name,
+                    'label' => $item->label,
+                    'icon' => $item->icon,
+                ])
+                ->all();
         }
 
         if (! self::isAdmin($user)) {

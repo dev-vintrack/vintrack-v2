@@ -1,0 +1,63 @@
+/* HERO NOSOTROS */
+.about-hero {
+    position: relative;
+    height: 80vh;
+    background: url('../images/vintrack-nosotros3.png') center/cover no-repeat;
+}
+
+.about-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, rgba(2,6,23,0.85), rgba(2,6,23,0.4));
+}
+
+.about-hero .container {
+    position: relative;
+    z-index: 2;
+}
+
+.section-title {
+    color: #0f172a;
+}
+
+/* VALORES */
+.value-card {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #ffffff;
+    padding: 25px;
+    border-radius: 14px;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    text-align: center;
+}
+
+.value-card i {
+    font-size: 2rem;
+    color: #60a5fa;
+    margin-bottom: 0.75rem;
+    display: inline-block;
+}
+
+.value-card h4,
+.value-card h5 {
+    color: #ffffff;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+}
+
+.value-card p {
+    color: #cbd5e1;
+    font-size: 0.95rem;
+    margin-bottom: 0;
+}
+
+.value-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+}
+
+.values-section {
+    background: #dbdee2;
+    padding: 80px 0;
+}

@@ -30,6 +30,10 @@ class User extends Authenticatable
         'activo',
         'approved_at',
         'status',
+        'email_otp',
+        'email_otp_expire',
+        'es_oficial',
+        'entidad',
     ];
 
     /**
@@ -51,8 +55,10 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'email_otp_expire' => 'datetime',
             'approved_at' => 'datetime',
             'activo' => 'boolean',
+            'es_oficial' => 'boolean',
             'id_rol' => 'integer',
             'password' => 'hashed',
         ];

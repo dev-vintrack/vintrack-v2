@@ -30,6 +30,8 @@ class AdminMenuPermissionSeeder extends Seeder
             ['route' => 'admin.providers.index',     'label' => 'Proveedores',            'icon' => 'hdd-network'],
             ['route' => 'admin.users.index',         'label' => 'Usuarios',               'icon' => 'people'],
             ['route' => 'admin.menu-permissions.index', 'label' => 'Permisos de Menú',    'icon' => 'sliders'],
+            ['route' => 'admin.customer-menu-permissions.index', 'label' => 'Permisos de Menú Cliente', 'icon' => 'sliders2'],
+            ['route' => 'admin.notifications.index',    'label' => 'Notificaciones',       'icon' => 'envelope-check'],
             ['route' => 'admin.provider-service-roles.index', 'label' => 'Servicios por Rol', 'icon' => 'hand-thumbs-up'],
             ['route' => 'admin.roles.index',         'label' => 'Roles',                  'icon' => 'person-gear'],
             ['route' => 'admin.role-types.index',    'label' => 'Tipos de Rol',           'icon' => 'tags'],
@@ -69,12 +71,13 @@ class AdminMenuPermissionSeeder extends Seeder
             return true;
         }
 
-        // Analista only sees the original operational sections.
+        // Analista sees the original operational sections plus customer menu management.
         if ($role === 'analista') {
             return in_array($route, [
                 'admin.providers.index',
                 'admin.packages.index',
                 'admin.credits.purchase',
+                'admin.customer-menu-permissions.index',
             ], true);
         }
 
@@ -82,6 +85,7 @@ class AdminMenuPermissionSeeder extends Seeder
         if ($role === 'soporte') {
             return ! in_array($route, [
                 'admin.menu-permissions.index',
+                'admin.notifications.index',
                 'admin.provider-service-roles.index',
                 'admin.roles.index',
                 'home',

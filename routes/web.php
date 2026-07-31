@@ -3,6 +3,8 @@
 use App\Presentation\Http\Controllers\Web\Admin\AdminConsultationController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminInventoryController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminMenuPermissionController;
+use App\Presentation\Http\Controllers\Web\Admin\CustomerMenuPermissionController;
+use App\Presentation\Http\Controllers\Web\Admin\AdminNotificationController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminPackageController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminProviderController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminProviderServiceRoleController;
@@ -15,22 +17,50 @@ use App\Presentation\Http\Controllers\Web\Admin\CreditPurchaseController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminWalletController;
 use App\Presentation\Http\Controllers\Web\ConsultationController;
 use App\Presentation\Http\Controllers\Web\CustomerAccountController;
+use App\Presentation\Http\Controllers\Web\ForgotPasswordController;
 use App\Presentation\Http\Controllers\Web\HomeController;
 use App\Presentation\Http\Controllers\Web\LoginController;
 use App\Presentation\Http\Controllers\Web\RegisterController;
 use App\Presentation\Http\Controllers\Web\ReportController;
+use App\Presentation\Http\Controllers\Web\ResetPasswordController;
+use App\Presentation\Http\Controllers\Web\SiteController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.post');
+Route::get('/login/verificar', [LoginController::class, 'showVerifyForm'])->name('login.verify');
+Route::post('/login/verificar', [LoginController::class, 'verifyOtp'])->name('login.verify.post');
+Route::post('/login/reenviar', [LoginController::class, 'resendOtp'])->name('login.resend');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
-Route::post('/register', [RegisterController::class, 'register'])->name('register.post');
+
+Route::get('/registro', [RegisterController::class, 'showEmailForm'])->name('register');
+Route::post('/registro', [RegisterController::class, 'sendEmailOtp'])->name('register.otp');
+Route::get('/registro/verificar', [RegisterController::class, 'showVerifyForm'])->name('register.verify');
+Route::post('/registro/verificar', [RegisterController::class, 'verifyEmailOtp'])->name('register.verify.post');
+Route::post('/registro/reenviar', [RegisterController::class, 'resendEmailOtp'])->name('register.resend');
+Route::get('/registro/datos', [RegisterController::class, 'showDataForm'])->name('register.data');
+Route::post('/registro/datos', [RegisterController::class, 'store'])->name('register.store');
+Route::get('/registro/exitoso', [RegisterController::class, 'showWhatsApp'])->name('register.whatsapp');
+
+Route::get('/recuperar-contrasena', [ForgotPasswordController::class, 'showRequestForm'])->name('password.request');
+Route::post('/recuperar-contrasena', [ForgotPasswordController::class, 'sendResetOtp'])->name('password.email');
+Route::get('/recuperar-contrasena/verificar', [ForgotPasswordController::class, 'showVerifyForm'])->name('password.verify');
+Route::post('/recuperar-contrasena/verificar', [ForgotPasswordController::class, 'verifyResetOtp'])->name('password.verify.post');
+Route::post('/recuperar-contrasena/reenviar', [ForgotPasswordController::class, 'resendResetOtp'])->name('password.resend');
+Route::get('/recuperar-contrasena/nueva', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
+Route::post('/recuperar-contrasena/nueva', [ResetPasswordController::class, 'reset'])->name('password.reset.post');
+
+Route::get('/', [SiteController::class, 'home'])->name('site.home');
+Route::get('/nosotros', [SiteController::class, 'about'])->name('site.about');
+Route::get('/servicios', [SiteController::class, 'services'])->name('site.services');
+Route::get('/capacitacion', [SiteController::class, 'training'])->name('site.training');
+Route::get('/contacto', [SiteController::class, 'contact'])->name('site.contact');
+Route::post('/contacto', [SiteController::class, 'sendContact'])->name('site.contact.send');
+Route::get('/ventas', [SiteController::class, 'sales'])->name('site.sales');
+Route::post('/ventas', [SiteController::class, 'sendSalesInquiry'])->name('site.sales.send');
+Route::post('/decode-vin', [SiteController::class, 'decodeVin'])->name('site.decode-vin');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/', function () {
-        return redirect()->route('home');
-    });
     Route::get('/home', [HomeController::class, 'index'])->name('home');
     Route::get('/home/cliente', [HomeController::class, 'cliente'])->name('home.cliente');
     Route::get('/home/perito', [HomeController::class, 'perito'])->name('home.perito');
@@ -42,13 +72,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/reports/{id}', [ReportController::class, 'show'])->name('reports.show');
     Route::get('/reports/{id}/pdf', [ReportController::class, 'pdf'])->name('reports.pdf');
 
-    Route::prefix('mi-cuenta')->middleware(['active.customer'])->group(function () {
+    Route::prefix('mi-cuenta')->middleware(['active.customer', 'customer.menu'])->group(function () {
         Route::get('/creditos', [CustomerAccountController::class, 'credits'])->name('customer.credits');
         Route::get('/movimientos', [CustomerAccountController::class, 'movements'])->name('customer.movements');
         Route::get('/consultas', [CustomerAccountController::class, 'consultations'])->name('customer.consultations');
     });
 
     Route::prefix('admin')->middleware(['role:admin,analista,soporte'])->group(function () {
+        Route::get('/customer-menu-permissions', [CustomerMenuPermissionController::class, 'index'])->name('admin.customer-menu-permissions.index');
+        Route::put('/customer-menu-permissions', [CustomerMenuPermissionController::class, 'update'])->name('admin.customer-menu-permissions.update');
+
         Route::get('/providers', [AdminProviderController::class, 'index'])->name('admin.providers.index');
         Route::post('/providers/{id}', [AdminProviderController::class, 'updateProvider'])->name('admin.providers.update');
         Route::post('/providers/{providerId}/services/{serviceId}', [AdminProviderController::class, 'updateService'])->name('admin.services.update');
@@ -101,6 +134,9 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('admin')->middleware(['role:admin'])->group(function () {
         Route::get('/menu-permissions', [AdminMenuPermissionController::class, 'index'])->name('admin.menu-permissions.index');
         Route::put('/menu-permissions', [AdminMenuPermissionController::class, 'update'])->name('admin.menu-permissions.update');
+
+        Route::get('/notifications', [AdminNotificationController::class, 'index'])->name('admin.notifications.index');
+        Route::put('/notifications/policies/{policy}', [AdminNotificationController::class, 'update'])->name('admin.notifications.update');
 
         Route::get('/provider-service-roles', [AdminProviderServiceRoleController::class, 'index'])->name('admin.provider-service-roles.index');
         Route::post('/provider-service-roles/{id_rol}/{provider_service_id}', [AdminProviderServiceRoleController::class, 'update'])->name('admin.provider-service-roles.update');

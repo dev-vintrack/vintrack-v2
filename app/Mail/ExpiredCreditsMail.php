@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Infrastructure\Persistence\Models\ProviderService;
 use App\Infrastructure\Persistence\Models\UserProviderWallet;
+use Carbon\CarbonInterface;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -17,7 +18,8 @@ class ExpiredCreditsMail extends Mailable
     public function __construct(
         public readonly UserProviderWallet $wallet,
         public readonly ProviderService $service,
-        public readonly float $amount
+        public readonly float $amount,
+        public readonly CarbonInterface $expiredAt
     ) {
     }
 

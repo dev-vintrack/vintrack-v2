@@ -1,0 +1,307 @@
+/* =========================================================
+   SECCIONES LANDING VINTRACK
+   ========================================================= */
+
+/* --- 3 tarjetas iniciales --- */
+.benefits-intro {
+    background: #f4f7fb;
+    color: #0f172a;
+    padding: 80px 0;
+}
+
+.benefits-intro h2 {
+    color: #0f172a;
+    margin-bottom: 3rem;
+}
+
+.feature-card {
+    background: #1e293b;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    height: 100%;
+    transition: all 0.3s ease;
+}
+
+.feature-card i {
+    display: block;
+    font-size: 2.5rem;
+    color: #60a5fa;
+    margin-bottom: 1rem;
+}
+
+.feature-card h4 {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-weight: 700;
+}
+
+.feature-card p {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+.feature-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* --- Animaciones --- */
+.fade-up,
+.fade-left,
+.fade-right {
+    opacity: 0;
+    transition: all 0.8s ease;
+}
+
+.fade-up {
+    transform: translateY(40px);
+}
+
+.fade-left {
+    transform: translateX(-80px);
+}
+
+.fade-right {
+    transform: translateX(80px);
+}
+
+.fade-up.show,
+.fade-left.show,
+.fade-right.show {
+    opacity: 1;
+    transform: translate(0, 0);
+}
+
+.delay-1 { transition-delay: 0.2s; }
+.delay-2 { transition-delay: 0.4s; }
+.delay-3 { transition-delay: 0.6s; }
+
+/* --- Vintrack Benefits --- */
+.vintrack-benefits {
+    position: relative;
+    padding: 120px 20px;
+    background: linear-gradient(180deg, #020617 0%, #07112b 100%);
+    overflow: hidden;
+    color: #fff;
+}
+
+.benefits-header {
+    text-align: center;
+    margin-bottom: 80px;
+}
+
+.benefits-badge {
+    display: inline-block;
+    padding: 10px 22px;
+    border-radius: 50px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    font-size: 14px;
+    letter-spacing: 1px;
+    margin-bottom: 25px;
+}
+
+.benefits-header h2 {
+    color: #fff;
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+}
+
+.benefits-header p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.1rem;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.benefits-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.car-wrapper {
+    position: relative;
+    width: 700px;
+    max-width: 100%;
+}
+
+.car-image {
+    width: 100%;
+    filter: drop-shadow(0 0 25px rgba(59, 130, 246, 0.35));
+}
+
+.info-point {
+    position: absolute;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px rgba(37, 99, 235, 0.5);
+    transition: 0.35s ease;
+    animation: pulse 2s infinite;
+    padding: 0;
+}
+
+.info-point:hover {
+    transform: scale(1.20);
+}
+
+.point-1 { top: 13%; left: 1%; }
+.point-2 { top: 13%; right: 1%; }
+.point-3 { bottom: 48%; left: -2%; }
+.point-4 { bottom: 48%; right: -1%; }
+.point-5 { bottom: 18%; left: -1%; }
+.point-6 { bottom: 18%; right: -1.5%; }
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.6); }
+    70% { box-shadow: 0 0 0 18px rgba(37, 99, 235, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+}
+
+.texto-azul { color: #4da3ff; }
+
+/* --- Galería Explora VINTrack --- */
+.image-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 15px;
+    cursor: pointer;
+}
+
+.image-card img {
+    width: 100%;
+    transition: transform 0.5s ease;
+}
+
+.image-card .overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    background: linear-gradient(to top, rgba(15, 23, 42, 0.9), transparent);
+    color: white;
+    opacity: 0;
+    transition: all 0.4s ease;
+    transform: translateY(20px);
+}
+
+.image-card h5 {
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.image-card p {
+    font-size: 0.85rem;
+    color: #e2e8f0;
+    margin-bottom: 0;
+}
+
+.image-card:hover img {
+    transform: scale(1.1);
+}
+
+.image-card:hover .overlay {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* --- Control total --- */
+.features-section {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    padding: 80px 0;
+    color: #fff;
+}
+
+.features-section h2 {
+    font-size: 2.2rem;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+}
+
+.features-section ul li {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    color: #cbd5e1;
+}
+
+.features-section img {
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+    max-width: 100%;
+    border-radius: 0.5rem;
+}
+
+.features-section img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.6);
+}
+
+/* --- Footer --- */
+.footer-modern {
+    background: #0f172a;
+    padding: 60px 0 20px;
+    color: #fff;
+}
+
+.footer-logo {
+    height: 40px;
+    margin-bottom: 1rem;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-links li {
+    margin-bottom: 8px;
+}
+
+.footer-links a {
+    color: #cbd5f5;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.footer-links a:hover {
+    color: #1f54dd;
+}
+
+.footer-divider {
+    border-color: rgba(255, 255, 255, 0.1);
+    margin: 2rem 0 1rem;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+    .benefits-header h2 {
+        font-size: 1.8rem;
+    }
+
+    .info-point {
+        width: 45px;
+        height: 45px;
+        font-size: 22px;
+    }
+
+    .features-section h2 {
+        font-size: 1.6rem;
+    }
+}

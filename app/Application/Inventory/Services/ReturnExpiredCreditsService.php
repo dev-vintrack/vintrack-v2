@@ -2,18 +2,17 @@
 
 namespace App\Application\Inventory\Services;
 
+use App\Application\Notifications\Services\CustomerMailNotificationService;
+use App\Application\Notifications\Services\WalletNotificationSweepService;
 use App\Domain\Credits\Repositories\LedgerRepositoryInterface;
 use App\Domain\Credits\Repositories\WalletRepositoryInterface;
 use App\Domain\Credits\ValueObjects\Amount;
 use App\Domain\Credits\ValueObjects\CorrelationId;
 use App\Domain\Credits\ValueObjects\Money;
-use App\Infrastructure\Persistence\Models\ProviderService;
 use App\Infrastructure\Persistence\Models\UserPackage;
 use App\Infrastructure\Persistence\Models\UserProviderWallet;
-use App\Mail\ExpiredCreditsMail;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use RuntimeException;
 use Throwable;
 
@@ -22,7 +21,9 @@ class ReturnExpiredCreditsService
     public function __construct(
         private readonly WalletRepositoryInterface $walletRepository,
         private readonly LedgerRepositoryInterface $ledgerRepository,
-        private readonly InventoryMovementService $inventoryService
+        private readonly InventoryMovementService $inventoryService,
+        private readonly CustomerMailNotificationService $notifications,
+        private readonly WalletNotificationSweepService $notificationSweep
     ) {
     }
 
@@ -31,6 +32,8 @@ class ReturnExpiredCreditsService
      */
     public function run(): array
     {
+        $expiringCandidates = $this->notificationSweep->sendExpiringWarnings();
+
         UserPackage::syncExpiredStatuses();
         UserProviderWallet::syncExpiredStatuses();
 
@@ -48,6 +51,7 @@ class ReturnExpiredCreditsService
         foreach ($wallets as $walletModel) {
             try {
                 $balance = (float) $walletModel->balance;
+                $expiredAt = $walletModel->validity_end->copy();
 
                 DB::transaction(function () use ($walletModel, $balance) {
                     $wallet = $this->walletRepository->findByUserAndService(
@@ -87,19 +91,7 @@ class ReturnExpiredCreditsService
                     $this->ledgerRepository->save($ledgerEntry);
                 });
 
-                $service = $walletModel->service ?? ProviderService::find($walletModel->provider_service_id);
-
-                if ($walletModel->user && $service) {
-                    try {
-                        Mail::to($walletModel->user->email)
-                            ->send(new ExpiredCreditsMail($walletModel, $service, $balance));
-                    } catch (Throwable $e) {
-                        logger()->warning('No se pudo enviar correo de créditos vencidos', [
-                            'wallet_id' => $walletModel->id,
-                            'error' => $e->getMessage(),
-                        ]);
-                    }
-                }
+                $this->notifications->notifyExpired($walletModel, $balance, $expiredAt);
 
                 $processed++;
                 $returned += $balance;
@@ -124,6 +116,7 @@ class ReturnExpiredCreditsService
             'returned' => $returned,
             'candidates' => $wallets->count(),
             'errorDetails' => $errorDetails,
+            'expiringCandidates' => $expiringCandidates,
         ];
     }
 

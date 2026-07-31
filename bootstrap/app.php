@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth' => \App\Presentation\Http\Middleware\Authenticate::class,
             'role' => \App\Presentation\Http\Middleware\RequireRole::class,
             'active.customer' => \App\Presentation\Http\Middleware\RequireActiveCustomer::class,
+            'customer.menu' => \App\Presentation\Http\Middleware\RequireCustomerMenuPermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
