@@ -81,10 +81,15 @@ class AdminPackageController
                 'active'        => $request->boolean('active', true),
             ]);
 
+            $providerIdsByService = ProviderService::whereIn('id', array_keys($data['credits']))
+                ->pluck('provider_id', 'id')
+                ->all();
+
             foreach ($data['credits'] as $providerServiceId => $credits) {
                 if ($credits !== null && $credits > 0) {
                     CreditPackageItem::create([
                         'credit_package_id'   => $package->id,
+                        'provider_id'         => $providerIdsByService[$providerServiceId] ?? null,
                         'provider_service_id' => $providerServiceId,
                         'credits'             => $credits,
                     ]);
@@ -131,10 +136,16 @@ class AdminPackageController
             ]);
 
             $package->items()->delete();
+
+            $providerIdsByService = ProviderService::whereIn('id', array_keys($data['credits']))
+                ->pluck('provider_id', 'id')
+                ->all();
+
             foreach ($data['credits'] as $providerServiceId => $credits) {
                 if ($credits !== null && $credits > 0) {
                     CreditPackageItem::create([
                         'credit_package_id'   => $package->id,
+                        'provider_id'         => $providerIdsByService[$providerServiceId] ?? null,
                         'provider_service_id' => $providerServiceId,
                         'credits'             => $credits,
                     ]);
