@@ -117,18 +117,18 @@ class VehicleBackfiller
         $adapterCode = strtolower($adapterCode);
 
         if ($adapterCode === 'vindata') {
-            $service = ProviderService::where('provider_id', $providerId)->where('key', 'NMVTISPlus')->first();
+            $service = ProviderService::where('provider_id', $providerId)->where('service_code', 'nmvtis_plus')->first();
             return $service?->id;
         }
 
         if ($adapterCode === 'placas') {
-            $service = ProviderService::where('provider_id', $providerId)->where('key', 'Placas_Service')->first();
+            $service = ProviderService::where('provider_id', $providerId)->where('service_code', 'placas_service')->first();
             return $service?->id;
         }
 
-        $key = $services[0] ?? null;
-        if ($key) {
-            $service = ProviderService::where('provider_id', $providerId)->where('key', $key)->first();
+        $serviceCode = $services[0] ?? null;
+        if ($serviceCode) {
+            $service = ProviderService::where('provider_id', $providerId)->where('service_code', $serviceCode)->first();
             if ($service) {
                 return $service->id;
             }

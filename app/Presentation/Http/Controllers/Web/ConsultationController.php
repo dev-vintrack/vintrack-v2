@@ -33,13 +33,13 @@ class ConsultationController
             $provider = Provider::findOrFail($data['provider_id']);
             $adapterCode = strtolower($provider->adapter_code);
 
-            $services = $data['services'] ?? match ($adapterCode) {
-                'vindata' => ['VHR'],
-                default => ['Placas_Service'],
+            $serviceCodes = $data['services'] ?? match ($adapterCode) {
+                'vindata' => ['vhr'],
+                default => ['placas_service'],
             };
 
             $providerService = ProviderService::where('provider_id', $provider->id)
-                ->where('key', $services[0] ?? '')
+                ->where('service_code', $serviceCodes[0] ?? '')
                 ->first();
 
             if (! $providerService || ! RoleHelper::isServiceAllowed(Auth::user()?->id_rol, $providerService->id)) {
@@ -60,7 +60,7 @@ class ConsultationController
                 $provider->id,
                 $data['type'],
                 $data['value'],
-                $services
+                $serviceCodes
             );
 
             $response = $result->response();

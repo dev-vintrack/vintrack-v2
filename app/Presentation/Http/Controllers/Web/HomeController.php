@@ -135,7 +135,7 @@ class HomeController
                     'provider_id' => $providerId,
                     'provider_adapter_code' => $providerAdapterCodes[$providerId] ?? '',
                     'provider_name' => $providerNames[$providerId] ?? '',
-                    'key' => $service->key(),
+                    'service_code' => $service->serviceCode(),
                 ];
             }
         }

@@ -69,7 +69,7 @@
                 <form id="consultaForm" action="{{ route('consult') }}" method="POST">
                     @csrf
                     <input type="hidden" id="providerHidden" name="provider_id" value="">
-                    <input type="hidden" id="serviceKeyHidden" name="services[]" value="">
+                    <input type="hidden" id="serviceCodeHidden" name="services[]" value="">
                     <div class="mb-3">
                         <label class="form-label">Servicio</label>
                         <select id="serviceSelect" class="form-select" required>
@@ -78,7 +78,7 @@
                                 <option value="{{ $option['id'] }}"
                                         data-provider-id="{{ $option['provider_id'] }}"
                                         data-provider-adapter-code="{{ $option['provider_adapter_code'] }}"
-                                        data-key="{{ $option['key'] }}">
+                                        data-service-code="{{ $option['service_code'] }}">
                                     {{ $option['provider_name'] }} - {{ $option['name'] }}
                                 </option>
                             @endforeach
@@ -108,7 +108,7 @@
 <script>
 const serviceSelect = document.getElementById('serviceSelect');
 const providerHidden = document.getElementById('providerHidden');
-const serviceKeyHidden = document.getElementById('serviceKeyHidden');
+const serviceCodeHidden = document.getElementById('serviceCodeHidden');
 const typeSelect = document.getElementById('typeSelect');
 const typeHidden = document.getElementById('typeHidden');
 
@@ -129,10 +129,10 @@ function updateServiceUI() {
     const option = serviceSelect.options[serviceSelect.selectedIndex];
     const providerId = option?.dataset.providerId ?? '';
     const providerAdapterCode = option?.dataset.providerAdapterCode ?? '';
-    const serviceKey = option?.dataset.key ?? '';
+    const serviceCode = option?.dataset.serviceCode ?? '';
 
     providerHidden.value = providerId;
-    serviceKeyHidden.value = serviceKey;
+    serviceCodeHidden.value = serviceCode;
 
     if (providerAdapterCode === 'vindata') {
         typeSelect.value = 'vin';

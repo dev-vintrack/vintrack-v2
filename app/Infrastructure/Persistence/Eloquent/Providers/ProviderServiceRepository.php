@@ -42,6 +42,14 @@ class ProviderServiceRepository implements ProviderServiceRepositoryInterface
         return $model ? $this->toEntity($model) : null;
     }
 
+    public function findByServiceCode(string $serviceCode): ?ProviderService
+    {
+        $model = ProviderServiceModel::where('service_code', $serviceCode)
+            ->first();
+
+        return $model ? $this->toEntity($model) : null;
+    }
+
     public function save(ProviderService $service): void
     {
         ProviderServiceModel::updateOrCreate(
@@ -49,6 +57,7 @@ class ProviderServiceRepository implements ProviderServiceRepositoryInterface
             [
                 'provider_id' => $service->providerId(),
                 'key' => $service->key(),
+                'service_code' => $service->serviceCode(),
                 'name' => $service->name(),
                 'credit_cost' => $service->creditCost()->amount(),
                 'enabled' => $service->isEnabled(),
@@ -62,6 +71,7 @@ class ProviderServiceRepository implements ProviderServiceRepositoryInterface
             $model->id,
             $model->provider_id,
             $model->key,
+            $model->service_code,
             $model->name,
             $model->enabled,
             Money::fromFloat((float) $model->credit_cost)

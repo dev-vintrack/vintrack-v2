@@ -39,6 +39,7 @@ class ConsultationTest extends TestCase
         $service = ProviderService::create([
             'provider_id' => $provider->id,
             'key' => 'Placas_Service',
+            'service_code' => 'placas_service',
             'name' => 'Placas Service',
             'credit_cost' => 1,
             'available_credits' => 0,
@@ -52,7 +53,7 @@ class ConsultationTest extends TestCase
                 'provider_id' => $provider->id,
                 'type' => 'placa',
                 'value' => 'ABC1234',
-                'services' => ['Placas_Service'],
+                'services' => ['placas_service'],
             ])
             ->assertStatus(402)
             ->assertJson(['success' => false, 'message' => 'Saldo insuficiente de créditos.']);
@@ -79,6 +80,7 @@ class ConsultationTest extends TestCase
         $service = ProviderService::create([
             'provider_id' => $provider->id,
             'key' => 'Placas_Service',
+            'service_code' => 'placas_service',
             'name' => 'Placas Service',
             'credit_cost' => 1,
             'available_credits' => 10,
@@ -101,7 +103,7 @@ class ConsultationTest extends TestCase
                 'provider_id' => $provider->id,
                 'type' => 'placa',
                 'value' => 'ABC1234',
-                'services' => ['Placas_Service'],
+                'services' => ['placas_service'],
             ]);
 
         $response->assertStatus(200)

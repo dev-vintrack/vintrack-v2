@@ -49,12 +49,16 @@ class ProviderSeeder extends Seeder
         $placasService = ProviderService::updateOrCreate(
             ['provider_id' => $placas->id, 'key' => 'Placas_Service'],
             [
+                'service_code' => 'placas_service',
                 'name' => 'Placas Service',
                 'credit_cost' => 0,
                 'available_credits' => 0,
                 'enabled' => true,
             ]
         );
+
+        ProviderService::where('id', $placasService->id)
+            ->update(['service_code' => 'placas_service']);
 
         $this->ensureServiceRoles($placasService);
 
@@ -91,20 +95,24 @@ class ProviderSeeder extends Seeder
         }
 
         $vinDataServices = [
-            ['key' => 'VHR', 'name' => 'VIN History Report', 'credit_cost' => 1],
-            ['key' => 'NMVTISPlus', 'name' => 'NMVTIS+', 'credit_cost' => 1],
+            ['key' => 'VHR', 'service_code' => 'vhr', 'name' => 'VIN History Report', 'credit_cost' => 1],
+            ['key' => 'NMVTISPlus', 'service_code' => 'nmvtis_plus', 'name' => 'NMVTIS+', 'credit_cost' => 1],
         ];
 
         foreach ($vinDataServices as $service) {
             $serviceModel = ProviderService::updateOrCreate(
                 ['provider_id' => $vindata->id, 'key' => $service['key']],
                 [
+                    'service_code' => $service['service_code'],
                     'name' => $service['name'],
                     'credit_cost' => $service['credit_cost'],
                     'available_credits' => 0,
                     'enabled' => true,
                 ]
             );
+
+            ProviderService::where('id', $serviceModel->id)
+                ->update(['service_code' => $service['service_code']]);
 
             $this->ensureServiceRoles($serviceModel);
         }

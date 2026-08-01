@@ -29,6 +29,7 @@
                 <thead>
                     <tr>
                         <th>Key</th>
+                        <th>Service Code</th>
                         <th>Nombre</th>
                         <th>Costo / Alertas</th>
                         <th>Inventario</th>
@@ -39,6 +40,7 @@
                     @foreach ($provider->services as $service)
                     <tr>
                         <td>{{ $service->key }}</td>
+                        <td>{{ $service->service_code }}</td>
                         <td>{{ $service->name }}</td>
                         <td>
                             <form action="{{ route('admin.services.update', [$provider->id, $service->id]) }}" method="POST" class="row g-2 align-items-end">

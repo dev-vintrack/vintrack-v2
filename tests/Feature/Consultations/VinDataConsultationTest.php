@@ -41,6 +41,7 @@ class VinDataConsultationTest extends TestCase
         $service = ProviderService::create([
             'provider_id' => $provider->id,
             'key' => 'VHR',
+            'service_code' => 'vhr',
             'name' => 'Vehicle History Report',
             'credit_cost' => 1,
             'available_credits' => 10,
@@ -63,7 +64,7 @@ class VinDataConsultationTest extends TestCase
                 'provider_id' => $provider->id,
                 'type' => 'vin',
                 'value' => '1HGCM82633A123456',
-                'services' => ['VHR'],
+                'services' => ['vhr'],
             ]);
 
         $response->assertStatus(200)
@@ -96,6 +97,7 @@ class VinDataConsultationTest extends TestCase
         $service = ProviderService::create([
             'provider_id' => $provider->id,
             'key' => 'VHR',
+            'service_code' => 'vhr',
             'name' => 'Vehicle History Report',
             'credit_cost' => 1,
             'available_credits' => 10,
@@ -118,7 +120,7 @@ class VinDataConsultationTest extends TestCase
                 'provider_id' => $provider->id,
                 'type' => 'vin',
                 'value' => '1HGCM82633A123456',
-                'services' => ['VHR'],
+                'services' => ['vhr'],
             ]);
 
         $consultationId = (int) basename($consultResponse->json('local_report_url'));
@@ -151,6 +153,7 @@ class VinDataConsultationTest extends TestCase
         $service = ProviderService::create([
             'provider_id' => $provider->id,
             'key' => 'VHR',
+            'service_code' => 'vhr',
             'name' => 'Vehicle History Report',
             'credit_cost' => 1,
             'available_credits' => 10,
@@ -173,7 +176,7 @@ class VinDataConsultationTest extends TestCase
                 'provider_id' => $provider->id,
                 'type' => 'vin',
                 'value' => '1HGCM82633A123456',
-                'services' => ['VHR'],
+                'services' => ['vhr'],
             ]);
 
         $consultationId = (int) basename($consultResponse->json('local_report_url'));

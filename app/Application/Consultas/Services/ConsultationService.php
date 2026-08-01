@@ -42,30 +42,27 @@ class ConsultationService
         int $providerId,
         string $type,
         string $value,
-        array $services
+        array $serviceCodes
     ): ConsultationResult {
         $provider = $this->providerRepository->findById(ProviderId::fromInt($providerId));
         if (!$provider || !$provider->isEnabled()) {
             $response = new ConsultationResponse(false, 403, 'Proveedor no disponible.', [], null, $this->emptyFlags());
-            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, 0, $type, $value, $services, $response));
+            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, 0, $type, $value, $serviceCodes, $response));
         }
 
         $enabledServices = $this->serviceRepository->findEnabledByProviderId($provider->id()->value());
-        $enabledKeys = array_map(fn ($s) => $s->key(), $enabledServices);
-        $requestedServices = array_values(array_intersect($services, $enabledKeys));
-        if (empty($requestedServices)) {
+        $enabledServiceCodes = array_map(fn ($s) => $s->serviceCode(), $enabledServices);
+        $requestedServiceCodes = array_values(array_intersect($serviceCodes, $enabledServiceCodes));
+        if (empty($requestedServiceCodes)) {
             $response = new ConsultationResponse(false, 422, 'Debe seleccionar al menos un servicio habilitado.', [], null, $this->emptyFlags());
-            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, $services, $response));
+            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, $serviceCodes, $response));
         }
 
-        $debitServiceKey = $requestedServices[0];
-        $providerService = $this->serviceRepository->findByProviderIdAndKey(
-            $provider->id()->value(),
-            $debitServiceKey
-        );
+        $debitServiceCode = $requestedServiceCodes[0];
+        $providerService = $this->serviceRepository->findByServiceCode($debitServiceCode);
         if (! $providerService) {
             $response = new ConsultationResponse(false, 500, 'Servicio no encontrado para el proveedor.', [], null, $this->emptyFlags());
-            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, $requestedServices, $response));
+            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, $requestedServiceCodes, $response));
         }
 
         $providerServiceId = $providerService->id();
@@ -75,17 +72,23 @@ class ConsultationService
         $cost = $providerService->creditCost()->amount();
         if (! $wallet->isValidAt(new DateTimeImmutable())) {
             $response = new ConsultationResponse(false, 402, 'Los créditos para este servicio han expirado.', [], null, $this->emptyFlags());
-            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, [$debitServiceKey], $response, $cost));
+            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, [$debitServiceCode], $response, $cost));
         }
         if ($cost > 0 && !$wallet->balance()->isGreaterThanOrEqual(Money::fromFloat($cost))) {
             $response = new ConsultationResponse(false, 402, 'Saldo insuficiente de créditos.', [], null, $this->emptyFlags());
-            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, [$debitServiceKey], $response, $cost));
+            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, [$debitServiceCode], $response, $cost));
         }
+
+        $requestedServiceKeys = array_values(array_filter(array_map(function (string $serviceCode) {
+            $service = $this->serviceRepository->findByServiceCode($serviceCode);
+
+            return $service?->key();
+        }, $requestedServiceCodes)));
 
         $adapterServices = $this->buildAdapterServices(
             strtolower($adapterCode),
             $providerServiceId,
-            $requestedServices,
+            $requestedServiceKeys,
             $userId
         );
 
@@ -111,7 +114,7 @@ class ConsultationService
             $provider->id()->value(),
             $type,
             $value,
-            [$debitServiceKey],
+            [$debitServiceCode],
             $cost,
             $response,
             new DateTimeImmutable()

@@ -20,5 +20,7 @@ interface ProviderServiceRepositoryInterface
 
     public function findByProviderIdAndKey(int $providerId, string $key): ?ProviderService;
 
+    public function findByServiceCode(string $serviceCode): ?ProviderService;
+
     public function save(ProviderService $service): void;
 }

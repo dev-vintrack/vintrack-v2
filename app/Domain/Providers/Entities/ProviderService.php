@@ -10,6 +10,7 @@ class ProviderService
         private readonly int $id,
         private readonly int $providerId,
         private readonly string $key,
+        private readonly string $serviceCode,
         private readonly ?string $name,
         private readonly bool $enabled,
         private readonly Money $creditCost
@@ -29,6 +30,11 @@ class ProviderService
     public function key(): string
     {
         return $this->key;
+    }
+
+    public function serviceCode(): string
+    {
+        return $this->serviceCode;
     }
 
     public function name(): ?string

@@ -17,6 +17,7 @@ class ProviderService extends Model
     protected $fillable = [
         'provider_id',
         'key',
+        'service_code',
         'name',
         'credit_cost',
         'available_credits',

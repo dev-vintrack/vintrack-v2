@@ -187,6 +187,7 @@ class CustomerMailNotificationTest extends TestCase
         $service = ProviderService::create([
             'provider_id' => $provider->id,
             'key' => 'SERVICE-' . fake()->unique()->numerify('#####'),
+            'service_code' => 'service-' . fake()->unique()->numerify('#####'),
             'name' => 'Servicio de prueba',
             'credit_cost' => 1,
             'available_credits' => 1000,

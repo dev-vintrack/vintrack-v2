@@ -33,6 +33,7 @@ class WalletTest extends TestCase
         $service = \App\Infrastructure\Persistence\Models\ProviderService::create([
             'provider_id' => $provider->id,
             'key' => 'Placas_Service',
+            'service_code' => 'placas_service',
             'name' => 'Placas Service',
             'credit_cost' => 1,
             'available_credits' => 20,
