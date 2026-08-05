@@ -35,3 +35,9 @@ yarn-error.log
 *.tar.gz
 *.bak
 /database/backups
+
+# Notas y logs locales de sesión
+CAMBIOS_FASE_*.txt
+archivos_sesion_actual.txt
+deploy.md
+/routes/*.log
