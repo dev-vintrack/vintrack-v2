@@ -81,7 +81,7 @@
 
                 <div class="col-md-4 mb-4">
                     <h5>Contacto</h5>
-                    <p>Email: {{ config('vintrack.admin_email') }}</p>
+                    <p>Email: {{ config('vintrack.contact_email') }}</p>
                 </div>
             </div>
 

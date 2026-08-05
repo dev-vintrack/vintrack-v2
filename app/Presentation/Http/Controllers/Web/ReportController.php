@@ -66,7 +66,14 @@ class ReportController
     private function findOwnedConsultation(int $id): Consultation
     {
         $consultation = $this->consultationRepository->findById($id);
-        if (!$consultation || $consultation->userId() !== Auth::id()) {
+        if (!$consultation) {
+            throw new NotFoundHttpException('Reporte no encontrado.');
+        }
+
+        $user = Auth::user();
+        $isAdmin = $user && $user->role?->roleType?->is_admin === true;
+
+        if (!$isAdmin && $consultation->userId() !== Auth::id()) {
             throw new NotFoundHttpException('Reporte no encontrado.');
         }
 

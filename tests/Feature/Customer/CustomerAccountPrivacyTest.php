@@ -133,6 +133,19 @@ class CustomerAccountPrivacyTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_admin_can_open_any_user_report(): void
+    {
+        [$provider] = $this->createService();
+        $admin = $this->createUser('admin');
+        $customer = $this->createUser('cliente_registrado');
+        $customerConsultation = $this->createConsultation($customer, $provider, 'VIN-CLIENTE');
+
+        $this->actingAs($admin)
+            ->get(route('reports.show', $customerConsultation->id))
+            ->assertOk()
+            ->assertSee('VIN-CLIENTE');
+    }
+
     private function createUser(string $role, bool $activo = true, string $status = 'active'): User
     {
         return User::factory()->create([

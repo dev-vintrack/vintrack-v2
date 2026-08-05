@@ -120,6 +120,20 @@ class CustomerAccountController
         ));
     }
 
+    public function vinDecoder(Request $request): View
+    {
+        $this->rejectUserFilter($request);
+
+        $kpis = [
+            'total' => 0,
+            'valid' => 0,
+            'today' => 0,
+            'pending' => 0,
+        ];
+
+        return view('customer.vin-decoder', compact('kpis'));
+    }
+
     private function rejectUserFilter(Request $request): void
     {
         if ($request->has('user_id')) {

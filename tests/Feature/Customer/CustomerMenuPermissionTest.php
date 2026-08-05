@@ -35,6 +35,10 @@ class CustomerMenuPermissionTest extends TestCase
         $this->actingAs($customer)
             ->get(route('customer.consultations'))
             ->assertOk();
+
+        $this->actingAs($customer)
+            ->get(route('customer.vin-decoder'))
+            ->assertOk();
     }
 
     public function test_disabled_customer_menu_returns_forbidden(): void
@@ -129,7 +133,21 @@ class CustomerMenuPermissionTest extends TestCase
             ->assertOk()
             ->assertDontSee('Mis créditos')
             ->assertSee('Mis movimientos')
-            ->assertSee('Mis consultas');
+            ->assertSee('Mis consultas')
+            ->assertSee('VIN Decoder');
+    }
+
+    public function test_disabled_vin_decoder_menu_returns_forbidden(): void
+    {
+        $customer = $this->createUser('cliente_registrado');
+
+        CustomerMenuPermission::forRole($customer->id_rol)
+            ->where('route_name', 'customer.vin-decoder')
+            ->update(['enabled' => false]);
+
+        $this->actingAs($customer)
+            ->get(route('customer.vin-decoder'))
+            ->assertForbidden();
     }
 
     private function createUser(string $role, bool $activo = true, string $status = 'active'): User

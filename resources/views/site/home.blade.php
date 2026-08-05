@@ -115,7 +115,7 @@
                                 </ul>
                                 <div class="d-flex flex-wrap gap-2">
                                     <a href="{{ route('site.services') }}" class="btn btn-primary">Ver Planes</a>
-                                    <a href="{{ route('site.sales') }}" class="btn btn-success">Solicita Compra Unica (sin registro)</a>
+                                    <a href="#" id="btnSalesInquiry" class="btn btn-success">Solicita Compra Unica (sin registro)</a>
                                 </div>
                             </div>
                         </div>
@@ -495,6 +495,20 @@
                 btn.disabled = false;
             }
         });
+
+        const salesBtn = document.getElementById('btnSalesInquiry');
+        if (salesBtn) {
+            salesBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                const vinInput = document.getElementById('vin');
+                const vin = vinInput ? vinInput.value.replace(/\s+/g, '').toUpperCase() : '';
+                const url = new URL("{{ route('site.sales') }}", window.location.origin);
+                if (vin.length > 0) {
+                    url.searchParams.set('vin', vin);
+                }
+                window.location.href = url.toString();
+            });
+        }
     });
 })();
 </script>

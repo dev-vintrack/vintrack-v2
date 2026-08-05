@@ -79,9 +79,16 @@ class SiteController
         return back()->with('status', 'Mensaje enviado correctamente');
     }
 
-    public function sales(): View
+    public function sales(Request $request): View
     {
-        return view('site.sales');
+        $vin = preg_replace('/[^A-Z0-9*]/', '', strtoupper((string) $request->query('vin')));
+        $message = 'Deseo compra un reporte completo por única ocasión de un vehículo Nacional/USA/Ambos';
+
+        if (strlen($vin) > 0) {
+            $message .= ' con el VIN: ' . $vin;
+        }
+
+        return view('site.sales', compact('message'));
     }
 
     public function sendSalesInquiry(Request $request): RedirectResponse

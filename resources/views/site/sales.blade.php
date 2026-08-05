@@ -41,7 +41,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="message" class="form-label">Mensaje</label>
-                            <textarea class="form-control" id="message" name="message" rows="4" required>Deseo compra un reporte completo por única ocasión de un vehículo Nacional/USA/Ambos</textarea>
+                            <textarea class="form-control" id="message" name="message" rows="4" required>{{ old('message', $message ?? 'Deseo compra un reporte completo por única ocasión de un vehículo Nacional/USA/Ambos') }}</textarea>
                             <p class="form-text text-muted mb-0">En cuanto envíes tu mensaje, Un asesor comercial te indicara la forma y el proceso de pago, para que recibas el PDF de tu reporte completo.</p>
                         </div>
                         <button type="submit" class="btn btn-primary">Enviar mensaje</button>

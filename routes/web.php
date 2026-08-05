@@ -76,6 +76,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/creditos', [CustomerAccountController::class, 'credits'])->name('customer.credits');
         Route::get('/movimientos', [CustomerAccountController::class, 'movements'])->name('customer.movements');
         Route::get('/consultas', [CustomerAccountController::class, 'consultations'])->name('customer.consultations');
+        Route::get('/vin-decoder', [CustomerAccountController::class, 'vinDecoder'])->name('customer.vin-decoder');
     });
 
     Route::prefix('admin')->middleware(['role:admin,analista,soporte'])->group(function () {

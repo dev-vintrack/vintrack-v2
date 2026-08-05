@@ -5,7 +5,8 @@
                 <h5 class="card-title">Costo de la Consulta por proveedor</h5>
                 @forelse ($providers as $p)
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span>{{ $p->name() }} <small class="text-muted">({{ $p->adapterCode() }})</small></span>
+                        <!--<span>{{ $p->name() }} <small class="text-muted">({{ $p->adapterCode() }})</small></span>-->
+                        <span>{{ $p->name() }}</span>
                         <span class="badge bg-primary">{{ number_format($p->creditCost(), 2) }} créditos</span>
                     </div>
                 @empty

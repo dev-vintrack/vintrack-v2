@@ -173,7 +173,7 @@ class RegisterController
             return redirect()->route('register');
         }
 
-        $adminPhone = config('vintrack.admin_whatsapp', '0000000000');
+        $adminPhone = config('vintrack.admin_whatsapp', '525638040952');
         $mensaje = urlencode("Hola, solicito completar mi registro en VINTrack.com.mx. Mi nombre es {$success['nombre']} y confirmo que el correo {$success['email']} me pertenece para continuar con la activación segura de mi cuenta.");
         $whatsappUrl = "https://wa.me/{$adminPhone}?text={$mensaje}";
 

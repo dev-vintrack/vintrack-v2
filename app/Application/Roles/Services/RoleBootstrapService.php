@@ -129,6 +129,7 @@ class RoleBootstrapService
             ['route' => 'customer.credits',       'label' => 'Mis créditos',    'icon' => 'wallet2'],
             ['route' => 'customer.movements',     'label' => 'Mis movimientos', 'icon' => 'arrow-left-right'],
             ['route' => 'customer.consultations', 'label' => 'Mis consultas',   'icon' => 'clock-history'],
+            ['route' => 'customer.vin-decoder',   'label' => 'VIN Decoder',     'icon' => 'upc-scan'],
         ];
     }
 
