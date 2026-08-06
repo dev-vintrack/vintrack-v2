@@ -12,7 +12,7 @@ class AdminMenuPermissionController
 {
     public function index()
     {
-        $permissions = AdminMenuPermission::with('role')
+        $permissions = AdminMenuPermission::with(['role', 'menuItem'])
             ->orderBy('id_rol')
             ->orderBy('display_order')
             ->get()

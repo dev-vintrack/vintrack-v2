@@ -79,16 +79,10 @@ class ConsultationService
             return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, [$debitServiceCode], $response, $cost));
         }
 
-        $requestedServiceKeys = array_values(array_filter(array_map(function (string $serviceCode) {
-            $service = $this->serviceRepository->findByServiceCode($serviceCode);
-
-            return $service?->key();
-        }, $requestedServiceCodes)));
-
         $adapterServices = $this->buildAdapterServices(
             strtolower($adapterCode),
             $providerServiceId,
-            $requestedServiceKeys,
+            $requestedServiceCodes,
             $userId
         );
 

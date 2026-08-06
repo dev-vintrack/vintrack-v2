@@ -16,8 +16,6 @@ class CustomerMenuPermission extends Model
     protected $fillable = [
         'id_rol',
         'route_name',
-        'label',
-        'icon',
         'enabled',
         'display_order',
     ];
@@ -31,6 +29,11 @@ class CustomerMenuPermission extends Model
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'id_rol', 'id_rol');
+    }
+
+    public function menuItem(): BelongsTo
+    {
+        return $this->belongsTo(MenuItem::class, 'route_name', 'route_name');
     }
 
     public function scopeEnabled($query)

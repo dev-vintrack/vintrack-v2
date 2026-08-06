@@ -11,7 +11,7 @@ class CustomerMenuPermissionController
 {
     public function index()
     {
-        $permissions = CustomerMenuPermission::with('role')
+        $permissions = CustomerMenuPermission::with(['role', 'menuItem'])
             ->whereHas('role', fn ($query) => $query->where('nombre', '!=', 'ocasional'))
             ->orderBy('id_rol')
             ->orderBy('display_order')

@@ -10,9 +10,11 @@
 <section class="rh-hero" style="background-image: url('{{ asset('images/Hero_home.png') }}');">
     <div class="rh-hero-overlay"></div>
     <div class="rh-hero-content">
-        <span class="rh-hero-badge">VINTrack</span>
-        <h1>Consulta y Seguimiento Vehicular</h1>
-        <p>Consulta información relacionada con robos de vehículos, reportes y estatus en tiempo real.</p>
+        <div class="rh-hero-toptitle">
+            <span class="rh-hero-toptitle-white">CONSULTA Y </span>
+            <span class="rh-hero-toptitle-blue">SEGUIMIENTO VEHICULAR</span>
+        </div>
+        <span class="rh-hero-badge">Consulta información relacionada con robos de vehículos, reportes y estatus en tiempo real</span>
     </div>
 </section>
 
@@ -109,4 +111,24 @@
         </div>
     </div>
 </section>
+
+@push('scripts')
+<script>
+    (function () {
+        let userInteracted = false;
+        const markInteraction = () => { userInteracted = true; };
+        ['wheel', 'touchstart', 'mousedown', 'keydown'].forEach(evt =>
+            window.addEventListener(evt, markInteraction, { once: true, passive: true })
+        );
+
+        const graceUntil = Date.now() + 1800;
+        const enforceTop = () => {
+            if (userInteracted || Date.now() > graceUntil) return;
+            if (window.scrollY > 0) window.scrollTo(0, 0);
+            requestAnimationFrame(enforceTop);
+        };
+        requestAnimationFrame(enforceTop);
+    })();
+</script>
+@endpush
 @endsection

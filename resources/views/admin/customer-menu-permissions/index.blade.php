@@ -40,9 +40,9 @@
                             <tbody>
                                 @foreach($items as $item)
                                     <tr>
-                                        <td>{{ $item->label }}</td>
+                                        <td>{{ $item->menuItem?->label ?? $item->route_name }}</td>
                                         <td><code>{{ $item->route_name }}</code></td>
-                                        <td>{{ $item->icon ?? '—' }}</td>
+                                        <td>{{ $item->menuItem?->icon ?? '—' }}</td>
                                         <td>
                                             <input type="number" name="permissions[{{ $item->id }}][display_order]"
                                                    class="form-control form-control-sm"

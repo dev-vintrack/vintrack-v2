@@ -48,13 +48,16 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
             return $this->errorResponse(422, 'Debe seleccionar un producto VINData.');
         }
 
-        $productCode = strtoupper($services[0]);
-        $validProducts = ['VHR', 'NMVTISPLUS'];
-        if (!in_array($productCode, $validProducts, true)) {
+        $serviceCode = strtolower(trim($services[0]));
+        $productMap = [
+            'vhr' => 'VHR',
+            'nmvtis_plus' => 'NMVTISPlus',
+        ];
+        if (!array_key_exists($serviceCode, $productMap)) {
             return $this->errorResponse(422, 'Producto VINData inválido. Use VHR o NMVTISPlus.');
         }
 
-        $apiProductCode = $productCode === 'NMVTISPLUS' ? 'NMVTISPlus' : $productCode;
+        $apiProductCode = $productMap[$serviceCode];
 
         $token = $this->getToken();
         if (empty($token)) {

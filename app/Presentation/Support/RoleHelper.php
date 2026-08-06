@@ -56,14 +56,15 @@ class RoleHelper
     public static function menuItemsFor(User $user): array
     {
         if (self::isCustomer($user) && in_array($user->rol, ['cliente_registrado', 'perito', 'oficial'], true)) {
-            return CustomerMenuPermission::where('id_rol', $user->id_rol)
+            return CustomerMenuPermission::with('menuItem')
+                ->where('id_rol', $user->id_rol)
                 ->where('enabled', true)
                 ->orderBy('display_order')
-                ->get(['route_name', 'label', 'icon'])
+                ->get()
                 ->map(fn ($item) => [
                     'route_name' => $item->route_name,
-                    'label' => $item->label,
-                    'icon' => $item->icon,
+                    'label' => $item->menuItem?->label ?? $item->route_name,
+                    'icon' => $item->menuItem?->icon,
                 ])
                 ->all();
         }
@@ -72,14 +73,15 @@ class RoleHelper
             return [];
         }
 
-        return AdminMenuPermission::where('id_rol', $user->id_rol)
+        return AdminMenuPermission::with('menuItem')
+            ->where('id_rol', $user->id_rol)
             ->where('enabled', true)
             ->orderBy('display_order')
-            ->get(['route_name', 'label', 'icon'])
+            ->get()
             ->map(fn ($item) => [
                 'route_name' => $item->route_name,
-                'label' => $item->label,
-                'icon' => $item->icon,
+                'label' => $item->menuItem?->label ?? $item->route_name,
+                'icon' => $item->menuItem?->icon,
             ])
             ->all();
     }

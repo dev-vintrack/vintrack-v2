@@ -1,0 +1,13 @@
+relative_path	name
+app/Application/Roles/Services	RoleBootstrapService.php
+app/Infrastructure/Persistence/Models	AdminMenuPermission.php
+app/Infrastructure/Persistence/Models	CustomerMenuPermission.php
+app/Infrastructure/Persistence/Models	MenuItem.php
+app/Presentation/Http/Controllers/Web/Admin	AdminMenuPermissionController.php
+app/Presentation/Http/Controllers/Web/Admin	CustomerMenuPermissionController.php
+app/Presentation/Support	RoleHelper.php
+database/migrations	2026_08_05_000001_create_menu_items_table.php
+database/migrations	2026_08_05_000002_drop_label_icon_from_menu_permissions_tables.php
+deploy	2026-08-05_menu_items_catalog.sql
+resources/views/admin/customer-menu-permissions	index.blade.php
+resources/views/admin/menu-permissions	index.blade.php

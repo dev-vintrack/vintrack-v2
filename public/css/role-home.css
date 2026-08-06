@@ -17,7 +17,7 @@
 .rh-hero {
     position: relative;
     width: 100%;
-    min-height: 42vh;
+    min-height: 82vh;
     background-size: cover;
     background-position: center;
     display: flex;
@@ -32,7 +32,7 @@
 .rh-hero-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(120deg, rgba(11,27,61,0.85), rgba(11,27,61,0.55));
+    background: linear-gradient(120deg, rgba(11,27,61,0.45), rgba(11,27,61,0.20));
 }
 
 .rh-hero-content {
@@ -42,13 +42,38 @@
     padding: 2rem;
 }
 
+.rh-hero-toptitle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    line-height: 1.15;
+    margin-bottom: 1.25rem;
+}
+
+.rh-hero-toptitle-white,
+.rh-hero-toptitle-blue {
+    font-size: clamp(2rem, 5vw, 3.6rem);
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.rh-hero-toptitle-white {
+    color: #fff;
+}
+
+.rh-hero-toptitle-blue {
+    color: rgba(37, 99, 235, 0.85);
+}
+
 .rh-hero-badge {
     display: inline-block;
     padding: 0.5rem 1.1rem;
     border-radius: 50px;
     background: rgba(255,255,255,0.15);
     color: #fff;
-    font-size: 0.8rem;
+    font-size: 1rem;
     font-weight: 600;
     letter-spacing: 0.8px;
     margin-bottom: 1rem;
