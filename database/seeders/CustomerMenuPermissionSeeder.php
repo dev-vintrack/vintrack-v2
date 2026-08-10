@@ -11,36 +11,34 @@ class CustomerMenuPermissionSeeder extends Seeder
     /**
      * Default customer portal menu options.
      *
-     * @return array<int, array{route: string, label: string, icon: string|null}>
+     * @return list<string>
      */
     private function menuItems(): array
     {
         return [
-            ['route' => 'customer.credits',       'label' => 'Mis créditos',   'icon' => 'wallet2'],
-            ['route' => 'customer.movements',     'label' => 'Mis movimientos', 'icon' => 'arrow-left-right'],
-            ['route' => 'customer.consultations', 'label' => 'Mis consultas',  'icon' => 'clock-history'],
-            ['route' => 'customer.vin-decoder',   'label' => 'VIN Decoder',    'icon' => 'upc-scan'],
+            'customer.credits',
+            'customer.movements',
+            'customer.consultations',
+            'customer.vin-decoder',
         ];
     }
 
     public function run(): void
     {
-        $customerRoles = ['cliente_registrado', 'perito', 'oficial'];
+        $customerRoles = ['cliente_registrado', 'perito', 'oficial', 'unidad_analisis'];
         $items = $this->menuItems();
 
         foreach ($customerRoles as $roleName) {
             $role = Role::firstOrCreateByName($roleName);
             $order = 0;
 
-            foreach ($items as $item) {
+            foreach ($items as $routeName) {
                 CustomerMenuPermission::firstOrCreate(
                     [
                         'id_rol' => $role->id_rol,
-                        'route_name' => $item['route'],
+                        'route_name' => $routeName,
                     ],
                     [
-                        'label' => $item['label'],
-                        'icon' => $item['icon'],
                         'enabled' => true,
                         'display_order' => $order++,
                     ]

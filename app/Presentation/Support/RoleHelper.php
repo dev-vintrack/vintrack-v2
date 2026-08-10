@@ -22,6 +22,7 @@ class RoleHelper
         'cliente_registrado' => 'Cliente Registrado',
         'perito'             => 'Cliente Perito',
         'oficial'            => 'Cliente con cargo Oficial',
+        'unidad_analisis'    => 'Unidad de Análisis',
         'ocasional'          => 'Cliente Ocasional',
     ];
 
@@ -55,7 +56,7 @@ class RoleHelper
      */
     public static function menuItemsFor(User $user): array
     {
-        if (self::isCustomer($user) && in_array($user->rol, ['cliente_registrado', 'perito', 'oficial'], true)) {
+        if (self::isCustomer($user) && in_array($user->rol, ['cliente_registrado', 'perito', 'oficial', 'unidad_analisis'], true)) {
             return CustomerMenuPermission::with('menuItem')
                 ->where('id_rol', $user->id_rol)
                 ->where('enabled', true)

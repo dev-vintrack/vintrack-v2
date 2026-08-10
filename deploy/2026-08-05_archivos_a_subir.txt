@@ -1,3 +1,7 @@
+Sesion del 2026-08-05
+
+1. Se creo una nueva tabla menu_items y se relaciona con otras 2 tablas por medio del 
+
 relative_path	name
 app/Application/Roles/Services	RoleBootstrapService.php
 app/Infrastructure/Persistence/Models	AdminMenuPermission.php
@@ -11,3 +15,90 @@ database/migrations	2026_08_05_000002_drop_label_icon_from_menu_permissions_tabl
 deploy	2026-08-05_menu_items_catalog.sql
 resources/views/admin/customer-menu-permissions	index.blade.php
 resources/views/admin/menu-permissions	index.blade.php
+
+2. Dependecia del Code del Servicio de VINData
+app\Application\Consultas\Services\ConsultationService.php
+VinDataProviderAdapter.php
+
+3. Arreglar Fotos Hero
+public\images\
+   vintrack-perito.png, vintrack-clienteReg.png, vintrack-policeOfficer.png
+public/css/role-home.css
+resources/views/home/cliente.blade.php
+resources/views/home/oficial.blade.php
+resources/views/home/perito.blade.php
+
+
+
+
+
+
+These two files weren't touched in our conversation 
+— they were modified outside this session (likely by you or another change).
+
+
+All staged. Committing now.
+
+Ahora subo a `origin/develop`.
+
+# Rama `develop` actualizada
+
+Commit `f6861fb` subido a `origin/develop` (22 archivos, +453/-97).
+
+## Incluye
+- **Catálogo `menu_items`**: migraciones, modelo `MenuItem`, controllers/vistas de permisos actualizados.
+- **Fix scroll iframe VIN**: script anti-scroll en [home/cliente.blade.php](cci:7://file:///c:/laragon/www/vintrack-v2/resources/views/home/cliente.blade.php:0:0-0:0), [home/perito.blade.php](cci:7://file:///c:/laragon/www/vintrack-v2/resources/views/home/perito.blade.php:0:0-0:0), [home/oficial.blade.php](cci:7://file:///c:/laragon/www/vintrack-v2/resources/views/home/oficial.blade.php:0:0-0:0).
+- **Estilos hero home**: [public/css/role-home.css](cci:7://file:///c:/laragon/www/vintrack-v2/public/css/role-home.css:0:0-0:0), imágenes nuevas (`vintrack-perito.png`, `vintrack-clienteReg.png`, `vintrack-policeOfficer.png` actualizada).
+- **Fuera de esta sesión** (incluidos a tu pedido): `ConsultationService.php`, `VinDataProviderAdapter.php`.
+
+**Recuerda:** ejecutar el `@/c:/laragon/www/vintrack-v2/deploy/2026-08-05_menu_items_catalog.sql` (Paso 1) en producción antes/junto con el deploy del código, y el Paso 2 (drop columnas) solo después de confirmar que el menú funciona.
+
+
+
+
+
+Por favor hazme un resumen de todo lo que hablamos en esta sesión, incluye:
+- El objetivo principal
+- Las decisiones importantes que hemos tomado
+- El texto o código que creamos
+- Identifica las nuevas features o funcionalidades con una breve descripción para el usuario (no técnica)
+- Los próximos pasos pendientes
+máximo 400 palabras en formato estructurado.
+Si tienes alguna duda de lo que te estoy solicitando, por favor pregúntame hasta que te quede totalmente claro
+
+
+
+
+# Resumen de la Sesión
+
+## Objetivo Principal
+Eliminar la duplicidad del nombre de las opciones de menú (Admin y Cliente), mejorar visualmente las páginas de inicio por rol, y corregir un comportamiento molesto de scroll automático.
+
+## Decisiones Importantes
+- **Catálogo único de menú**: en vez de repetir el nombre de cada opción por cada rol, se centralizó en una tabla `menu_items`.
+- **Migración en 2 pasos para producción**: crear tabla y poblar datos primero (seguro con código viejo); eliminar columnas duplicadas después de confirmar que el código nuevo funciona.
+- **Estilo del hero**: título en dos líneas (blanco arriba, azul semi-transparente abajo), centrado, con el texto descriptivo debajo.
+- **Corrección de scroll**: usar un script con "ventana de gracia" (~1.8s) que regresa el scroll al inicio si un elemento externo lo desplaza sin interacción real del usuario, en lugar de bloquear el iframe.
+- Se incluyeron en el commit final 2 archivos ajenos a la sesión (`ConsultationService.php`, `VinDataProviderAdapter.php`) por decisión tuya.
+
+## Código y Archivos Creados
+- **Nuevos**: [app/Infrastructure/Persistence/Models/MenuItem.php](cci:7://file:///c:/laragon/www/vintrack-v2/app/Infrastructure/Persistence/Models/MenuItem.php:0:0-0:0), 2 migraciones (`create_menu_items_table`, `drop_label_icon_from_menu_permissions_tables`), script SQL de deploy ([deploy/2026-08-05_menu_items_catalog.sql](cci:7://file:///c:/laragon/www/vintrack-v2/deploy/2026-08-05_menu_items_catalog.sql:0:0-0:0)), lista de archivos a subir ([deploy/2026-08-05_archivos_a_subir.txt](cci:7://file:///c:/laragon/www/vintrack-v2/deploy/2026-08-05_archivos_a_subir.txt:0:0-0:0)).
+- **Modificados**: modelos/controllers de permisos de menú, [RoleHelper.php](cci:7://file:///c:/laragon/www/vintrack-v2/app/Presentation/Support/RoleHelper.php:0:0-0:0), [RoleBootstrapService.php](cci:7://file:///c:/laragon/www/vintrack-v2/app/Application/Roles/Services/RoleBootstrapService.php:0:0-0:0), vistas de permisos, [role-home.css](cci:7://file:///c:/laragon/www/vintrack-v2/public/css/role-home.css:0:0-0:0), y las 3 vistas home (`cliente`, `perito`, `oficial`).
+
+## Funcionalidades Nuevas (para el usuario)
+1. **Edición centralizada del menú**: ahora puedes renombrar una opción del menú (Admin o Cliente) editando **una sola fila** en phpMyAdmin, sin tener que repetirlo por cada rol.
+2. **Nuevo diseño del encabezado (hero)** en las páginas de inicio de Cliente, Perito y Oficial: título grande blanco/azul centrado, con imagen de fondo personalizada por rol (incluyendo nueva imagen para Perito).
+3. **Corrección de salto de pantalla**: al entrar a tu página de inicio, ya no se desplaza automáticamente hacia la sección "Consulta VIN Vehicular" por culpa de un formulario externo.
+
+## Próximos Pasos Pendientes
+- **Producción**: subir los archivos listados en [deploy/2026-08-05_archivos_a_subir.txt](cci:7://file:///c:/laragon/www/vintrack-v2/deploy/2026-08-05_archivos_a_subir.txt:0:0-0:0) y ejecutar el **Paso 1** del script SQL (crear catálogo). Ejecutar el **Paso 2** (eliminar columnas duplicadas) solo después de confirmar visualmente que el menú carga bien en el sitio en vivo.
+- **Validación visual**: revisar en el navegador (conexión lenta simulada) que el fix de scroll funcione correctamente en las 3 vistas de home.
+- **Rama `develop`**: ya actualizada y subida a GitHub (commit `f6861fb`); pendiente decidir cuándo mergear a `main`/producción.
+
+
+
+
+
+
+
+

@@ -93,7 +93,7 @@ class CustomerAccountPrivacyTest extends TestCase
 
     public function test_only_supported_active_customer_roles_can_access_customer_portal(): void
     {
-        foreach (['cliente_registrado', 'perito', 'oficial'] as $role) {
+        foreach (['cliente_registrado', 'perito', 'oficial', 'unidad_analisis'] as $role) {
             $this->actingAs($this->createUser($role))
                 ->get(route('customer.credits'))
                 ->assertOk();

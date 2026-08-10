@@ -57,6 +57,15 @@ class HomeController
         return view('home.oficial', $this->dashboardData());
     }
 
+    public function unidad_analisis(): View|RedirectResponse
+    {
+        if ($redirect = $this->ensureAllowedRoles(['unidad_analisis'])) {
+            return $redirect;
+        }
+
+        return view('home.unidad_analisis', $this->dashboardData());
+    }
+
     public function ocasional(): View|RedirectResponse
     {
         if ($redirect = $this->ensureAllowedRoles(['ocasional'])) {

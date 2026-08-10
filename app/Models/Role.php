@@ -78,7 +78,7 @@ class Role extends Model
     public static function firstOrCreateByName(string $name): static
     {
         $adminNames = ['admin', 'analista', 'soporte'];
-        $approvalNames = ['perito', 'oficial'];
+        $approvalNames = ['perito', 'oficial', 'unidad_analisis'];
 
         return static::firstOrCreate(
             ['nombre' => $name],
@@ -89,6 +89,7 @@ class Role extends Model
                     'cliente_registrado' => 'home.cliente',
                     'perito' => 'home.perito',
                     'oficial' => 'home.oficial',
+                    'unidad_analisis' => 'home.unidad_analisis',
                     'ocasional' => 'home.ocasional',
                     default => 'home',
                 },

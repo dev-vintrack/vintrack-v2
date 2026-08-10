@@ -1,0 +1,11 @@
+app/Models/Role.php
+app/Presentation/Http/Controllers/Web/HomeController.php
+app/Presentation/Http/Middleware/RequireActiveCustomer.php
+app/Presentation/Support/RoleHelper.php
+database/seeders/CustomerMenuPermissionSeeder.php
+resources/views/home/unidad_analisis.blade.php
+routes/web.php
+tests/Feature/Customer/CustomerAccountPrivacyTest.php
+
+deploy/2026-08-07_unidad_analisis.sql      (ejecutar en PHPMyAdmin, NO subir por FTP)
+deploy/2026-08-07_unidad_analisis_fix.sql  (ejecutar en PHPMyAdmin, NO subir por FTP)

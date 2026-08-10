@@ -65,6 +65,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/home/cliente', [HomeController::class, 'cliente'])->name('home.cliente');
     Route::get('/home/perito', [HomeController::class, 'perito'])->name('home.perito');
     Route::get('/home/oficial', [HomeController::class, 'oficial'])->name('home.oficial');
+    Route::get('/home/unidad-analisis', [HomeController::class, 'unidad_analisis'])->name('home.unidad_analisis');
     Route::get('/home/ocasional', [HomeController::class, 'ocasional'])->name('home.ocasional');
     Route::get('/home/pending', [HomeController::class, 'pending'])->name('home.pending');
 

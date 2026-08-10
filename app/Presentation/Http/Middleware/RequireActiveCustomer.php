@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class RequireActiveCustomer
 {
-    private const ALLOWED_ROLES = ['cliente_registrado', 'perito', 'oficial'];
+    private const ALLOWED_ROLES = ['cliente_registrado', 'perito', 'oficial', 'unidad_analisis'];
 
     public function handle(Request $request, Closure $next): Response
     {
