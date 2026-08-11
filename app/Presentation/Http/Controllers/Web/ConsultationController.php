@@ -80,8 +80,26 @@ class ConsultationController
                 $banner = PlacasReportPresenter::computeBanner($sections, $alertaRobo);
             }
 
-            // Usamos el status real del servicio; evitamos 204/304 que vacían el body.
-            $httpStatus = $response->success() ? 200 : $response->httpStatus();
+            // Usamos el status real del servicio, pero normalizado: codigos invalidos o que
+            // vacian el body (0, 1xx, 204, 304, fuera de 100-599) rompen el JSON en el cliente
+            // ("Unexpected end of JSON input") porque Response::prepare() los trata como vacios.
+            // El status real del proveedor sigue disponible en el body via 'status'.
+            $httpStatus = $response->success() ? 200 : $this->safeHttpStatus($response->httpStatus());
+
+            if (! $response->success()) {
+                // A diferencia de las excepciones (catch abajo), estos fallos "controlados"
+                // (timeout de polling, saldo insuficiente, proveedor deshabilitado, etc.) no
+                // quedaban registrados en ningun log, dificultando el diagnostico en produccion.
+                Log::warning('Consulta fallida (sin excepcion)', [
+                    'adapter' => $adapterCode,
+                    'provider_id' => $provider->id,
+                    'provider_service_id' => $providerService->id,
+                    'user_id' => Auth::id(),
+                    'upstream_status' => $response->httpStatus(),
+                    'response_http_status' => $httpStatus,
+                    'message' => $response->errorMessage(),
+                ]);
+            }
 
             return response()->json([
                 'success' => $response->success(),
@@ -110,5 +128,22 @@ class ConsultationController
                 'banner' => null,
             ], 500);
         }
+    }
+
+    /**
+     * Normaliza un status HTTP proveniente de un servicio externo para usarlo como
+     * codigo de respuesta HTTP propio. Symfony/Laravel vacian automaticamente el body
+     * de la respuesta cuando el status es informativo (1xx) o pertenece a {204, 304}
+     * (Response::isEmpty()), y ademas rechazan cualquier valor fuera de 100-599
+     * (Response::isInvalid()). Cualquiera de esos casos produciria un body vacio o una
+     * excepcion, causando "Unexpected end of JSON input" en el cliente.
+     */
+    private function safeHttpStatus(int $status): int
+    {
+        if ($status < 200 || $status > 599 || in_array($status, [204, 304], true)) {
+            return 502;
+        }
+
+        return $status;
     }
 }

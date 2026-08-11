@@ -34,6 +34,7 @@ class VehicleBackfiller
                 'id',
                 'user_id',
                 'provider_id',
+                'provider_service_id',
                 'criterio',
                 'valor',
                 'api_id',
@@ -76,9 +77,21 @@ class VehicleBackfiller
                             $consultation->credits_api
                         );
 
+                        $providerServiceId = $consultation->provider_service_id
+                            ?? $this->resolveProviderServiceId(
+                                $consultation->provider_id,
+                                $adapterCode,
+                                $consultation->services ?? []
+                            );
+
+                        if ($providerServiceId === null) {
+                            throw new \RuntimeException('No se pudo resolver provider_service_id para la consulta');
+                        }
+
                         $entity = ConsultationEntity::fromResponse(
                             $consultation->user_id,
                             $consultation->provider_id,
+                            $providerServiceId,
                             $consultation->criterio,
                             $consultation->valor,
                             $consultation->services ?? [],
@@ -86,16 +99,6 @@ class VehicleBackfiller
                             $response,
                             new DateTimeImmutable($consultation->created_at)
                         );
-
-                        $providerServiceId = $this->resolveProviderServiceId(
-                            $consultation->provider_id,
-                            $adapterCode,
-                            $consultation->services ?? []
-                        );
-
-                        if ($providerServiceId === null) {
-                            throw new \RuntimeException('No se pudo resolver provider_service_id para la consulta');
-                        }
 
                         $this->vehicleUpserter->upsertFromConsultation($entity, $adapterCode, $providerServiceId);
                         $processed++;

@@ -147,6 +147,7 @@ class CustomerMailNotificationTest extends TestCase
         $consultation = Consultation::fromResponse(
             $user->id,
             $service->provider_id,
+            $service->id,
             'placa',
             'ABC1234',
             [$service->key],

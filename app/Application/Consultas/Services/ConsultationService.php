@@ -72,11 +72,11 @@ class ConsultationService
         $cost = $providerService->creditCost()->amount();
         if (! $wallet->isValidAt(new DateTimeImmutable())) {
             $response = new ConsultationResponse(false, 402, 'Los créditos para este servicio han expirado.', [], null, $this->emptyFlags());
-            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, [$debitServiceCode], $response, $cost));
+            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, [$debitServiceCode], $response, $cost, $providerServiceId));
         }
         if ($cost > 0 && !$wallet->balance()->isGreaterThanOrEqual(Money::fromFloat($cost))) {
             $response = new ConsultationResponse(false, 402, 'Saldo insuficiente de créditos.', [], null, $this->emptyFlags());
-            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, [$debitServiceCode], $response, $cost));
+            return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, [$debitServiceCode], $response, $cost, $providerServiceId));
         }
 
         $adapterServices = $this->buildAdapterServices(
@@ -106,6 +106,7 @@ class ConsultationService
         $consultation = Consultation::fromResponse(
             $userId,
             $provider->id()->value(),
+            $providerServiceId,
             $type,
             $value,
             [$debitServiceCode],
@@ -163,11 +164,13 @@ class ConsultationService
         string $value,
         array $services,
         ConsultationResponse $response,
-        float $cost = 0
+        float $cost = 0,
+        int $providerServiceId = 0
     ): Consultation {
         return Consultation::fromResponse(
             $userId,
             $providerId,
+            $providerServiceId,
             $type,
             $value,
             $services,

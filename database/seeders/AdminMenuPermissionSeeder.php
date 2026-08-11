@@ -12,50 +12,52 @@ class AdminMenuPermissionSeeder extends Seeder
     /**
      * Default menu options and suggested order.
      *
-     * @return array<int, array{route: string, label: string, icon: string|null}>
+     * Nota: label/icon ya no se guardan en customer/admin_menu_permissions (se movieron
+     * a la tabla menu_items, ver 2026_08_05_000001/000002). Se conservan aqui unicamente
+     * como referencia/orden de las rutas por defecto.
+     *
+     * @return list<string>
      */
     private function menuItems(): array
     {
         return [
-            ['route' => 'home',                      'label' => 'Inicio',                 'icon' => 'house-door'],
-            ['route' => 'admin.consultations.index', 'label' => 'Historial de Consultas', 'icon' => 'clipboard-data'],
-            ['route' => 'admin.inventory.index',     'label' => 'Inventario Global',      'icon' => 'boxes'],
-            ['route' => 'admin.purchases.index',     'label' => 'Compras',                'icon' => 'cart'],
-            ['route' => 'admin.wallets.movements',   'label' => 'Movimientos Wallet',     'icon' => 'arrow-left-right'],
-            ['route' => 'admin.wallets.index',       'label' => 'Créditos por Usuario',   'icon' => 'wallet'],
-            ['route' => 'admin.vehicles.index',    'label' => 'Vehículos Registrados',  'icon' => 'car-front'],
-            ['route' => 'admin.packages.active',     'label' => 'Paquetes Activos',       'icon' => 'box-seam'],
-            ['route' => 'admin.credits.purchase',    'label' => 'Comprar Créditos',       'icon' => 'plus-circle'],
-            ['route' => 'admin.packages.index',      'label' => 'Paquetes',               'icon' => 'boxes'],
-            ['route' => 'admin.providers.index',     'label' => 'Proveedores',            'icon' => 'hdd-network'],
-            ['route' => 'admin.users.index',         'label' => 'Usuarios',               'icon' => 'people'],
-            ['route' => 'admin.menu-permissions.index', 'label' => 'Permisos de Menú',    'icon' => 'sliders'],
-            ['route' => 'admin.customer-menu-permissions.index', 'label' => 'Permisos de Menú Cliente', 'icon' => 'sliders2'],
-            ['route' => 'admin.notifications.index',    'label' => 'Notificaciones',       'icon' => 'envelope-check'],
-            ['route' => 'admin.provider-service-roles.index', 'label' => 'Servicios por Rol', 'icon' => 'hand-thumbs-up'],
-            ['route' => 'admin.roles.index',         'label' => 'Roles',                  'icon' => 'person-gear'],
-            ['route' => 'admin.role-types.index',    'label' => 'Tipos de Rol',           'icon' => 'tags'],
+            'home',
+            'admin.consultations.index',
+            'admin.inventory.index',
+            'admin.purchases.index',
+            'admin.wallets.movements',
+            'admin.wallets.index',
+            'admin.vehicles.index',
+            'admin.packages.active',
+            'admin.credits.purchase',
+            'admin.packages.index',
+            'admin.providers.index',
+            'admin.users.index',
+            'admin.menu-permissions.index',
+            'admin.customer-menu-permissions.index',
+            'admin.notifications.index',
+            'admin.provider-service-roles.index',
+            'admin.roles.index',
+            'admin.role-types.index',
         ];
     }
 
     public function run(): void
     {
-        $items = $this->menuItems();
+        $routes = $this->menuItems();
 
         foreach (array_keys(RoleHelper::ROLES) as $role) {
             $roleModel = Role::firstOrCreateByName($role);
             $order = 0;
-            foreach ($items as $item) {
-                $enabled = $this->isEnabledByDefault($role, $item['route']);
+            foreach ($routes as $route) {
+                $enabled = $this->isEnabledByDefault($role, $route);
 
                 AdminMenuPermission::firstOrCreate(
                     [
                         'id_rol' => $roleModel->id_rol,
-                        'route_name' => $item['route'],
+                        'route_name' => $route,
                     ],
                     [
-                        'label' => $item['label'],
-                        'icon' => $item['icon'],
                         'enabled' => $enabled,
                         'display_order' => $order++,
                     ]

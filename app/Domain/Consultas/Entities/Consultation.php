@@ -15,6 +15,7 @@ class Consultation
         private readonly ?int $id,
         private readonly int $userId,
         private readonly int $providerId,
+        private readonly int $providerServiceId,
         private readonly string $criterio,
         private readonly string $valor,
         private readonly ?string $apiId,
@@ -50,6 +51,7 @@ class Consultation
     public static function fromResponse(
         int $userId,
         int $providerId,
+        int $providerServiceId,
         string $criterio,
         string $valor,
         array $services,
@@ -61,6 +63,7 @@ class Consultation
             null,
             $userId,
             $providerId,
+            $providerServiceId,
             $criterio,
             $valor,
             $response->apiId(),
@@ -92,6 +95,11 @@ class Consultation
     public function providerId(): int
     {
         return $this->providerId;
+    }
+
+    public function providerServiceId(): int
+    {
+        return $this->providerServiceId;
     }
 
     public function criterio(): string

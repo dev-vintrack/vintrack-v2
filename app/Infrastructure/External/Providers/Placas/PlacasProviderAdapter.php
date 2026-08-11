@@ -12,16 +12,25 @@ use RuntimeException;
 
 class PlacasProviderAdapter implements ProviderAdapterInterface
 {
-    private const DEFAULT_TIMEOUT = 12;
-    private const POLL_MAX_SECONDS = 18;
+    // Fallbacks unicamente si config/providers.php no define los valores; los valores
+    // reales usados en runtime vienen de PLACAS_HTTP_TIMEOUT / PLACAS_POLL_MAX_SECONDS /
+    // PLACAS_POLL_INTERVAL_SECONDS (ver config/providers.php).
+    private const DEFAULT_TIMEOUT = 30;
+    private const POLL_MAX_SECONDS = 40;
     private const POLL_INTERVAL_SECONDS = 2;
 
     private Client $client;
+    private int $pollMaxSeconds;
+    private int $pollIntervalSeconds;
 
     public function __construct(?Client $client = null)
     {
+        $httpTimeout = (int) Config::get('providers.placas.http_timeout', self::DEFAULT_TIMEOUT);
+        $this->pollMaxSeconds = (int) Config::get('providers.placas.poll_max_seconds', self::POLL_MAX_SECONDS);
+        $this->pollIntervalSeconds = (int) Config::get('providers.placas.poll_interval_seconds', self::POLL_INTERVAL_SECONDS);
+
         $this->client = $client ?? new Client([
-            'timeout' => self::DEFAULT_TIMEOUT,
+            'timeout' => $httpTimeout,
             'connect_timeout' => 10,
         ]);
     }
@@ -34,7 +43,10 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
     public function consult(ConsultationRequest $request): ConsultationResponse
     {
         // Algunos hosting compartidos matan la petición a los 30s; intentamos darle más tiempo.
-        @set_time_limit(90);
+        // El presupuesto real es POST inicial + ventana de polling (ambos configurables via
+        // PLACAS_HTTP_TIMEOUT / PLACAS_POLL_MAX_SECONDS), mas margen de seguridad.
+        $httpTimeout = (int) Config::get('providers.placas.http_timeout', self::DEFAULT_TIMEOUT);
+        @set_time_limit(max(90, $httpTimeout + $this->pollMaxSeconds + 30));
 
         [$ok, $message, $value] = $this->validateInput($request->type(), $request->value());
         if (!$ok) {
@@ -135,8 +147,8 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
     private function pollResult(string $apiUrl, string $id, string $token): array
     {
         $url = rtrim($apiUrl, '/') . '/' . $id;
-        $deadline = time() + self::POLL_MAX_SECONDS;
-        $interval = max(1, self::POLL_INTERVAL_SECONDS);
+        $deadline = time() + $this->pollMaxSeconds;
+        $interval = max(1, $this->pollIntervalSeconds);
         $lastHttp = 0;
         $lastData = null;
         $lastErr = null;

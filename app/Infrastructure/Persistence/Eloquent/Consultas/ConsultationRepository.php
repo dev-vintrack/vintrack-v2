@@ -16,6 +16,7 @@ class ConsultationRepository implements ConsultationRepositoryInterface
             [
                 'user_id' => $consultation->userId(),
                 'provider_id' => $consultation->providerId(),
+                'provider_service_id' => $consultation->providerServiceId(),
                 'criterio' => $consultation->criterio(),
                 'valor' => $consultation->valor(),
                 'api_id' => $consultation->apiId(),
@@ -64,6 +65,7 @@ class ConsultationRepository implements ConsultationRepositoryInterface
             $model->id,
             $model->user_id,
             $model->provider_id,
+            $model->provider_service_id,
             $model->criterio,
             $model->valor,
             $model->api_id,

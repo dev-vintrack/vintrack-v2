@@ -16,6 +16,7 @@ class Consultation extends Model
     protected $fillable = [
         'user_id',
         'provider_id',
+        'provider_service_id',
         'criterio',
         'valor',
         'api_id',
@@ -58,5 +59,10 @@ class Consultation extends Model
     public function provider(): BelongsTo
     {
         return $this->belongsTo(Provider::class, 'provider_id');
+    }
+
+    public function providerService(): BelongsTo
+    {
+        return $this->belongsTo(ProviderService::class, 'provider_service_id');
     }
 }

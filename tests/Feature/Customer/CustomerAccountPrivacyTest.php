@@ -45,8 +45,8 @@ class CustomerAccountPrivacyTest extends TestCase
             'correlation_id' => 'customer-other-movement',
         ]);
 
-        $this->createConsultation($customer, $provider, 'VIN-PROPIO');
-        $this->createConsultation($otherCustomer, $provider, 'VIN-AJENO');
+        $this->createConsultation($customer, $provider, $service, 'VIN-PROPIO');
+        $this->createConsultation($otherCustomer, $provider, $service, 'VIN-AJENO');
 
         $this->actingAs($customer)
             ->get(route('customer.credits'))
@@ -123,10 +123,10 @@ class CustomerAccountPrivacyTest extends TestCase
 
     public function test_customer_cannot_open_another_users_report(): void
     {
-        [$provider] = $this->createService();
+        [$provider, $service] = $this->createService();
         $customer = $this->createUser('cliente_registrado');
         $otherCustomer = $this->createUser('cliente_registrado');
-        $otherConsultation = $this->createConsultation($otherCustomer, $provider, 'VIN-PRIVADO');
+        $otherConsultation = $this->createConsultation($otherCustomer, $provider, $service, 'VIN-PRIVADO');
 
         $this->actingAs($customer)
             ->get(route('reports.show', $otherConsultation->id))
@@ -135,10 +135,10 @@ class CustomerAccountPrivacyTest extends TestCase
 
     public function test_admin_can_open_any_user_report(): void
     {
-        [$provider] = $this->createService();
+        [$provider, $service] = $this->createService();
         $admin = $this->createUser('admin');
         $customer = $this->createUser('cliente_registrado');
-        $customerConsultation = $this->createConsultation($customer, $provider, 'VIN-CLIENTE');
+        $customerConsultation = $this->createConsultation($customer, $provider, $service, 'VIN-CLIENTE');
 
         $this->actingAs($admin)
             ->get(route('reports.show', $customerConsultation->id))
@@ -193,11 +193,12 @@ class CustomerAccountPrivacyTest extends TestCase
         ]);
     }
 
-    private function createConsultation(User $user, Provider $provider, string $value): Consultation
+    private function createConsultation(User $user, Provider $provider, ProviderService $service, string $value): Consultation
     {
         return Consultation::create([
             'user_id' => $user->id,
             'provider_id' => $provider->id,
+            'provider_service_id' => $service->id,
             'criterio' => 'vin',
             'valor' => $value,
             'services' => ['Servicio de prueba'],
