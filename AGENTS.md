@@ -775,14 +775,14 @@ SPRINT-01 — Domain & Data Model Design is:
 
 `APPROVED — OBSERVATIONS RESOLVED`
 
-The current authorized Sprint is:
+The current implemented Sprint is:
 
-`SPRINT-02 — Core Domain, Persistence & Consultation Admission`
+`SPRINT-04 — Client Portal — Notification Process`
 
-SPRINT-02 is authorized only for local implementation and testing under
-`docs/sprints/SPRINT-02-CORE-DOMAIN-PERSISTENCE.md`. Production,
-portals/DataTables, uploads/downloads, message delivery, Cron/Scheduler,
-retroactive cases, purge and the next Sprint remain outside its scope.
+SPRINT-04 is `READY FOR OWNER REVIEW` after local implementation and testing
+under `docs/sprints/SPRINT-04-CLIENT-PORTAL-NOTIFICATION-PROCESS.md`.
+Production, SPRINT-05, the Administrative Portal, consultation histories,
+DataTables, notification delivery and Cron remain unauthorized.
 
 
 # 39. Golden Rule

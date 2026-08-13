@@ -130,3 +130,31 @@ Cada Sprint requiere autorización explícita, debe terminar en `READY FOR OWNER
 SPRINT-03 implementará exclusivamente evidencia y manejo seguro de archivos sobre el núcleo de SPRINT-02; SPRINT-04 consumirá ese subsistema en el Portal Cliente; SPRINT-05 incorporará revisión/validación administrativa; SPRINT-06 implementará historiales y DataTables server-side; SPRINT-07 activará delivery/outbox/automatización; y SPRINT-08 concentrará hardening y los Production Gates pendientes de SPRINT-02, salvo dependencias necesarias para validar correctamente un Sprint anterior.
 
 Las reglas aprobadas en SPRINT-01 y las implementadas en SPRINT-02 permanecen contractuales salvo Change Request aprobado. Producción permanece fuera de alcance hasta superar SPRINT-08 y recibir autorización explícita. **APPROVED**
+
+## DEC-037 — SPRINT-03 Governance Closure and Canonical Roadmap Confirmation
+
+**Estado:** APPROVED WITH OBSERVATIONS
+**Aprobado por:** Project Owner
+**Fecha:** 2026-08-13
+
+SPRINT-03 — Evidence & Secure File Management queda cerrado como `APPROVED WITH OBSERVATIONS` sin reabrir ni modificar su implementación.
+
+DEC-035 conserva exclusivamente su significado histórico como cierre de SPRINT-02 y no debe renumerarse, sobrescribirse ni reutilizarse. **DEC-036 queda confirmado como identificador canónico y oficial del roadmap posterior a SPRINT-02.** La referencia a DEC-035 en el rector histórico de SPRINT-03 es un error documental histórico y no se modifica para ocultarlo.
+
+Observaciones y Production Gates de SPRINT-03:
+
+1. Ausencia actual de scanner antivirus/antimalware aceptada como riesgo residual; no se autoriza instalar servicios, SaaS o scanner en este cierre.
+2. Antes de producción deben verificarse en Neubox fileinfo, GD, ruta privada efectiva, permisos de lectura/escritura, inaccesibilidad HTTP directa y streaming/download.
+3. MariaDB 10.6.27 real permanece pendiente antes de producción.
+
+Estos gates se acumulan con OBS-02-01 a OBS-02-06. Producción permanece `NOT AUTHORIZED`. SPRINT-04 — Client Portal — Notification Process queda previsto por DEC-036, pero requiere autorización explícita separada del Project Owner. **APPROVED WITH OBSERVATIONS**
+
+## DEC-038 — Recovered-at Future Date Rule
+
+**Estado:** APPROVED / IMPLEMENTED LOCALLY IN SPRINT-04
+**Aprobado por:** Project Owner
+**Fecha:** 2026-08-13
+
+`recovered_at` debe ser menor o igual al datetime empresarial actual. No se permiten fechas u horas futuras. La timezone contractual es `America/Mexico_City`.
+
+La regla se valida obligatoriamente server-side dentro del servicio de ciclo de vida del expediente, tanto al guardar el borrador como al enviar. La restricción del navegador es exclusivamente una mejora UX y no constituye autoridad ni control de seguridad. **APPROVED**

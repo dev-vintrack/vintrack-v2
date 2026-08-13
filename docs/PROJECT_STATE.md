@@ -25,34 +25,40 @@
 `consultations.provider_service_id` exists locally and in production. Do not recreate.
 
 ## Current Phase
-SPRINT-03 IMPLEMENTATION COMPLETE / OWNER REVIEW
+SPRINT-04 IMPLEMENTATION COMPLETE / OWNER REVIEW
 
 ## Phase 0 Documentation
 APPROVED — Version 1.0
 
 ## Last Completed Sprint
-SPRINT-02 — Core Domain, Persistence & Consultation Admission
+SPRINT-03 — Evidence & Secure File Management
 
 ## Last Sprint Status
 APPROVED WITH OBSERVATIONS
 
 ## Current Sprint
-SPRINT-03 — Evidence & Secure File Management
+SPRINT-04 — Client Portal — Notification Process
 
 ## Current Sprint Status
 READY FOR OWNER REVIEW
 
 ## Next Sprint
-SPRINT-04 — Client Portal — Notification Process
+SPRINT-05 — Administrative Portal — Review & Validation
 
 ## Next Sprint Status
-PLANNED BY DEC-036 — NOT AUTHORIZED — EXPLICIT PROJECT OWNER AUTHORIZATION REQUIRED
+NOT AUTHORIZED — EXPLICIT PROJECT OWNER AUTHORIZATION REQUIRED
 
 ## Canonical Provider Service Field
 `consultations.provider_service_id`
 
 ## Approval
-SPRINT-02 — Core Domain, Persistence & Consultation Admission was approved by the Project Owner as `APPROVED WITH OBSERVATIONS` on 2026-08-13. The observations are mandatory follow-up before production but do not reopen SPRINT-02. Production deployment and every following Sprint remain unauthorized.
+SPRINT-04 fue autorizado expresamente por el Project Owner y se implementó localmente. Permanece `READY FOR OWNER REVIEW`; esta finalización no constituye aprobación del Sprint ni autoriza SPRINT-05 o producción.
+
+## Production Status
+NOT AUTHORIZED
+
+## Canonical Roadmap Decision
+DEC-036
 
 ## Mandatory Pre-Production Follow-up
 
@@ -65,6 +71,12 @@ SPRINT-02 — Core Domain, Persistence & Consultation Admission was approved by 
 
 These gates are additional to backup, rollback, compatibility validation and explicit production authorization.
 
+## SPRINT-03 Production Gates
+
+1. `OBS-03-02`: evaluate the accepted residual malware-scanning risk before production; no scanner is currently integrated.
+2. `OBS-03-03`: verify real fileinfo and GD availability, private path, read/write permissions, absence of direct HTTP access, and streaming/download behavior on Neubox.
+3. `OBS-03-04`: validate relevant behavior on real MariaDB 10.6.27.
+
 ## Approved Implementation Roadmap
 
 1. SPRINT-03 — Evidence & Secure File Management.
@@ -75,7 +87,7 @@ These gates are additional to backup, rollback, compatibility validation and exp
 6. SPRINT-08 — Hardening & Production Readiness.
 7. PRODUCTION GATE — explicit Project Owner authorization required.
 
-DEC-036 approves the sequence. SPRINT-03 received separate explicit Project Owner authorization on 2026-08-13 and is now ready for review. Later Sprints and production remain unauthorized.
+DEC-036 es el roadmap canónico. SPRINT-03 permanece cerrado como APPROVED WITH OBSERVATIONS. SPRINT-04 está listo para revisión del Owner; SPRINT-05 y producción permanecen no autorizados.
 
 ## Critical Rules
 1. Keep notification process separate from consultation history.
@@ -94,4 +106,5 @@ DEC-036 approves the sequence. SPRINT-03 received separate explicit Project Owne
 14. Primary future Cron executable is `/usr/local/bin/php`, subject to predeployment verification.
 15. SPRINT-02 is closed as APPROVED WITH OBSERVATIONS; its six observations are mandatory before production.
 16. Production and the next Sprint are not authorized.
-17. DEC-036 establishes SPRINT-03 through SPRINT-08 as the approved roadmap; SPRINT-03 was explicitly authorized and is ready for Owner review; SPRINT-04 remains unauthorized.
+17. DEC-036 establishes SPRINT-03 through SPRINT-08 as the canonical approved roadmap; SPRINT-04 is ready for Owner review and SPRINT-05 remains unauthorized.
+18. DEC-038 prohíbe `recovered_at` futuro y fija `America/Mexico_City` para su comparación server-side.

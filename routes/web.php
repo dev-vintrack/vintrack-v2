@@ -17,6 +17,7 @@ use App\Presentation\Http\Controllers\Web\Admin\CreditPurchaseController;
 use App\Presentation\Http\Controllers\Web\Admin\CustomerMenuPermissionController;
 use App\Presentation\Http\Controllers\Web\ConsultationController;
 use App\Presentation\Http\Controllers\Web\CustomerAccountController;
+use App\Presentation\Http\Controllers\Web\CustomerNotificationCaseController;
 use App\Presentation\Http\Controllers\Web\ForgotPasswordController;
 use App\Presentation\Http\Controllers\Web\HomeController;
 use App\Presentation\Http\Controllers\Web\LoginController;
@@ -86,6 +87,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/movimientos', [CustomerAccountController::class, 'movements'])->name('customer.movements');
         Route::get('/consultas', [CustomerAccountController::class, 'consultations'])->name('customer.consultations');
         Route::get('/vin-decoder', [CustomerAccountController::class, 'vinDecoder'])->name('customer.vin-decoder');
+        Route::get('/proceso-notificaciones', [CustomerNotificationCaseController::class, 'index'])->name('customer.notification-cases.index');
+    });
+
+    Route::prefix('mi-cuenta/proceso-notificaciones')->middleware(['active.customer'])->name('customer.notification-cases.')->group(function () {
+        Route::get('/{case}', [CustomerNotificationCaseController::class, 'show'])->name('show');
+        Route::put('/{case}', [CustomerNotificationCaseController::class, 'update'])->name('update');
+        Route::post('/{case}/submit', [CustomerNotificationCaseController::class, 'submit'])->name('submit');
     });
 
     Route::prefix('admin')->middleware(['role:admin,analista,soporte'])->group(function () {

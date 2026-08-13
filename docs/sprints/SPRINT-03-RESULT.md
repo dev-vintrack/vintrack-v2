@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-08-13  
 **Entorno:** local/testing  
-**Estado:** READY FOR OWNER REVIEW
+**Estado:** APPROVED WITH OBSERVATIONS
 
 ## 1. Executive Summary
 Se implementó evidencia privada con upload, metadata/SHA-256, límite concurrente, listado, descarga autorizada, soft removal, idempotencia, auditoría y compensación filesystem/DB. Resultado final: **82 tests, 295 assertions, 0 fallos**. Producción no fue tocada.
@@ -17,7 +17,7 @@ Sin portales, DataTables, revisión visual, delivery, email real, Cron/Scheduler
 Leídos `AGENTS.md`, siete documentos maestros, resultados SPRINT-00/01/02 y rector SPRINT-03. Inspeccionados schema, migrations, modelos, storage, rutas, roles, autorización, auditoría y tests.
 
 ## 5. Roadmap / DEC-035 Registration
-Contradicción contractual: el rector pide registrar el roadmap como DEC-035; DEC-035 ya es el cierre de SPRINT-02 y el roadmap ya está en DEC-036. No se sobrescribió historia. Esta edición queda **DETENIDA / OWNER DECISION REQUIRED** únicamente para decidir si el criterio debe referir DEC-036 o un nuevo número.
+Resolución formal del Project Owner: DEC-035 conserva su significado histórico como cierre de SPRINT-02 y no se renumera, sobrescribe ni reutiliza. El roadmap posterior a SPRINT-02 está registrado correctamente en **DEC-036**, que queda confirmado como identificador canónico y oficial. La referencia a DEC-035 en el rector de SPRINT-03 permanece intacta como error documental histórico.
 
 ## 6. Baseline Verification
 Antes de cambios, `php artisan test --no-ansi`: **76 passed, 258 assertions, 0 failed**, 29.43 s. Se preservó el baseline local no versionado de SPRINT-02.
@@ -96,7 +96,7 @@ Sin daemon, symlink público, shell runtime, cloud o background obligatorio. Fil
 Suite completa verde: núcleo SPRINT-02, admission antes de wallet/provider, creación/reutilización, submit, estados, authorization y wallet/provider.
 
 ## 30. Failures, Limitations and Known Issues
-Sin scanner. MariaDB 10.6.27 no ejecutado. DEC-035/036 requiere Owner. La base desechable anterior no existía; harness usó datos aislados en MySQL local principal y cleanup exitoso. Capabilities siguen materializadas por el servicio role-based del baseline, sin catálogo persistente nuevo.
+Scanner antimalware no disponible, aceptado como riesgo residual y Production Gate; no se instala infraestructura adicional. MariaDB 10.6.27 y la verificación productiva de fileinfo, GD, ruta privada, permisos, inaccesibilidad HTTP directa y streaming/download permanecen Production Gates. La base desechable anterior no existía; el harness usó datos aislados en MySQL local principal y tuvo cleanup exitoso. Capabilities siguen materializadas por el servicio role-based del baseline, sin catálogo persistente nuevo.
 
 ## 31. Production Impact
 Producción no conectada, migrada, desplegada ni modificada.
@@ -108,10 +108,10 @@ Retirar rutas/clases y revertir extensiones puntuales; no hay migration. Con dat
 BR-019/DEC-017 formatos/límites; BR-020/DEC-021 audit; BR-026/035 y DEC-033 auth/estado; DEC-029/BR-033 soft remove; SPRINT-01 §15–16 storage/SHA/locks/eventos.
 
 ## 34. Acceptance Criteria Verification
-Storage, validación, concurrencia, integridad, autorización/IDOR, download/list/remove, seguridad, tests/regresión/formato y alcance negativo: PASS. Gobernanza DEC-035: **OWNER DECISION REQUIRED**; DEC-036 ya registra roadmap.
+Storage, validación, concurrencia, integridad, autorización/IDOR, download/list/remove, seguridad, tests/regresión/formato y alcance negativo: PASS. Gobernanza: PASS; DEC-036 confirmado como roadmap canónico y DEC-035 preservado como cierre histórico de SPRINT-02.
 
 ## 35. Recommended Follow-up Sprint Boundaries
-No iniciar SPRINT-04. Antes de producción: resolver DEC-035/036, ejecutar MariaDB/hosting, confirmar permisos del directorio privado y cerrar Production Gates de SPRINT-02.
+No iniciar SPRINT-04 sin autorización expresa. Antes de producción: ejecutar MariaDB 10.6.27, evaluar malware scanning, verificar fileinfo/GD, ruta y permisos privados, inaccesibilidad HTTP directa y streaming/download en Neubox, y cerrar los Production Gates acumulados de SPRINT-02.
 
 ## 36. Sprint Conclusion
 Demostrado localmente case autorizado → upload → privado → metadata/SHA/audit → list/download → soft remove; además IDOR rechazado, replay, compensación y carrera 7+2 con final ocho.
@@ -127,4 +127,18 @@ Purga física: NO IMPLEMENTADA
 Expedientes retroactivos: NO CREADOS
 ```
 
-READY FOR OWNER REVIEW
+## Owner Review / Governance Closure
+
+**Decisión formal:** `SPRINT-03 — APPROVED WITH OBSERVATIONS`
+**Fecha de aprobación:** 2026-08-13
+
+Observaciones registradas:
+
+1. `OBS-03-01`: DEC-036 es el identificador canónico del roadmap; DEC-035 conserva su significado histórico. El rector no se modifica.
+2. `OBS-03-02`: ausencia de malware scanner aceptada como riesgo residual y Production Gate; sin instalar servicios adicionales.
+3. `OBS-03-03`: fileinfo, GD, ruta privada, permisos, bloqueo de acceso HTTP directo y streaming/download deben verificarse en Neubox antes de producción.
+4. `OBS-03-04`: MariaDB 10.6.27 continúa como Production Gate pendiente.
+
+Estas observaciones no reabren ni modifican la implementación de SPRINT-03. Producción permanece no autorizada y SPRINT-04 requiere autorización explícita separada.
+
+`APPROVED WITH OBSERVATIONS`

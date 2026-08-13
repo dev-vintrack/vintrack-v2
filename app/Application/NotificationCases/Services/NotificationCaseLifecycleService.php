@@ -9,6 +9,7 @@ use App\Domain\NotificationCases\Services\TextNormalizer;
 use App\Domain\NotificationCases\ValueObjects\Vin;
 use App\Infrastructure\Persistence\Models\NotificationCase;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
@@ -50,6 +51,13 @@ final class NotificationCaseLifecycleService
                 if (array_key_exists($field, $allowed)) {
                     $allowed[$field] = $this->normalizer->normalize($allowed[$field]);
                 }
+            }
+            if (array_key_exists('recovered_at', $allowed) && $allowed['recovered_at'] !== null && $allowed['recovered_at'] !== '') {
+                $recoveredAt = CarbonImmutable::parse((string) $allowed['recovered_at'], $this->settings->timezone());
+                if ($recoveredAt->greaterThan(CarbonImmutable::now($this->settings->timezone()))) {
+                    throw new DomainException('La fecha y hora de recuperación no puede estar en el futuro.');
+                }
+                $allowed['recovered_at'] = $recoveredAt;
             }
             $case->forceFill($allowed);
             $case->lock_version++;
@@ -142,6 +150,9 @@ final class NotificationCaseLifecycleService
             }
             if (! $case->iph && ! $case->nuc) {
                 throw new DomainException('Debe informarse IPH o NUC.');
+            }
+            if ($case->recovered_at->greaterThan(CarbonImmutable::now($this->settings->timezone()))) {
+                throw new DomainException('La fecha y hora de recuperación no puede estar en el futuro.');
             }
             $from = $case->status;
             $this->stateMachine->assertTransition($from, NotificationCaseStatus::SUBMITTED);

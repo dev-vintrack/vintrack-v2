@@ -11,6 +11,18 @@ enum NotificationCaseStatus: string
     case VALIDATED = 'VALIDATED';
     case CLOSED_NO_FOLLOW_UP = 'CLOSED_NO_FOLLOW_UP';
 
+    public function label(): string
+    {
+        return match ($this) {
+            self::PENDING => 'PENDIENTE',
+            self::SUBMITTED => 'ENVIADO',
+            self::UNDER_REVIEW => 'EN VALIDACIÓN',
+            self::REJECTED => 'RECHAZADO',
+            self::VALIDATED => 'VALIDADO',
+            self::CLOSED_NO_FOLLOW_UP => 'CERRADO POR FALTA DE SEGUIMIENTO',
+        };
+    }
+
     public function isPending(): bool
     {
         return ! in_array($this, [self::VALIDATED, self::CLOSED_NO_FOLLOW_UP], true);

@@ -1,0 +1,16 @@
+AGENTS.md
+app/Application/NotificationCases/Services/NotificationCaseLifecycleService.php
+app/Domain/NotificationCases/Enums/NotificationCaseStatus.php
+app/Presentation/Http/Controllers/Web/CustomerNotificationCaseController.php
+app/Presentation/Http/Requests/NotificationCases/SaveNotificationCaseDraftRequest.php
+app/Presentation/Http/Requests/NotificationCases/SubmitNotificationCaseRequest.php
+database/migrations/2026_08_13_120000_add_notification_process_customer_menu.php
+docs/DECISION_LOG.md
+docs/PROJECT_STATE.md
+docs/sprints/SPRINT-03-RESULT.md
+docs/sprints/SPRINT-04-CLIENT-PORTAL-NOTIFICATION-PROCESS.md
+docs/sprints/SPRINT-04-RESULT.md
+resources/views/customer/notification-cases/index.blade.php
+resources/views/customer/notification-cases/show.blade.php
+routes/web.php
+tests/Feature/NotificationCases/CustomerNotificationCasePortalTest.php
