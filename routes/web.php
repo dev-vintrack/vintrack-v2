@@ -3,7 +3,6 @@
 use App\Presentation\Http\Controllers\Web\Admin\AdminConsultationController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminInventoryController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminMenuPermissionController;
-use App\Presentation\Http\Controllers\Web\Admin\CustomerMenuPermissionController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminNotificationController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminPackageController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminProviderController;
@@ -13,13 +12,15 @@ use App\Presentation\Http\Controllers\Web\Admin\AdminRoleController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminRoleTypeController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminUserController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminVehicleController;
-use App\Presentation\Http\Controllers\Web\Admin\CreditPurchaseController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminWalletController;
+use App\Presentation\Http\Controllers\Web\Admin\CreditPurchaseController;
+use App\Presentation\Http\Controllers\Web\Admin\CustomerMenuPermissionController;
 use App\Presentation\Http\Controllers\Web\ConsultationController;
 use App\Presentation\Http\Controllers\Web\CustomerAccountController;
 use App\Presentation\Http\Controllers\Web\ForgotPasswordController;
 use App\Presentation\Http\Controllers\Web\HomeController;
 use App\Presentation\Http\Controllers\Web\LoginController;
+use App\Presentation\Http\Controllers\Web\NotificationCaseDocumentController;
 use App\Presentation\Http\Controllers\Web\RegisterController;
 use App\Presentation\Http\Controllers\Web\ReportController;
 use App\Presentation\Http\Controllers\Web\ResetPasswordController;
@@ -61,6 +62,13 @@ Route::post('/ventas', [SiteController::class, 'sendSalesInquiry'])->name('site.
 Route::post('/decode-vin', [SiteController::class, 'decodeVin'])->name('site.decode-vin');
 
 Route::middleware(['auth'])->group(function () {
+    Route::prefix('notification-cases/{case}/documents')->name('notification-cases.documents.')->group(function () {
+        Route::get('/', [NotificationCaseDocumentController::class, 'index'])->name('index');
+        Route::post('/', [NotificationCaseDocumentController::class, 'store'])->name('store');
+        Route::get('/{document}', [NotificationCaseDocumentController::class, 'show'])->name('show');
+        Route::delete('/{document}', [NotificationCaseDocumentController::class, 'destroy'])->name('destroy');
+    });
+
     Route::get('/home', [HomeController::class, 'index'])->name('home');
     Route::get('/home/cliente', [HomeController::class, 'cliente'])->name('home.cliente');
     Route::get('/home/perito', [HomeController::class, 'perito'])->name('home.perito');

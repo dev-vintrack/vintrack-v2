@@ -3,6 +3,7 @@
 namespace App\Presentation\Http\Controllers\Web;
 
 use App\Application\Consultas\Services\ConsultationService;
+use App\Application\NotificationCases\Exceptions\ConsultationBlockedException;
 use App\Infrastructure\Persistence\Models\Provider;
 use App\Infrastructure\Persistence\Models\ProviderService;
 use App\Presentation\Support\PlacasReportPresenter;
@@ -10,14 +11,14 @@ use App\Presentation\Support\RoleHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 class ConsultationController
 {
     public function __construct(
         private readonly ConsultationService $consultationService
-    ) {
-    }
+    ) {}
 
     public function consult(Request $request)
     {
@@ -60,7 +61,10 @@ class ConsultationController
                 $provider->id,
                 $data['type'],
                 $data['value'],
-                $serviceCodes
+                $serviceCodes,
+                (string) ($request->header('X-Idempotency-Key') ?: Str::uuid()),
+                $request->ip(),
+                $request->userAgent(),
             );
 
             $response = $result->response();
@@ -111,8 +115,21 @@ class ConsultationController
                 'theft_flags' => $response->theftFlags(),
                 'banner' => $banner,
             ], $httpStatus);
+        } catch (ConsultationBlockedException $e) {
+            return response()->json([
+                'success' => false,
+                'status' => 409,
+                'code' => 'MAX_PENDING_NOTIFICATION_CASES',
+                'message' => $e->getMessage(),
+                'pending_count' => $e->pendingCount,
+                'data' => [],
+                'report_url' => null,
+                'local_report_url' => null,
+                'theft_flags' => [],
+                'banner' => null,
+            ], 409);
         } catch (Throwable $e) {
-            Log::error('Error en consulta: ' . $e->getMessage(), [
+            Log::error('Error en consulta: '.$e->getMessage(), [
                 'exception' => get_class($e),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -120,7 +137,7 @@ class ConsultationController
             return response()->json([
                 'success' => false,
                 'status' => 500,
-                'message' => 'Error interno: ' . $e->getMessage(),
+                'message' => 'Error interno: '.$e->getMessage(),
                 'data' => [],
                 'report_url' => null,
                 'local_report_url' => null,

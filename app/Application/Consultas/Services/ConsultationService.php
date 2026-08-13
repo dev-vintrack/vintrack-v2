@@ -5,6 +5,8 @@ namespace App\Application\Consultas\Services;
 use App\Application\Consultas\Notifications\ConsultationNotifierInterface;
 use App\Application\Credits\CommandHandlers\DebitCreditsCommandHandler;
 use App\Application\Credits\Commands\DebitCreditsCommand;
+use App\Application\NotificationCases\Services\ConsultationAdmissionService;
+use App\Application\NotificationCases\Services\NotificationCaseCreationService;
 use App\Application\Vehicles\Services\VehicleUpserter;
 use App\Domain\Consultas\Entities\Consultation;
 use App\Domain\Consultas\Repositories\ConsultationRepositoryInterface;
@@ -21,7 +23,6 @@ use App\Infrastructure\Persistence\Models\UserProviderWallet;
 use App\Models\Role;
 use App\Models\User;
 use DateTimeImmutable;
-use RuntimeException;
 
 class ConsultationService
 {
@@ -33,20 +34,25 @@ class ConsultationService
         private readonly DebitCreditsCommandHandler $debitHandler,
         private readonly ConsultationRepositoryInterface $consultationRepository,
         private readonly ConsultationNotifierInterface $notifier,
-        private readonly VehicleUpserter $vehicleUpserter
-    ) {
-    }
+        private readonly VehicleUpserter $vehicleUpserter,
+        private readonly ?ConsultationAdmissionService $consultationAdmission = null,
+        private readonly ?NotificationCaseCreationService $notificationCaseCreation = null,
+    ) {}
 
     public function consult(
         int $userId,
         int $providerId,
         string $type,
         string $value,
-        array $serviceCodes
+        array $serviceCodes,
+        ?string $requestKey = null,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
     ): ConsultationResult {
         $provider = $this->providerRepository->findById(ProviderId::fromInt($providerId));
-        if (!$provider || !$provider->isEnabled()) {
+        if (! $provider || ! $provider->isEnabled()) {
             $response = new ConsultationResponse(false, 403, 'Proveedor no disponible.', [], null, $this->emptyFlags());
+
             return new ConsultationResult($response, $this->createUnsavedConsultation($userId, 0, $type, $value, $serviceCodes, $response));
         }
 
@@ -55,6 +61,7 @@ class ConsultationService
         $requestedServiceCodes = array_values(array_intersect($serviceCodes, $enabledServiceCodes));
         if (empty($requestedServiceCodes)) {
             $response = new ConsultationResponse(false, 422, 'Debe seleccionar al menos un servicio habilitado.', [], null, $this->emptyFlags());
+
             return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, $serviceCodes, $response));
         }
 
@@ -62,20 +69,29 @@ class ConsultationService
         $providerService = $this->serviceRepository->findByServiceCode($debitServiceCode);
         if (! $providerService) {
             $response = new ConsultationResponse(false, 500, 'Servicio no encontrado para el proveedor.', [], null, $this->emptyFlags());
+
             return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, $requestedServiceCodes, $response));
         }
 
         $providerServiceId = $providerService->id();
         $adapterCode = $provider->adapterCode();
+        $requestKey ??= 'consult-'.bin2hex(random_bytes(16));
+        $admission = $this->consultationAdmission ?? app(ConsultationAdmissionService::class);
+        $caseCreation = $this->notificationCaseCreation ?? app(NotificationCaseCreationService::class);
+        $reservationId = $admission->reserve($userId, $requestKey, $ipAddress, $userAgent);
         UserProviderWallet::syncExpiredStatuses();
         $wallet = $this->walletRepository->findByUserAndServiceOrCreate($userId, $providerServiceId);
         $cost = $providerService->creditCost()->amount();
-        if (! $wallet->isValidAt(new DateTimeImmutable())) {
+        if (! $wallet->isValidAt(new DateTimeImmutable)) {
+            $admission->release($reservationId);
             $response = new ConsultationResponse(false, 402, 'Los créditos para este servicio han expirado.', [], null, $this->emptyFlags());
+
             return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, [$debitServiceCode], $response, $cost, $providerServiceId));
         }
-        if ($cost > 0 && !$wallet->balance()->isGreaterThanOrEqual(Money::fromFloat($cost))) {
+        if ($cost > 0 && ! $wallet->balance()->isGreaterThanOrEqual(Money::fromFloat($cost))) {
+            $admission->release($reservationId);
             $response = new ConsultationResponse(false, 402, 'Saldo insuficiente de créditos.', [], null, $this->emptyFlags());
+
             return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, [$debitServiceCode], $response, $cost, $providerServiceId));
         }
 
@@ -88,19 +104,29 @@ class ConsultationService
 
         $request = new ConsultationRequest($userId, $adapterCode, $value, $type, $adapterServices);
         $adapter = $this->adapterRegistry->resolve($adapterCode);
-        $response = $adapter->consult($request);
+        try {
+            $response = $adapter->consult($request);
+        } catch (\Throwable $exception) {
+            $admission->release($reservationId);
+            throw $exception;
+        }
 
         if ($response->success() && $cost > 0) {
-            $correlationId = 'consult-' . $adapterCode . '-' . $userId . '-' . time() . '-' . bin2hex(random_bytes(4));
+            $correlationId = 'consult-'.$adapterCode.'-'.$userId.'-'.time().'-'.bin2hex(random_bytes(4));
             $debitCommand = new DebitCreditsCommand(
                 $userId,
                 $providerServiceId,
                 $cost,
-                'Consulta ' . $adapterCode . ' ' . strtoupper($type) . ' ' . $value,
+                'Consulta '.$adapterCode.' '.strtoupper($type).' '.$value,
                 $correlationId,
                 null
             );
-            $this->debitHandler->handle($debitCommand);
+            try {
+                $this->debitHandler->handle($debitCommand);
+            } catch (\Throwable $exception) {
+                $admission->release($reservationId);
+                throw $exception;
+            }
         }
 
         $consultation = Consultation::fromResponse(
@@ -112,13 +138,19 @@ class ConsultationService
             [$debitServiceCode],
             $cost,
             $response,
-            new DateTimeImmutable()
+            new DateTimeImmutable
         );
         $savedConsultation = $this->consultationRepository->save($consultation);
 
         if ($response->success()) {
             $this->vehicleUpserter->upsertFromConsultation($savedConsultation, $adapterCode, $providerServiceId);
             $this->dispatchNotifications($userId, $providerServiceId, $adapterCode, $savedConsultation);
+        }
+
+        if ($response->success() && $savedConsultation->alertaRobo()) {
+            $caseCreation->createOrReuse($savedConsultation, $adapterCode, $reservationId);
+        } else {
+            $admission->consume($reservationId);
         }
 
         return new ConsultationResult($response, $savedConsultation);
@@ -176,7 +208,7 @@ class ConsultationService
             $services,
             $cost,
             $response,
-            new DateTimeImmutable()
+            new DateTimeImmutable
         );
     }
 

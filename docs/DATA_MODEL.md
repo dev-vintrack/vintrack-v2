@@ -1,0 +1,71 @@
+# VINTrack — Data Model Governance
+
+**Status:** APPROVED  
+**Version:** 1.0  
+**Approval date:** 2026-08-12
+
+## Existing Baseline
+`consultations.provider_service_id` already exists locally and in production. Do not recreate it.
+
+## vehicles
+`vehicles` is a consolidated/reporting structure and must NOT be the notification-expedient master because it lacks the required direct relationship to the user who performed the consultation.
+
+## Required Data Areas
+The implementation is expected to require dedicated structures for:
+1. Notification expedient.
+2. Evidence/document metadata.
+3. Audit/history.
+4. Configuration/reference values where appropriate.
+
+## Expedient Data
+The final design should support:
+- expedient number;
+- responsible user/customer;
+- originating consultation;
+- relevant vehicle/service identifiers;
+- status;
+- deadline;
+- lifecycle dates;
+- previous expedient reference where applicable;
+- timestamps.
+
+The case stores `consultation_id` and immutable owner `user_id`. It must not duplicate `source_criterion`, `source_value` or `provider_service_id`; those remain reachable through `consultations`. `vin`/`vin_key` are nullable only for a `placa`-originated draft without recoverable VIN, required before `SUBMITTED`, and immutable after first assignment. A provisional guard uses the related consultation's provider service + normalized PLATE + normalized plate value. VIN conflicts are represented by an auxiliary auditable reconciliation incident/flag, never a seventh case status.
+
+## Evidence Data
+Support:
+- expedient relation;
+- original filename;
+- secure storage path/key;
+- MIME/content type;
+- size;
+- upload metadata;
+- timestamps.
+
+## Audit Data
+Support:
+- actor;
+- action;
+- entity;
+- entity identifier;
+- previous/new state;
+- reason/metadata;
+- timestamp.
+
+Include `CASE_VIN_ASSIGNED` for the idempotent first VIN assignment and reconciliation events. Pre-case events may have nullable case reference only under their explicit allowlist.
+
+## Configuration
+The final design must support configurable business values such as the 90-day reuse window, 30-day maximum open period, 3-day deadline, maximum pending count and file limits.
+
+## Integrity
+Use InnoDB, utf8mb4, appropriate foreign keys and indexes. Design for efficient lookup by user/customer, consultation, VIN/reference, status and dates.
+
+Functional temporal columns use `DATETIME` with contractual `America/Mexico_City` semantics; `notification_deadline_at` is `DATETIME(0)` and other timestamps may be `DATETIME(6)`. Do not rely on `TIMESTAMP`, database session timezone or browser conversion.
+
+## Retention
+Provisional targets: cases, documents and audit events 5 years; portal notifications 2 years. These targets do not authorize automatic purge, physical deletion or anonymization. Future disposal requires legal and Owner approval, auditability, idempotency and preservation of historical chains.
+
+## Migration Safety
+Migrations must be tested locally first, be reversible where practical, and be compatible with MySQL 8.4.3 and MariaDB 10.6.27.
+
+## Important
+Do not invent final foreign keys or table names until the actual application/database has been inspected during Discovery.

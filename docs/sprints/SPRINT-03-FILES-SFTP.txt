@@ -1,0 +1,16 @@
+app/Application/NotificationCases/Exceptions/CaseDocumentException.php
+app/Application/NotificationCases/Services/CaseDocumentValidator.php
+app/Application/NotificationCases/Services/NotificationCaseAuditService.php
+app/Application/NotificationCases/Services/NotificationCaseAuthorizationService.php
+app/Application/NotificationCases/Services/NotificationCaseDocumentService.php
+app/Application/NotificationCases/Services/PrivateCaseDocumentStorage.php
+app/Infrastructure/Persistence/Models/NotificationCase.php
+app/Infrastructure/Persistence/Models/NotificationCaseDocument.php
+app/Presentation/Http/Controllers/Web/NotificationCaseDocumentController.php
+docs/PROJECT_STATE.md
+docs/sprints/SPRINT-03-RESULT.md
+routes/web.php
+tests/Feature/NotificationCases/NotificationCaseDocumentTest.php
+tests/Support/cleanup_notification_case_document_concurrency.php
+tests/Support/notification_case_document_worker.php
+tests/Support/prepare_notification_case_document_concurrency.php
