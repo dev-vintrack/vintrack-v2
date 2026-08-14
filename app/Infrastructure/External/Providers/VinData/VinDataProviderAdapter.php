@@ -9,11 +9,11 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
-use RuntimeException;
 
 class VinDataProviderAdapter implements ProviderAdapterInterface
 {
     private const TOKEN_CACHE_KEY = 'vindata_bearer_token';
+
     private const DEFAULT_TIMEOUT = 60;
 
     private Client $client;
@@ -53,7 +53,7 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
             'vhr' => 'VHR',
             'nmvtis_plus' => 'NMVTISPlus',
         ];
-        if (!array_key_exists($serviceCode, $productMap)) {
+        if (! array_key_exists($serviceCode, $productMap)) {
             return $this->errorResponse(422, 'Producto VINData inválido. Use VHR o NMVTISPlus.');
         }
 
@@ -73,7 +73,7 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
             $buyResponse = $this->client->post($buyUrl, [
                 'headers' => [
                     'Accept' => 'application/json',
-                    'Authorization' => 'Bearer ' . $token,
+                    'Authorization' => 'Bearer '.$token,
                     'User-Agent' => 'VINTRACK/2.0 (+https://vintrack.com.mx)',
                 ],
             ]);
@@ -82,7 +82,7 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
         } catch (RequestException $e) {
             return $this->errorResponse(
                 $e->getResponse()?->getStatusCode() ?? 500,
-                'Error al comprar reporte VINData: ' . $e->getMessage()
+                'No fue posible completar la compra del reporte VINData.'
             );
         }
 
@@ -99,7 +99,7 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
             $reportResponse = $this->client->get($reportUrl, [
                 'headers' => [
                     'Accept' => 'application/json',
-                    'Authorization' => 'Bearer ' . $token,
+                    'Authorization' => 'Bearer '.$token,
                     'User-Agent' => 'VINTRACK/2.0 (+https://vintrack.com.mx)',
                 ],
             ]);
@@ -108,7 +108,7 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
         } catch (RequestException $e) {
             return $this->errorResponse(
                 $e->getResponse()?->getStatusCode() ?? 500,
-                'Error al obtener el reporte VINData: ' . $e->getMessage(),
+                'No fue posible obtener el reporte VINData.',
                 $uuid
             );
         }
@@ -128,7 +128,7 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
     private function getToken(): ?string
     {
         $cached = Cache::get(self::TOKEN_CACHE_KEY);
-        if (!empty($cached)) {
+        if (! empty($cached)) {
             return $cached;
         }
 
@@ -153,7 +153,7 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
             $body = json_decode($response->getBody()->getContents(), true);
             $token = $body['token'] ?? $body['access_token'] ?? null;
 
-            if (!empty($token)) {
+            if (! empty($token)) {
                 $ttl = (int) Config::get('providers.vindata.token_ttl_minutes', 55);
                 Cache::put(self::TOKEN_CACHE_KEY, $token, now()->addMinutes($ttl));
             }
@@ -191,7 +191,7 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
             }
         }
 
-        if (!empty($reportBody['titleBrandReported'])) {
+        if (! empty($reportBody['titleBrandReported'])) {
             foreach ($reportBody['titleBrandReported'] as $brand) {
                 $brandName = strtolower($brand['name'] ?? '');
                 if (str_contains($brandName, 'junk') || str_contains($brandName, 'salvage') || str_contains($brandName, 'total loss')) {
@@ -203,7 +203,7 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
             }
         }
 
-        if (!empty($reportBody['junkSalvageTotalLoss'])) {
+        if (! empty($reportBody['junkSalvageTotalLoss'])) {
             $alerts['junk_salvage'] = 1;
         }
 

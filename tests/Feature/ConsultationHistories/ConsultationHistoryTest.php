@@ -105,6 +105,41 @@ class ConsultationHistoryTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $a->id]);
     }
 
+    public function test_derived_status_search_uses_the_latest_historically_applicable_case(): void
+    {
+        [$a, , $provider, $service] = $this->baseline();
+        $first = $this->consultation($a, $provider, $service, 'vin', '1HGCM82633A123456', '2026-01-01 10:00:00');
+        $this->case($first, $a, NotificationCaseStatus::REJECTED);
+        $latest = $this->consultation($a, $provider, $service, 'vin', '1HGCM82633A123456', '2026-01-02 10:00:00');
+        $this->case($latest, $a, NotificationCaseStatus::VALIDATED, ['validated_at' => '2026-01-03 10:00:00']);
+        $analyst = User::factory()->create(['rol' => 'analista', 'activo' => true]);
+
+        $validated = $this->jsonFor($analyst, 'admin.consultations.data', ['search' => ['value' => 'VALIDADO']]);
+        $validated->assertOk();
+        $this->assertSame(1, $validated->json('recordsFiltered'));
+        $this->assertSame(['VALIDATED'], array_values(array_unique(array_column($validated->json('data'), 'general_status'))));
+
+        $rejected = $this->jsonFor($analyst, 'admin.consultations.data', ['case_status' => 'REJECTED']);
+        $this->assertSame(1, $rejected->json('recordsFiltered'));
+    }
+
+    public function test_vin_ordering_and_closed_without_submit_preserve_derived_semantics(): void
+    {
+        [$a, , $provider, $service] = $this->baseline();
+        $plate = $this->consultation($a, $provider, $service, 'placa', 'ABC-123', '2026-01-01 10:00:00');
+        $this->case($plate, $a, NotificationCaseStatus::CLOSED_NO_FOLLOW_UP, [
+            'vin' => '1HGCM82633A000001', 'vin_key' => '1HGCM82633A000001', 'closed_at' => '2026-01-20 10:00:00',
+        ]);
+        $this->consultation($a, $provider, $service, 'vin', '9HGCM82633A000001', '2026-01-02 10:00:00');
+
+        $response = $this->jsonFor($a, 'customer.consultations.data', [
+            'length' => 10, 'order' => [['column' => 2, 'dir' => 'asc']],
+        ]);
+        $response->assertOk();
+        $this->assertSame(['1HGCM82633A000001', '9HGCM82633A000001'], array_column($response->json('data'), 'vin'));
+        $this->assertSame('NO', $response->json('data.0.notified_status'));
+    }
+
     private function jsonFor(User $user, string $route, array $parameters = [])
     {
         return $this->actingAs($user)->getJson(route($route, $parameters));

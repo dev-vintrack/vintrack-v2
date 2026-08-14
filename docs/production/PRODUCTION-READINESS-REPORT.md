@@ -17,12 +17,12 @@ SPRINT-01 a SPRINT-07 se mantienen contractuales. SPRINT-08 añadió idempotenci
 | Gate | Estado | Evidencia / condición |
 |---|---|---|
 | PG-01 MariaDB 10.6.27 | BLOCKED_EXTERNAL | No existe runtime aislado disponible; Docker/Podman ausentes. |
-| PG-02 idempotencia request→consultation | OPEN | Garantía persistente implementada y pruebas funcionales verdes; falta prueba obligatoria multiproceso instrumentada. |
-| PG-03 EXPLAIN con volumen | OPEN | No se generó todavía dataset representativo desechable ni evidencia Before/After. |
-| PG-04 deuda histórica migrations | OPEN | Confirmadas dependencia `adapter_code`, `down()` irreversible y rollback global `label/icon`; requiere estrategia de baseline/forward-fix. |
+| PG-02 idempotencia request→consultation | CLOSED | MySQL multiproceso: misma key produjo provider=1, debit=1, consultation=1 y operation=1; keys distintas produjeron 2/2/2/2. |
+| PG-03 EXPLAIN con volumen | CLOSED | Dataset 100k/10k/10k; escenarios medidos <5 s, búsqueda sin timeout y EXPLAIN Before/After reproducible. |
+| PG-04 deuda histórica migrations | CLOSED | Bootstrap `database/schema/mysql-schema.sql` probado en DB vacía (43 tablas/53 FK/54 migrations); historia previa declarada forward-only. |
 | PG-05 malware scanning | OPEN | MIME/hash no escanean malware; no hay solución aprobada. |
 | PG-06 storage/fileinfo/GD/permisos Neubox | BLOCKED_EXTERNAL | Extensiones verificadas sólo localmente. |
-| PG-07 backup/rollback | OPEN | Runbooks preparados; restauración integral local aún no ejecutada. |
+| PG-07 backup/rollback | CLOSED | Dump+evidence archive+manifest SHA-256 restaurados en DB/storage desechables; 10 verificaciones pasaron. VERIFIED LOCALLY. |
 | PG-08 PHP CLI cPanel | BLOCKED_EXTERNAL | Ruta/binario no probados en Neubox. |
 | PG-09 Artisan por cPanel Cron | BLOCKED_EXTERNAL | Requiere entorno real autorizado. |
 | PG-10 working directory | BLOCKED_EXTERNAL | Ruta real desconocida. |
@@ -36,15 +36,15 @@ SPRINT-01 a SPRINT-07 se mantienen contractuales. SPRINT-08 añadió idempotenci
 | PG-18 DataTables CDN/CSP | OPEN | CDN 1.13.6 aceptado; política CSP/SRI/local asset pendiente. |
 | PG-19 autorización producción | DEFERRED_BY_OWNER | Producción explícitamente no autorizada. |
 | PG-20 APP_DEBUG/config segura | BLOCKED_EXTERNAL | Checklist preparado; valores productivos no verificados. |
-| PG-21 secrets/log sanitization | OPEN | Revisión enfocada sin hallazgo confirmado; requiere auditoría formal previa al artifact. |
+| PG-21 secrets/log sanitization | CLOSED | Auditoría formal sin secretos reales versionados; excepción/provider/OTP/mail sanitizados y regresión verde. |
 
 ## 4. Closed Gates
 
-Ningún Gate que requiere entorno real fue cerrado. OBS-07-02 sí quedó resuelta como hardening local, pero no sustituye los Gates SMTP.
+PG-02, PG-04, PG-07 y PG-21 quedaron cerrados con evidencia local reproducible. Ningún Gate que requiere entorno real fue cerrado.
 
 ## 5. Open Gates
 
-PG-02, PG-03, PG-04, PG-05, PG-07, PG-18 y PG-21.
+PG-05 y PG-18.
 
 ## 6. External Blockers
 
@@ -58,9 +58,13 @@ La suite conserva pruebas negativas de auth, roles, IDOR, mass assignment, uploa
 
 MySQL 8.4.3 ejecutó la migration `consultation_operations` y su ciclo reversible. La tabla usa hashes SHA-256, unique `(user_id,idempotency_key_hash)`, FK restrictivas y estados explícitos. MariaDB permanece no verificada.
 
-## 9. Performance Assessment
+## 9. PG-03 Performance Remediation
 
-Arquitectura server-side y tests de paginación/búsqueda permanecen verdes. Sin dataset representativo ni EXPLAIN reproducible, performance es **NOT VERIFIED** y no se agregaron índices especulativos.
+Dataset desechable: 200 users, 100,000 consultations, 10,000 cases y 10,000 events. Baseline: Cliente ~95 ms, Admin ~195 ms, filtro Cliente ~2.21 s y búsqueda derivada >180 s/timeout. La remediación separa conteos base, pagina IDs antes de enriquecer, materializa candidatos exactos de búsqueda/status, excluye asociaciones retroactivas o superadas y resuelve eventos por caso/página sin cambiar 3/30/90.
+
+P50 local (3 runs): Cliente 54.831 ms; Admin 136.343 ms; filtro Cliente 94.548 ms; búsqueda derivada 1,447.694 ms; placa 1,646.462 ms; status 2,225.898 ms; orden VIN/página offset 5,000 2,039.715 ms. Ningún escenario ni statement medido superó 5 s; no se carga el universo en PHP.
+
+Before, placa estimaba ~99,246 filas por lookup. After, `consultations_service_normalized_created_idx(provider_service_id, normalized_value, criterio, created_at, id)` estima 20; `consultations_normalized_created_idx(normalized_value, created_at, id)` resuelve candidatos; timeline usa `notification_case_events_timeline_idx`, estimación 1. Costo: dos índices secundarios y mantenimiento de escritura/storage. Migration `up/down/up` verificada. PG-03 CLOSED.
 
 ## 10. Storage Assessment
 
@@ -76,11 +80,11 @@ SMTP conserva semántica at-least-once. Usuario inexistente/email inválido es t
 
 ## 13. Backup Assessment
 
-Procedimiento documentado; backup/restauración productivos no ejecutados.
+Backup/restore integral fue VERIFIED LOCALLY con dump de 102,282 bytes, archive de evidencia de 3,584 bytes, manifest de 274 bytes y SHA-256. Producción no fue verificada.
 
 ## 14. Rollback Assessment
 
-La migration SPRINT-08 pasó rollback local. La cadena histórica no garantiza rollback global seguro; para migrations destructivas o de datos debe preferirse forward-fix/restauración validada.
+Las migrations SPRINT-08 pasaron ciclos reversibles locales. Para instalaciones nuevas, `php artisan migrate` carga el bootstrap versionado; configuración/datos de referencia requieren import aprobado separado. En entornos existentes sólo se aplican migrations incrementales. Todo lo anterior al baseline es forward-only: ante fallo, restaurar backup consistente o aplicar forward-fix.
 
 ## 15. Known Risks
 
@@ -95,11 +99,11 @@ Ejecutar todos los Gates `BLOCKED_EXTERNAL` sólo bajo autorización posterior y
 
 ## 17. Recommended Deployment Sequence
 
-No desplegar. Primero cerrar PG-02/03/04/05/07/21; luego staging/MariaDB; después verificar Neubox, backup/restauración, artifact, config, storage, Cron y SMTP; finalmente solicitar autorización separada.
+No desplegar. El Owner debe decidir PG-05/PG-18; luego staging/MariaDB y Gates Neubox bajo autorización separada.
 
 ## 18. Production Readiness Verdict
 
-**NOT READY**
+**READY WITH CONDITIONS**
 
 Production Authorization: **NOT AUTHORIZED**
 Deployment: **NOT EXECUTED**

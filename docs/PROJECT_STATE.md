@@ -37,22 +37,22 @@ SPRINT-07 — Notifications, Outbox Delivery & Automation
 APPROVED WITH OBSERVATIONS
 
 ## Current Sprint
-None
-
-## Current Sprint Status
-NO ACTIVE SPRINT
-
-## Next Sprint
 SPRINT-08 — Hardening & Production Readiness
 
+## Current Sprint Status
+READY FOR OWNER REVIEW — TARGETED REMEDIATION COMPLETED
+
+## Next Sprint
+None authorized
+
 ## Next Sprint Status
-PENDING OWNER AUTHORIZATION
+NO NEXT SPRINT AUTHORIZED
 
 ## Canonical Provider Service Field
 `consultations.provider_service_id`
 
 ## Approval
-SPRINT-07 fue aprobado por el Project Owner como `APPROVED WITH OBSERVATIONS` el 2026-08-14. DEC-043 registra el cierre. Las observaciones no reabren ni modifican la implementación. SPRINT-08 requiere autorización explícita y producción permanece no autorizada.
+SPRINT-08 fue ejecutado localmente y recibió decisión `NEEDS TARGETED FOLLOW-UP`. El remediation pass autorizado cerró localmente PG-02, PG-04, PG-07 y PG-21; PG-03 permanece OPEN por timeout reproducible de búsqueda global derivada. SPRINT-08 vuelve a `READY FOR OWNER REVIEW`, no está formalmente cerrado y producción permanece no autorizada.
 
 ## Production Status
 NOT AUTHORIZED
@@ -135,7 +135,7 @@ Carreras cerradas localmente: doble submit, doble VIN, validate vs reject, valid
 6. SPRINT-08 — Hardening & Production Readiness.
 7. PRODUCTION GATE — explicit Project Owner authorization required.
 
-DEC-036 es el roadmap canónico. SPRINT-06 está cerrado mediante DEC-042. SPRINT-07 está cerrado como APPROVED WITH OBSERVATIONS mediante DEC-043. SPRINT-08 está pendiente de autorización explícita y producción permanece no autorizada.
+DEC-036 es el roadmap canónico. SPRINT-07 está cerrado mediante DEC-043. SPRINT-08 está `READY FOR OWNER REVIEW` después de targeted remediation, todavía no cerrado formalmente. Producción permanece no autorizada.
 
 ## Critical Rules
 1. Keep notification process separate from consultation history.
@@ -169,4 +169,4 @@ DEC-036 es el roadmap canónico. SPRINT-06 está cerrado mediante DEC-042. SPRIN
 - Email de expedientes mediante Laravel Mail: implementado con transporte de pruebas; SMTP productivo no configurado.
 - Commands discretos para outbox, deadlines y auto-close: implementados localmente.
 - Scheduler no es requisito productivo; Cron real no configurado.
-- SPRINT-08 no iniciado; pendiente de autorización explícita.
+- SPRINT-08 targeted remediation ejecutado localmente; pendiente de revisión del Owner. No se inició SPRINT-09.

@@ -39,6 +39,7 @@ class CustomerMailNotificationService
 
         if ($balance <= 0) {
             $this->sendZeroBalance($wallet, $correlationId);
+
             return;
         }
 
@@ -86,7 +87,7 @@ class CustomerMailNotificationService
             'rol' => $user?->rol ?? '',
         ];
         $consultationReference = $consultation->id() ?: sha1(
-            $userId . '|' . $providerServiceId . '|' . $consultation->criterio() . '|' . $consultation->valor() . '|' . $consultation->createdAt()->format('c')
+            $userId.'|'.$providerServiceId.'|'.$consultation->criterio().'|'.$consultation->valor().'|'.$consultation->createdAt()->format('c')
         );
         $subject = 'Alerta VINTRACK: posible reporte de robo o recuperado';
 
@@ -119,7 +120,7 @@ class CustomerMailNotificationService
 
         $policy = NotificationPolicy::resolveFor($wallet->service, NotificationPolicy::EXPIRING);
         $validityKey = $wallet->validity_end->format('YmdHis');
-        $subject = "Tus créditos VINTRACK vencen en {$daysRemaining} " . ($daysRemaining === 1 ? 'día' : 'días');
+        $subject = "Tus créditos VINTRACK vencen en {$daysRemaining} ".($daysRemaining === 1 ? 'día' : 'días');
 
         $this->deliver(
             $policy,
@@ -212,11 +213,13 @@ class CustomerMailNotificationService
 
         if (! $policy->enabled) {
             $delivery->update(['status' => 'skipped', 'error' => 'Evento deshabilitado por política.']);
+
             return false;
         }
 
         if (! $user || empty($user->email)) {
             $delivery->update(['status' => 'skipped', 'error' => 'El usuario no tiene un correo disponible.']);
+
             return false;
         }
 
@@ -224,14 +227,16 @@ class CustomerMailNotificationService
             $delivery->update(['attempts' => 1]);
             Mail::to($user->email)->send($mail);
             $delivery->update(['status' => 'sent', 'sent_at' => now(), 'error' => null]);
+
             return true;
         } catch (Throwable $e) {
             $delivery->update([
                 'status' => 'failed',
                 'failed_at' => now(),
-                'error' => Str::limit($e->getMessage(), 2000, ''),
+                'error' => 'DELIVERY_FAILED:'.class_basename($e),
             ]);
             report($e);
+
             return false;
         }
     }

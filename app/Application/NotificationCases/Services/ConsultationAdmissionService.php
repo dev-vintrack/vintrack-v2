@@ -22,7 +22,9 @@ final class ConsultationAdmissionService
                 if ($existing->consumed_at === null && $existing->released_at === null && $existing->expires_at >= now()->format('Y-m-d H:i:s.u')) {
                     return (int) $existing->id;
                 }
-                throw new ConsultationBlockedException($this->pendingCount($userId));
+                if ((int) $existing->user_id !== $userId || $existing->consumed_at !== null) {
+                    throw new ConsultationBlockedException($this->pendingCount($userId));
+                }
             }
 
             DB::table('notification_case_user_guards')->insertOrIgnore([
@@ -45,6 +47,16 @@ final class ConsultationAdmissionService
                 ]);
 
                 return ['blocked' => $pending];
+            }
+
+            if ($existing) {
+                DB::table('notification_case_consultation_reservations')->where('id', $existing->id)->update([
+                    'expires_at' => now()->addSeconds($this->settings->reservationTtlSeconds()),
+                    'released_at' => null,
+                    'updated_at' => now(),
+                ]);
+
+                return (int) $existing->id;
             }
 
             return (int) DB::table('notification_case_consultation_reservations')->insertGetId([

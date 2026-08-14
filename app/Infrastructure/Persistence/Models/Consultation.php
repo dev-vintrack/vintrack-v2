@@ -19,6 +19,7 @@ class Consultation extends Model
         'provider_service_id',
         'criterio',
         'valor',
+        'normalized_value',
         'api_id',
         'services',
         'costo_credito',
@@ -50,6 +51,16 @@ class Consultation extends Model
         'flags_json' => 'array',
         'response_json' => 'array',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $consultation) {
+            $value = strtoupper(trim((string) $consultation->valor));
+            $consultation->normalized_value = strtolower((string) $consultation->criterio) === 'placa'
+                ? str_replace(['-', ' ', '.', '/'], '', $value)
+                : $value;
+        });
+    }
 
     public function user(): BelongsTo
     {

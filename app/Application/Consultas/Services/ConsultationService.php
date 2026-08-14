@@ -87,7 +87,7 @@ class ConsultationService
         $admission = $this->consultationAdmission ?? app(ConsultationAdmissionService::class);
         $caseCreation = $this->notificationCaseCreation ?? app(NotificationCaseCreationService::class);
         try {
-            $reservationId = $admission->reserve($userId, $requestKey, $ipAddress, $userAgent);
+            $reservationId = $admission->reserve($userId, 'consult:'.hash('sha256', $userId.'|'.$requestKey), $ipAddress, $userAgent);
         } catch (\Throwable $exception) {
             $operations->fail($operation->id, 'ADMISSION_FAILED', false);
             throw $exception;
@@ -97,14 +97,14 @@ class ConsultationService
         $cost = $providerService->creditCost()->amount();
         if (! $wallet->isValidAt(new DateTimeImmutable)) {
             $admission->release($reservationId);
-            $operations->fail($operation->id, 'WALLET_EXPIRED', true);
+            $operations->fail($operation->id, 'WALLET_EXPIRED', false);
             $response = new ConsultationResponse(false, 402, 'Los créditos para este servicio han expirado.', [], null, $this->emptyFlags());
 
             return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, [$debitServiceCode], $response, $cost, $providerServiceId));
         }
         if ($cost > 0 && ! $wallet->balance()->isGreaterThanOrEqual(Money::fromFloat($cost))) {
             $admission->release($reservationId);
-            $operations->fail($operation->id, 'INSUFFICIENT_BALANCE', true);
+            $operations->fail($operation->id, 'INSUFFICIENT_BALANCE', false);
             $response = new ConsultationResponse(false, 402, 'Saldo insuficiente de créditos.', [], null, $this->emptyFlags());
 
             return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, [$debitServiceCode], $response, $cost, $providerServiceId));

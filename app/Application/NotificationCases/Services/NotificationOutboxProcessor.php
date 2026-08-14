@@ -178,6 +178,10 @@ final class NotificationOutboxProcessor
 
     private function safeError(Throwable $exception): string
     {
-        return Str::limit(preg_replace('/[\r\n\t]+/', ' ', $exception->getMessage()) ?: 'DELIVERY_FAILED', 1000, '');
+        if ($exception instanceof NonRetryableDeliveryException) {
+            return Str::limit($exception->getMessage(), 1000, '');
+        }
+
+        return 'DELIVERY_FAILED:'.class_basename($exception);
     }
 }

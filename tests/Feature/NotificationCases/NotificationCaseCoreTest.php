@@ -4,8 +4,10 @@ namespace Tests\Feature\NotificationCases;
 
 use App\Application\Consultas\Exceptions\ConsultationOperationException;
 use App\Application\Consultas\Services\ConsultationService;
+use App\Application\Credits\CommandHandlers\DebitCreditsCommandHandler;
 use App\Application\NotificationCases\Exceptions\ConsultationBlockedException;
 use App\Application\NotificationCases\Services\NotificationCaseLifecycleService;
+use App\Domain\Consultas\Repositories\ConsultationRepositoryInterface;
 use App\Domain\Consultas\Services\ProviderAdapterInterface;
 use App\Domain\Consultas\Services\ProviderAdapterRegistry;
 use App\Domain\Consultas\ValueObjects\ConsultationRequest;
@@ -47,6 +49,7 @@ class NotificationCaseCoreTest extends TestCase
         $this->assertDatabaseCount('consultations', 3);
         $this->assertDatabaseCount('notification_case_events', 1);
         $this->assertDatabaseCount('notification_outbox', 1);
+        $this->assertDatabaseHas('consultation_operations', ['status' => 'FAILED_RETRYABLE', 'failure_code' => 'ADMISSION_FAILED']);
 
         try {
             app(ConsultationService::class)->consult($user->id, $provider->id, 'vin', '1HGCM82633A123456', ['vhr'], 'blocked-request');
@@ -132,6 +135,103 @@ class NotificationCaseCoreTest extends TestCase
         $this->assertDatabaseHas('consultation_operations', ['status' => 'FAILED_AMBIGUOUS']);
         $this->assertDatabaseCount('wallet_ledger', 0);
         $this->assertDatabaseCount('consultations', 0);
+    }
+
+    public function test_failure_before_provider_is_retryable_after_balance_recovery(): void
+    {
+        [$user, $provider, $service] = $this->baseline();
+        $wallet = UserProviderWallet::create([
+            'user_id' => $user->id, 'provider_id' => $provider->id, 'provider_service_id' => $service->id,
+            'balance' => 0, 'status' => 'active', 'validity_start' => now()->subDay(), 'validity_end' => now()->addMonth(),
+        ]);
+        $adapter = new CountingAdapter(false);
+        $this->bindAdapter($adapter);
+
+        $first = app(ConsultationService::class)->consult($user->id, $provider->id, 'vin', '1HGCM82633A123456', ['vhr'], 'retryable-before-provider');
+        $this->assertFalse($first->response()->success());
+        $this->assertSame(0, $adapter->calls);
+        $this->assertDatabaseHas('consultation_operations', ['status' => 'FAILED_RETRYABLE', 'failure_code' => 'INSUFFICIENT_BALANCE']);
+
+        $wallet->forceFill(['balance' => 2])->save();
+        $second = app(ConsultationService::class)->consult($user->id, $provider->id, 'vin', '1HGCM82633A123456', ['vhr'], 'retryable-before-provider');
+        $this->assertTrue($second->response()->success());
+        $this->assertSame(1, $adapter->calls);
+        $this->assertDatabaseCount('wallet_ledger', 1);
+        $this->assertDatabaseCount('consultations', 1);
+        $this->assertDatabaseHas('consultation_operations', ['status' => 'COMPLETED', 'consultation_id' => $second->consultation()->id()]);
+    }
+
+    public function test_unequivocal_provider_failure_is_completed_and_replayed_without_debit(): void
+    {
+        [$user, $provider, $service] = $this->baseline();
+        UserProviderWallet::create([
+            'user_id' => $user->id, 'provider_id' => $provider->id, 'provider_service_id' => $service->id,
+            'balance' => 5, 'status' => 'active', 'validity_start' => now()->subDay(), 'validity_end' => now()->addMonth(),
+        ]);
+        $adapter = new FailedResponseAdapter;
+        $this->bindAdapter($adapter);
+
+        $first = app(ConsultationService::class)->consult($user->id, $provider->id, 'vin', '1HGCM82633A123456', ['vhr'], 'failed-provider-response');
+        $second = app(ConsultationService::class)->consult($user->id, $provider->id, 'vin', '1HGCM82633A123456', ['vhr'], 'failed-provider-response');
+
+        $this->assertFalse($first->response()->success());
+        $this->assertSame($first->consultation()->id(), $second->consultation()->id());
+        $this->assertSame(1, $adapter->calls);
+        $this->assertDatabaseCount('wallet_ledger', 0);
+        $this->assertDatabaseCount('consultations', 1);
+        $this->assertDatabaseHas('consultation_operations', ['status' => 'COMPLETED']);
+    }
+
+    public function test_debit_failure_after_provider_is_ambiguous(): void
+    {
+        [$user, $provider, $service] = $this->baseline();
+        UserProviderWallet::create([
+            'user_id' => $user->id, 'provider_id' => $provider->id, 'provider_service_id' => $service->id,
+            'balance' => 5, 'status' => 'active', 'validity_start' => now()->subDay(), 'validity_end' => now()->addMonth(),
+        ]);
+        $adapter = new CountingAdapter(false);
+        $this->bindAdapter($adapter);
+        $debit = \Mockery::mock(DebitCreditsCommandHandler::class);
+        $debit->shouldReceive('handle')->once()->andThrow(new \RuntimeException('Injected debit failure.'));
+        $this->app->instance(DebitCreditsCommandHandler::class, $debit);
+        $this->app->forgetInstance(ConsultationService::class);
+
+        try {
+            app(ConsultationService::class)->consult($user->id, $provider->id, 'vin', '1HGCM82633A123456', ['vhr'], 'debit-failure');
+            $this->fail('Expected injected debit failure.');
+        } catch (\RuntimeException) {
+        }
+
+        $this->assertSame(1, $adapter->calls);
+        $this->assertDatabaseCount('wallet_ledger', 0);
+        $this->assertDatabaseCount('consultations', 0);
+        $this->assertDatabaseHas('consultation_operations', ['status' => 'FAILED_AMBIGUOUS', 'failure_code' => 'DEBIT_AFTER_PROVIDER_FAILED']);
+    }
+
+    public function test_consultation_persistence_failure_after_debit_is_ambiguous(): void
+    {
+        [$user, $provider, $service] = $this->baseline();
+        UserProviderWallet::create([
+            'user_id' => $user->id, 'provider_id' => $provider->id, 'provider_service_id' => $service->id,
+            'balance' => 5, 'status' => 'active', 'validity_start' => now()->subDay(), 'validity_end' => now()->addMonth(),
+        ]);
+        $adapter = new CountingAdapter(false);
+        $this->bindAdapter($adapter);
+        $repository = \Mockery::mock(ConsultationRepositoryInterface::class);
+        $repository->shouldReceive('save')->once()->andThrow(new \RuntimeException('Injected persistence failure.'));
+        $this->app->instance(ConsultationRepositoryInterface::class, $repository);
+        $this->app->forgetInstance(ConsultationService::class);
+
+        try {
+            app(ConsultationService::class)->consult($user->id, $provider->id, 'vin', '1HGCM82633A123456', ['vhr'], 'persistence-failure');
+            $this->fail('Expected injected persistence failure.');
+        } catch (\RuntimeException) {
+        }
+
+        $this->assertSame(1, $adapter->calls);
+        $this->assertDatabaseCount('wallet_ledger', 1);
+        $this->assertDatabaseCount('consultations', 0);
+        $this->assertDatabaseHas('consultation_operations', ['status' => 'FAILED_AMBIGUOUS', 'failure_code' => 'CONSULTATION_PERSISTENCE_FAILED']);
     }
 
     public function test_plate_draft_assigns_vin_once_then_submits_with_iph_or_nuc(): void
@@ -279,6 +379,23 @@ final class ThrowingAdapter implements ProviderAdapterInterface
         $this->calls++;
 
         throw new \RuntimeException('Injected provider failure.');
+    }
+}
+
+final class FailedResponseAdapter implements ProviderAdapterInterface
+{
+    public int $calls = 0;
+
+    public function supports(string $adapterCode): bool
+    {
+        return strtolower($adapterCode) === 'vindata';
+    }
+
+    public function consult(ConsultationRequest $request): ConsultationResponse
+    {
+        $this->calls++;
+
+        return new ConsultationResponse(false, 503, 'INJECTED_PROVIDER_FAILURE', [], null, []);
     }
 }
 

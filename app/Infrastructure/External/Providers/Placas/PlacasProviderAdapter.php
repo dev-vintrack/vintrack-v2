@@ -8,7 +8,6 @@ use App\Domain\Consultas\ValueObjects\ConsultationResponse;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Config;
-use RuntimeException;
 
 class PlacasProviderAdapter implements ProviderAdapterInterface
 {
@@ -16,11 +15,15 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
     // reales usados en runtime vienen de PLACAS_HTTP_TIMEOUT / PLACAS_POLL_MAX_SECONDS /
     // PLACAS_POLL_INTERVAL_SECONDS (ver config/providers.php).
     private const DEFAULT_TIMEOUT = 30;
+
     private const POLL_MAX_SECONDS = 40;
+
     private const POLL_INTERVAL_SECONDS = 2;
 
     private Client $client;
+
     private int $pollMaxSeconds;
+
     private int $pollIntervalSeconds;
 
     public function __construct(?Client $client = null)
@@ -49,7 +52,7 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
         @set_time_limit(max(90, $httpTimeout + $this->pollMaxSeconds + 30));
 
         [$ok, $message, $value] = $this->validateInput($request->type(), $request->value());
-        if (!$ok) {
+        if (! $ok) {
             return $this->errorResponse(422, $message);
         }
 
@@ -58,14 +61,14 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
             return $this->errorResponse(400, 'Falta configurar PLACAS_API_TOKEN');
         }
 
-        $apiUrl = rtrim(Config::get('providers.placas.url', 'https://placas.info/api/v2/consultar/'), '/') . '/';
+        $apiUrl = rtrim(Config::get('providers.placas.url', 'https://placas.info/api/v2/consultar/'), '/').'/';
         $callbackUrl = Config::get('providers.placas.callback_url');
 
         $payload = [
             'placa_niv' => $value,
             'services' => $request->services(),
         ];
-        if (!empty($callbackUrl)) {
+        if (! empty($callbackUrl)) {
             $payload['callback'] = $callbackUrl;
         }
 
@@ -73,7 +76,7 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
             $response = $this->client->post($apiUrl, [
                 'headers' => [
                     'Accept' => 'application/json',
-                    'Authorization' => 'Token ' . $token,
+                    'Authorization' => 'Token '.$token,
                     'User-Agent' => 'VINTRACK/2.0 (+https://vintrack.com.mx)',
                 ],
                 'json' => $payload,
@@ -84,17 +87,17 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
         } catch (RequestException $e) {
             $httpStatus = $e->getResponse()?->getStatusCode() ?? 0;
             $body = null;
-            $message = $e->getMessage();
-            return $this->errorResponse($httpStatus, 'Error de conexión: ' . $message);
+
+            return $this->errorResponse($httpStatus, 'No fue posible conectar con el proveedor de placas.');
         }
 
-        if (!is_array($body)) {
+        if (! is_array($body)) {
             return $this->errorResponse($httpStatus, 'Respuesta no válida de la API de placas');
         }
 
         if (isset($body['status']) && $body['status'] === 'processing' && isset($body['id'])) {
             [$ok, $pollStatus, $pollErr, $pollData] = $this->pollResult($apiUrl, $body['id'], $token);
-            if (!$ok) {
+            if (! $ok) {
                 return $this->errorResponse($pollStatus, $pollErr, $body['id']);
             }
             $body = $pollData;
@@ -132,12 +135,12 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
 
         if ($type === 'niv') {
             if (strlen($value) !== $nivLength) {
-                return [false, 'El NIV debe tener exactamente ' . $nivLength . ' caracteres alfanuméricos.', $value];
+                return [false, 'El NIV debe tener exactamente '.$nivLength.' caracteres alfanuméricos.', $value];
             }
         } else {
             $len = strlen($value);
             if ($len < $placaMin || $len > $placaMax) {
-                return [false, 'La placa debe tener entre ' . $placaMin . ' y ' . $placaMax . ' caracteres alfanuméricos.', $value];
+                return [false, 'La placa debe tener entre '.$placaMin.' y '.$placaMax.' caracteres alfanuméricos.', $value];
             }
         }
 
@@ -146,7 +149,7 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
 
     private function pollResult(string $apiUrl, string $id, string $token): array
     {
-        $url = rtrim($apiUrl, '/') . '/' . $id;
+        $url = rtrim($apiUrl, '/').'/'.$id;
         $deadline = time() + $this->pollMaxSeconds;
         $interval = max(1, $this->pollIntervalSeconds);
         $lastHttp = 0;
@@ -158,7 +161,7 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
                 $response = $this->client->get($url, [
                     'headers' => [
                         'Accept' => 'application/json',
-                        'Authorization' => 'Token ' . $token,
+                        'Authorization' => 'Token '.$token,
                         'User-Agent' => 'VINTRACK/2.0 (+https://vintrack.com.mx)',
                     ],
                 ]);
@@ -167,14 +170,16 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
                 $data = json_decode($response->getBody()->getContents(), true);
             } catch (RequestException $e) {
                 $lastHttp = $e->getResponse()?->getStatusCode() ?? 0;
-                $lastErr = $e->getMessage();
+                $lastErr = 'Fallo temporal al consultar el proveedor de placas.';
                 sleep($interval);
+
                 continue;
             }
 
-            if (!is_array($data)) {
-                $lastErr = 'No-JSON (' . $lastHttp . ')';
+            if (! is_array($data)) {
+                $lastErr = 'No-JSON ('.$lastHttp.')';
                 sleep($interval);
+
                 continue;
             }
 

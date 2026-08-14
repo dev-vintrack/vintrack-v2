@@ -136,15 +136,15 @@ class ConsultationController
                 'banner' => null,
             ], 409);
         } catch (Throwable $e) {
-            Log::error('Error en consulta: '.$e->getMessage(), [
+            Log::error('Error interno durante consulta.', [
                 'exception' => get_class($e),
-                'trace' => $e->getTraceAsString(),
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
                 'success' => false,
                 'status' => 500,
-                'message' => 'Error interno: '.$e->getMessage(),
+                'message' => 'No fue posible completar la consulta.',
                 'data' => [],
                 'report_url' => null,
                 'local_report_url' => null,

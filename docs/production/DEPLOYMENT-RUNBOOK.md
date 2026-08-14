@@ -27,3 +27,11 @@ Este documento es un procedimiento futuro. No autoriza deployment ni contiene ru
 | `notifications:auto-close` | cierre 30 días | cada 15 min | acotado | CAS/idempotencia | ruta por definir | NO |
 
 No se afirma ninguna ruta PHP o ruta absoluta del proyecto hasta verificarla en cPanel.
+
+## Estrategia definitiva de migrations
+
+- Instalación nueva: una DB vacía carga `database/schema/mysql-schema.sql` mediante `php artisan migrate`; localmente produjo 43 tablas, 53 FK y 54 migrations registradas. Importar después un dataset de configuración/referencia explícitamente aprobado; el schema dump no contiene datos de negocio.
+- Entorno existente: no cargar el schema dump; aplicar únicamente migrations incrementales posteriores a su batch actual.
+- Migrations anteriores al baseline: forward-only. No ejecutar rollback global por las deudas `adapter_code`, reestructura irreversible y `label/icon`.
+- Rollback seguro: sólo migration incremental identificada, reversible, sin dependencias posteriores y con backup validado.
+- Si una migration de datos/destructiva falla tras modificar estado: restaurar el backup consistente o crear forward-fix aprobado; nunca improvisar un `down()`.

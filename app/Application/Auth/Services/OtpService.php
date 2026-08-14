@@ -12,6 +12,7 @@ use Throwable;
 class OtpService
 {
     public const TTL_MINUTES = 5;
+
     public const LENGTH = 6;
 
     public function generate(?User $user = null): string
@@ -43,7 +44,7 @@ class OtpService
 
     private function sessionKey(string $type): string
     {
-        return $type . '_otp';
+        return $type.'_otp';
     }
 
     public function send(string $email, string $otp, string $subject, string $title): bool
@@ -54,8 +55,8 @@ class OtpService
             return true;
         } catch (Throwable $e) {
             Log::error('No se pudo enviar el correo OTP', [
-                'email' => $email,
-                'error' => $e->getMessage(),
+                'recipient_hash' => hash('sha256', strtolower(trim($email))),
+                'exception' => $e::class,
             ]);
 
             return false;

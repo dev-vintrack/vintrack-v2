@@ -41,3 +41,7 @@ Ejecutar smoke tests, diagnósticos de huérfanos/duplicados, revisar logs/outbo
 ## Forward-fix
 
 Preferir forward-fix cuando rollback borre datos, revierta un esquema ya consumido, rompa compatibilidad con artifacts o la migration histórica tenga `down()` vacío/no seguro.
+
+## Evidencia local SPRINT-08
+
+El procedimiento DB + evidence fue ejecutado integralmente en copias desechables. Se validaron hashes del dump, archive y manifest; después de destruir la fuente se restauraron filas, FK, folio, estado, events, outbox, Portal, metadata, archivo físico y SHA-256. Esta evidencia es `VERIFIED LOCALLY`, no `VERIFIED IN PRODUCTION`.
