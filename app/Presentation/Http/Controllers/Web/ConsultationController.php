@@ -2,6 +2,7 @@
 
 namespace App\Presentation\Http\Controllers\Web;
 
+use App\Application\Consultas\Exceptions\ConsultationOperationException;
 use App\Application\Consultas\Services\ConsultationService;
 use App\Application\NotificationCases\Exceptions\ConsultationBlockedException;
 use App\Infrastructure\Persistence\Models\Provider;
@@ -115,6 +116,12 @@ class ConsultationController
                 'theft_flags' => $response->theftFlags(),
                 'banner' => $banner,
             ], $httpStatus);
+        } catch (ConsultationOperationException $e) {
+            return response()->json([
+                'success' => false, 'status' => 409, 'code' => $e->errorCode,
+                'message' => $e->getMessage(), 'data' => [], 'report_url' => null,
+                'local_report_url' => null, 'theft_flags' => [], 'banner' => null,
+            ], 409);
         } catch (ConsultationBlockedException $e) {
             return response()->json([
                 'success' => false,

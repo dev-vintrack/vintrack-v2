@@ -223,3 +223,38 @@ Observaciones aceptadas:
 Quedan formalmente aceptados ambos historiales, DataTables server-side, paginación/búsqueda/filtros/ordering server-side, filtro Cliente, scope autenticado, resolución histórica Consultation → Case, 90 días, múltiples cases, prevención retroactiva, ownership proyectado, `VIN_NOT_AVAILABLE`, estados derivados, deadline/primer submit, acciones server-side, IDOR, ausencia de N+1, regresión y tests documentados.
 
 DEC-036 permanece como roadmap canónico y DEC-041 como cierre de SPRINT-05. Producción permanece `NOT AUTHORIZED`. SPRINT-07 queda `PENDING OWNER AUTHORIZATION` y no fue iniciado. **APPROVED WITH OBSERVATIONS**
+
+## DEC-043 — SPRINT-07 Governance Closure
+
+**Estado:** APPROVED WITH OBSERVATIONS
+**Aprobado por:** Project Owner
+**Fecha:** 2026-08-14
+
+SPRINT-07 — Notifications, Outbox Delivery & Automation queda cerrado como
+`APPROVED WITH OBSERVATIONS`, sin reabrir ni modificar su implementación.
+
+Observaciones aceptadas:
+
+1. `OBS-07-01`: el contrato SMTP es at-least-once con deduplicación interna,
+   retries controlados, trazabilidad y minimización de duplicados. No se afirmará
+   exactly-once externo sin garantía o idempotency key verificable del proveedor.
+2. `OBS-07-02`: recipient inexistente o email inválido puede agotar actualmente
+   el retry acotado. SPRINT-08 deberá evaluar clasificación determinística entre
+   fallo SMTP temporal retryable y destinatario inválido non-retryable/skipped.
+3. `OBS-07-03`: PHP CLI/cPanel/Artisan, working directory, frecuencia,
+   timeout/overlap, logs/cache, URL productiva, SMTP/TLS/remitente,
+   SPF/DKIM/DMARC, límites de correo y rebotes permanecen Production Gates.
+4. `OBS-07-04`: se conserva la deuda histórica del rollback global en
+   `2026_08_05_000002_drop_label_icon_from_menu_permissions_tables`; no pertenece
+   a SPRINT-07. Los ciclos reversibles recientes quedan aceptados.
+
+Quedan aceptados el processor del outbox único, canales Portal/Email
+independientes, deduplicación, retry/backoff con máximo cinco intentos,
+lease/claim, límites de lote/tiempo, Portal Notification Center, read/unread/count,
+IDOR/XSS, Mail de pruebas sin attachments, recipient server-side, recordatorios,
+auto-close por lifecycle, comandos Artisan discretos sin dependencia productiva
+de Scheduler/daemon y la evidencia de concurrencia, tests y regresión.
+
+DEC-036 permanece como roadmap canónico y DEC-042 como cierre de SPRINT-06.
+Producción permanece `NOT AUTHORIZED`. SPRINT-08 requiere autorización explícita
+separada del Project Owner. **APPROVED WITH OBSERVATIONS**

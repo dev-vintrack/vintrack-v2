@@ -25,34 +25,34 @@
 `consultations.provider_service_id` exists locally and in production. Do not recreate.
 
 ## Current Phase
-SPRINT-07 LOCAL IMPLEMENTATION / OWNER REVIEW
+SPRINT GOVERNANCE / MANDATORY PRE-PRODUCTION FOLLOW-UP
 
 ## Phase 0 Documentation
 APPROVED — Version 1.0
 
 ## Last Completed Sprint
-SPRINT-06 — Vehicle Consultation Histories + Server-side DataTables
+SPRINT-07 — Notifications, Outbox Delivery & Automation
 
 ## Last Sprint Status
 APPROVED WITH OBSERVATIONS
 
 ## Current Sprint
-SPRINT-07 — Notifications, Outbox Delivery & Automation
+None
 
 ## Current Sprint Status
-READY FOR OWNER REVIEW
+NO ACTIVE SPRINT
 
 ## Next Sprint
 SPRINT-08 — Hardening & Production Readiness
 
 ## Next Sprint Status
-NOT AUTHORIZED
+PENDING OWNER AUTHORIZATION
 
 ## Canonical Provider Service Field
 `consultations.provider_service_id`
 
 ## Approval
-SPRINT-06 fue aprobado por el Project Owner como `APPROVED WITH OBSERVATIONS` el 2026-08-14. DEC-042 registra el cierre. Las observaciones no reabren ni modifican la implementación. SPRINT-07 fue autorizado para ejecución local, está `READY FOR OWNER REVIEW` y producción permanece no autorizada.
+SPRINT-07 fue aprobado por el Project Owner como `APPROVED WITH OBSERVATIONS` el 2026-08-14. DEC-043 registra el cierre. Las observaciones no reabren ni modifican la implementación. SPRINT-08 requiere autorización explícita y producción permanece no autorizada.
 
 ## Production Status
 NOT AUTHORIZED
@@ -100,6 +100,31 @@ Carreras cerradas localmente: doble submit, doble VIN, validate vs reject, valid
 3. `OBS-06-03`: DataTables 1.13.6 vía CDN aceptado; revisar disponibilidad/CSP/dependencias externas antes de producción si aplica.
 4. `OBS-06-04`: permanecen todos los Production Gates acumulados no cerrados.
 
+## SPRINT-07 Closure Observations
+
+1. `OBS-07-01`: SMTP se acepta como at-least-once; no afirmar exactly-once externo sin garantía verificable del proveedor.
+2. `OBS-07-02`: clasificar destinatario inexistente/email inválido como non-retryable/skipped queda como hardening para SPRINT-08.
+3. `OBS-07-03`: PHP CLI/cPanel/Artisan, working directory, Cron, logs/cache, URL, SMTP/TLS/remitente, SPF/DKIM/DMARC, límites y rebotes permanecen Production Gates.
+4. `OBS-07-04`: deuda histórica del rollback global en `2026_08_05_000002_drop_label_icon_from_menu_permissions_tables` preservada; ciclos reversibles recientes aceptados.
+
+## Accumulated Production Gates
+
+1. MariaDB 10.6.27 real.
+2. Idempotencia end-to-end request → consulta.
+3. EXPLAIN/selectividad con volumen representativo.
+4. Deuda histórica de migrations.
+5. Malware scanning.
+6. Storage, fileinfo, GD y permisos reales en Neubox.
+7. Backup y rollback.
+8. DataTables CDN/CSP si la política técnica aplica.
+9. PHP CLI, ruta PHP, cPanel y ejecución Artisan.
+10. Working directory, frecuencia Cron, timeout y overlap.
+11. Logs, cache y URL productiva.
+12. SMTP, TLS y remitente.
+13. SPF, DKIM y DMARC.
+14. Límites/rate de correo y observabilidad de rebotes.
+15. Autorización productiva explícita.
+
 ## Approved Implementation Roadmap
 
 1. SPRINT-03 — Evidence & Secure File Management.
@@ -110,7 +135,7 @@ Carreras cerradas localmente: doble submit, doble VIN, validate vs reject, valid
 6. SPRINT-08 — Hardening & Production Readiness.
 7. PRODUCTION GATE — explicit Project Owner authorization required.
 
-DEC-036 es el roadmap canónico. SPRINT-05 está cerrado mediante DEC-041. SPRINT-06 está cerrado como APPROVED WITH OBSERVATIONS mediante DEC-042. SPRINT-07 está `READY FOR OWNER REVIEW`; SPRINT-08 no fue iniciado y producción permanece no autorizada.
+DEC-036 es el roadmap canónico. SPRINT-06 está cerrado mediante DEC-042. SPRINT-07 está cerrado como APPROVED WITH OBSERVATIONS mediante DEC-043. SPRINT-08 está pendiente de autorización explícita y producción permanece no autorizada.
 
 ## Critical Rules
 1. Keep notification process separate from consultation history.
@@ -137,11 +162,11 @@ DEC-036 es el roadmap canónico. SPRINT-05 está cerrado mediante DEC-041. SPRIN
 22. DEC-042 registra el cierre de SPRINT-06 como APPROVED WITH OBSERVATIONS.
 23. SPRINT-07 implementa localmente delivery/outbox/portal/commands; cPanel Cron y SMTP productivo no están configurados.
 
-## SPRINT-07 Local Result
+## SPRINT-07 Approved Result
 
 - Outbox processor, retry/backoff/dedup y canales independientes: implementados localmente.
 - Portal notifications propias, read/unread, contador, listado y enlace autorizado: implementados localmente.
 - Email de expedientes mediante Laravel Mail: implementado con transporte de pruebas; SMTP productivo no configurado.
 - Commands discretos para outbox, deadlines y auto-close: implementados localmente.
 - Scheduler no es requisito productivo; Cron real no configurado.
-- SPRINT-08 no iniciado y no autorizado.
+- SPRINT-08 no iniciado; pendiente de autorización explícita.

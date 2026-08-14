@@ -54,24 +54,22 @@ final class NotificationDeliveryAutomationTest extends TestCase
         $this->assertDatabaseHas('notification_outbox', ['channel' => 'EMAIL', 'status' => 'PENDING', 'attempts' => 0]);
 
         $second = app(NotificationOutboxProcessor::class)->process(1, 10, 'batch-two');
-        $this->assertSame(1, $second['retried']);
+        $this->assertSame(1, $second['failed']);
         $this->assertDatabaseHas('notification_outbox', ['channel' => 'PORTAL', 'status' => 'DELIVERED']);
-        $this->assertDatabaseHas('notification_outbox', ['channel' => 'EMAIL', 'status' => 'PENDING', 'attempts' => 1]);
+        $this->assertDatabaseHas('notification_outbox', ['channel' => 'EMAIL', 'status' => 'FAILED', 'attempts' => 1]);
+        $this->assertDatabaseHas('notification_deliveries', ['status' => 'skipped', 'attempts' => 0, 'error' => 'RECIPIENT_EMAIL_UNAVAILABLE']);
     }
 
-    public function test_retry_reaches_bounded_terminal_failure(): void
+    public function test_invalid_recipient_is_non_retryable(): void
     {
         [$owner, $case] = $this->case(['email' => 'invalid-address']);
         $message = app(NotificationCaseOutboxService::class)->queue($case->id, $owner->id, 'CASE_VALIDATED', 'EMAIL', 'terminal:email', ['case_number' => $case->case_number]);
 
-        for ($attempt = 1; $attempt <= NotificationOutboxProcessor::MAX_ATTEMPTS; $attempt++) {
-            $message->forceFill(['available_at' => now()->subSecond()])->save();
-            app(NotificationOutboxProcessor::class)->process(1, 10, 'retry-'.$attempt);
-            $message->refresh();
-        }
+        app(NotificationOutboxProcessor::class)->process(1, 10, 'invalid-recipient');
+        $message->refresh();
 
         $this->assertSame('FAILED', $message->status);
-        $this->assertSame(NotificationOutboxProcessor::MAX_ATTEMPTS, $message->attempts);
+        $this->assertSame(1, $message->attempts);
         $this->assertSame(0, app(NotificationOutboxProcessor::class)->process(1, 10, 'retry-terminal')['claimed']);
     }
 

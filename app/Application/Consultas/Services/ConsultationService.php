@@ -37,6 +37,7 @@ class ConsultationService
         private readonly VehicleUpserter $vehicleUpserter,
         private readonly ?ConsultationAdmissionService $consultationAdmission = null,
         private readonly ?NotificationCaseCreationService $notificationCaseCreation = null,
+        private readonly ?ConsultationOperationService $consultationOperations = null,
     ) {}
 
     public function consult(
@@ -76,20 +77,34 @@ class ConsultationService
         $providerServiceId = $providerService->id();
         $adapterCode = $provider->adapterCode();
         $requestKey ??= 'consult-'.bin2hex(random_bytes(16));
+        $operations = $this->consultationOperations ?? app(ConsultationOperationService::class);
+        $operation = $operations->claim($userId, $providerServiceId, $type, $value, $requestedServiceCodes, $requestKey);
+        if ($operation->replay) {
+            $consultation = $this->consultationRepository->findById($operation->consultationId);
+
+            return new ConsultationResult($operations->responseFromSnapshot($operation->responseSnapshot), $consultation);
+        }
         $admission = $this->consultationAdmission ?? app(ConsultationAdmissionService::class);
         $caseCreation = $this->notificationCaseCreation ?? app(NotificationCaseCreationService::class);
-        $reservationId = $admission->reserve($userId, $requestKey, $ipAddress, $userAgent);
+        try {
+            $reservationId = $admission->reserve($userId, $requestKey, $ipAddress, $userAgent);
+        } catch (\Throwable $exception) {
+            $operations->fail($operation->id, 'ADMISSION_FAILED', false);
+            throw $exception;
+        }
         UserProviderWallet::syncExpiredStatuses();
         $wallet = $this->walletRepository->findByUserAndServiceOrCreate($userId, $providerServiceId);
         $cost = $providerService->creditCost()->amount();
         if (! $wallet->isValidAt(new DateTimeImmutable)) {
             $admission->release($reservationId);
+            $operations->fail($operation->id, 'WALLET_EXPIRED', true);
             $response = new ConsultationResponse(false, 402, 'Los créditos para este servicio han expirado.', [], null, $this->emptyFlags());
 
             return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, [$debitServiceCode], $response, $cost, $providerServiceId));
         }
         if ($cost > 0 && ! $wallet->balance()->isGreaterThanOrEqual(Money::fromFloat($cost))) {
             $admission->release($reservationId);
+            $operations->fail($operation->id, 'INSUFFICIENT_BALANCE', true);
             $response = new ConsultationResponse(false, 402, 'Saldo insuficiente de créditos.', [], null, $this->emptyFlags());
 
             return new ConsultationResult($response, $this->createUnsavedConsultation($userId, $provider->id()->value(), $type, $value, [$debitServiceCode], $response, $cost, $providerServiceId));
@@ -104,15 +119,17 @@ class ConsultationService
 
         $request = new ConsultationRequest($userId, $adapterCode, $value, $type, $adapterServices);
         $adapter = $this->adapterRegistry->resolve($adapterCode);
+        $operations->providerStarted($operation->id);
         try {
             $response = $adapter->consult($request);
         } catch (\Throwable $exception) {
             $admission->release($reservationId);
+            $operations->fail($operation->id, 'PROVIDER_OUTCOME_UNKNOWN', true);
             throw $exception;
         }
 
         if ($response->success() && $cost > 0) {
-            $correlationId = 'consult-'.$adapterCode.'-'.$userId.'-'.time().'-'.bin2hex(random_bytes(4));
+            $correlationId = 'consult-operation-'.$operation->id;
             $debitCommand = new DebitCreditsCommand(
                 $userId,
                 $providerServiceId,
@@ -125,6 +142,7 @@ class ConsultationService
                 $this->debitHandler->handle($debitCommand);
             } catch (\Throwable $exception) {
                 $admission->release($reservationId);
+                $operations->fail($operation->id, 'DEBIT_AFTER_PROVIDER_FAILED', true);
                 throw $exception;
             }
         }
@@ -140,7 +158,13 @@ class ConsultationService
             $response,
             new DateTimeImmutable
         );
-        $savedConsultation = $this->consultationRepository->save($consultation);
+        try {
+            $savedConsultation = $this->consultationRepository->save($consultation);
+        } catch (\Throwable $exception) {
+            $admission->release($reservationId);
+            $operations->fail($operation->id, 'CONSULTATION_PERSISTENCE_FAILED', true);
+            throw $exception;
+        }
 
         if ($response->success()) {
             $this->vehicleUpserter->upsertFromConsultation($savedConsultation, $adapterCode, $providerServiceId);
@@ -152,6 +176,8 @@ class ConsultationService
         } else {
             $admission->consume($reservationId);
         }
+
+        $operations->complete($operation->id, $savedConsultation->id(), $response);
 
         return new ConsultationResult($response, $savedConsultation);
     }

@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-08-14
 **Entorno:** local/testing
-**Estado:** READY FOR OWNER REVIEW
+**Estado:** APPROVED WITH OBSERVATIONS
 **Producción:** NOT AUTHORIZED / NO MODIFICADA
 
 ## 1. Executive Summary
@@ -352,9 +352,9 @@ compatibilidad real MariaDB/cPanel/SMTP: NOT RUN / Production Gate.
 
 ## 45. Recommended Follow-up
 
-Project Owner debe revisar SPRINT-07. No iniciar SPRINT-08 sin autorización
-explícita. Antes de producción, ejecutar todos los gates del §41 con backup y
-rollback aprobados.
+SPRINT-07 fue aprobado con observaciones mediante DEC-043. No iniciar SPRINT-08
+sin autorización explícita. Antes de producción, ejecutar todos los gates del
+§41 con backup y rollback aprobados.
 
 ## 46. Sprint Conclusion
 
@@ -371,6 +371,28 @@ SMTP producción: NO CONFIGURADO
 Producción: NO MODIFICADA
 SPRINT-08: NO INICIADO
 
-READY FOR OWNER REVIEW
+## Owner Review / Governance Closure
 
-STOP.
+**Decisión formal:** `SPRINT-07 — APPROVED WITH OBSERVATIONS`
+**Fecha de aprobación:** 2026-08-14
+**Decisión de cierre:** DEC-043
+
+Observaciones registradas:
+
+1. `OBS-07-01 — SMTP exactly-once`: se acepta at-least-once processing,
+   deduplicación interna, retries controlados, trazabilidad y minimización de
+   duplicados externos. No afirmar exactly-once SMTP sin garantía verificable.
+2. `OBS-07-02 — Destinatario sin email`: el retry acotado actual queda aceptado.
+   SPRINT-08 evaluará distinguir fallo temporal retryable de destinatario
+   inválido non-retryable/skipped.
+3. `OBS-07-03 — cPanel / SMTP productivo`: PHP CLI, ruta, Artisan, working
+   directory, frecuencia, timeout/overlap, logs/cache, URL, SMTP/TLS/remitente,
+   SPF/DKIM/DMARC, límites y rebotes permanecen Production Gates.
+4. `OBS-07-04 — Deuda histórica de migrations`: se conserva el fallo de rollback
+   global en `2026_08_05_000002_drop_label_icon_from_menu_permissions_tables`;
+   no pertenece a SPRINT-07. Los ciclos reversibles recientes son aceptados.
+
+Esta aprobación no autoriza producción ni SPRINT-08. No se modificó código,
+migrations, BD, tests, Cron o SMTP durante el cierre documental.
+
+`APPROVED WITH OBSERVATIONS`

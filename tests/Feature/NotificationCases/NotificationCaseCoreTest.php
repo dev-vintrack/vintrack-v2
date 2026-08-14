@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\NotificationCases;
 
+use App\Application\Consultas\Exceptions\ConsultationOperationException;
 use App\Application\Consultas\Services\ConsultationService;
 use App\Application\NotificationCases\Exceptions\ConsultationBlockedException;
 use App\Application\NotificationCases\Services\NotificationCaseLifecycleService;
@@ -75,6 +76,62 @@ class NotificationCaseCoreTest extends TestCase
         $this->assertMatchesRegularExpression('/^NT-\d{4}-\d{6}$/', $case->case_number);
         $this->assertDatabaseCount('notification_case_events', 1);
         $this->assertDatabaseCount('notification_outbox', 1);
+
+        $replay = app(ConsultationService::class)->consult($user->id, $provider->id, 'vin', '1HGCM82633A123456', ['vhr'], 'positive-request');
+        $this->assertSame($result->consultation()->id(), $replay->consultation()->id());
+        $this->assertSame(1, $adapter->calls);
+        $this->assertDatabaseCount('consultations', 1);
+        $this->assertDatabaseCount('wallet_ledger', 1);
+        $this->assertDatabaseHas('consultation_operations', ['status' => 'COMPLETED', 'consultation_id' => $result->consultation()->id()]);
+    }
+
+    public function test_different_keys_are_distinct_and_key_cannot_be_reused_for_another_payload(): void
+    {
+        [$user, $provider, $service] = $this->baseline();
+        UserProviderWallet::create([
+            'user_id' => $user->id, 'provider_id' => $provider->id, 'provider_service_id' => $service->id,
+            'balance' => 5, 'status' => 'active', 'validity_start' => now()->subDay(), 'validity_end' => now()->addMonth(),
+        ]);
+        $adapter = new CountingAdapter(false);
+        $this->bindAdapter($adapter);
+
+        app(ConsultationService::class)->consult($user->id, $provider->id, 'vin', '1HGCM82633A123456', ['vhr'], 'key-one');
+        app(ConsultationService::class)->consult($user->id, $provider->id, 'vin', '1HGCM82633A123456', ['vhr'], 'key-two');
+
+        $this->assertSame(2, $adapter->calls);
+        $this->assertDatabaseCount('consultations', 2);
+        $this->assertDatabaseCount('wallet_ledger', 2);
+
+        $this->expectException(ConsultationOperationException::class);
+        app(ConsultationService::class)->consult($user->id, $provider->id, 'vin', '1HGCM82633A654321', ['vhr'], 'key-one');
+    }
+
+    public function test_provider_exception_becomes_ambiguous_and_is_not_reinvoked(): void
+    {
+        [$user, $provider, $service] = $this->baseline();
+        UserProviderWallet::create([
+            'user_id' => $user->id, 'provider_id' => $provider->id, 'provider_service_id' => $service->id,
+            'balance' => 5, 'status' => 'active', 'validity_start' => now()->subDay(), 'validity_end' => now()->addMonth(),
+        ]);
+        $adapter = new ThrowingAdapter;
+        $this->bindAdapter($adapter);
+
+        try {
+            app(ConsultationService::class)->consult($user->id, $provider->id, 'vin', '1HGCM82633A123456', ['vhr'], 'ambiguous-key');
+        } catch (\RuntimeException) {
+        }
+
+        try {
+            app(ConsultationService::class)->consult($user->id, $provider->id, 'vin', '1HGCM82633A123456', ['vhr'], 'ambiguous-key');
+            $this->fail('Ambiguous operation must not invoke the provider again.');
+        } catch (ConsultationOperationException $exception) {
+            $this->assertSame('IDEMPOTENCY_AMBIGUOUS', $exception->errorCode);
+        }
+
+        $this->assertSame(1, $adapter->calls);
+        $this->assertDatabaseHas('consultation_operations', ['status' => 'FAILED_AMBIGUOUS']);
+        $this->assertDatabaseCount('wallet_ledger', 0);
+        $this->assertDatabaseCount('consultations', 0);
     }
 
     public function test_plate_draft_assigns_vin_once_then_submits_with_iph_or_nuc(): void
@@ -196,7 +253,7 @@ class NotificationCaseCoreTest extends TestCase
         return $case;
     }
 
-    private function bindAdapter(CountingAdapter $adapter): void
+    private function bindAdapter(ProviderAdapterInterface $adapter): void
     {
         $this->app->singleton(ProviderAdapterRegistry::class, function () use ($adapter) {
             $registry = new ProviderAdapterRegistry;
@@ -205,6 +262,23 @@ class NotificationCaseCoreTest extends TestCase
             return $registry;
         });
         $this->app->forgetInstance(ConsultationService::class);
+    }
+}
+
+final class ThrowingAdapter implements ProviderAdapterInterface
+{
+    public int $calls = 0;
+
+    public function supports(string $adapterCode): bool
+    {
+        return strtolower($adapterCode) === 'vindata';
+    }
+
+    public function consult(ConsultationRequest $request): ConsultationResponse
+    {
+        $this->calls++;
+
+        throw new \RuntimeException('Injected provider failure.');
     }
 }
 
