@@ -8,6 +8,7 @@ use App\Infrastructure\Persistence\Models\ProviderService;
 use App\Infrastructure\Persistence\Models\UserProviderWallet;
 use App\Infrastructure\Persistence\Models\WalletLedgerEntry;
 use App\Models\User;
+use Database\Seeders\CustomerMenuPermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -18,7 +19,7 @@ class CustomerAccountPrivacyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\CustomerMenuPermissionSeeder::class);
+        $this->seed(CustomerMenuPermissionSeeder::class);
     }
 
     public function test_customer_pages_only_show_authenticated_users_records(): void
@@ -72,11 +73,13 @@ class CustomerAccountPrivacyTest extends TestCase
         $this->actingAs($customer)
             ->get(route('customer.consultations'))
             ->assertOk()
-            ->assertSee('VIN-PROPIO')
-            ->assertDontSee('VIN-AJENO')
-            ->assertSee('customerConsultationsTable')
-            ->assertSee('excelHtml5')
-            ->assertSee('pdfHtml5');
+            ->assertSee('Historial de Vehículos Consultados')
+            ->assertSee('consultationHistory')
+            ->assertSee('serverSide:true', false)
+            ->assertDontSee('excelHtml5');
+        $history = $this->actingAs($customer)->getJson(route('customer.consultations.data'))->assertOk();
+        $this->assertSame(1, $history->json('recordsTotal'));
+        $this->assertSame('VIN-PROPIO', $history->json('data.0.vin'));
     }
 
     public function test_customer_routes_reject_user_id_manipulation(): void
@@ -159,8 +162,8 @@ class CustomerAccountPrivacyTest extends TestCase
     private function createService(): array
     {
         $provider = Provider::create([
-            'code' => 'TEST-' . fake()->unique()->numerify('#####'),
-            'adapter_code' => 'test-' . fake()->unique()->numerify('#####'),
+            'code' => 'TEST-'.fake()->unique()->numerify('#####'),
+            'adapter_code' => 'test-'.fake()->unique()->numerify('#####'),
             'name' => 'Proveedor de prueba',
             'base_url' => 'https://example.test',
             'enabled' => true,
@@ -168,8 +171,8 @@ class CustomerAccountPrivacyTest extends TestCase
 
         $service = ProviderService::create([
             'provider_id' => $provider->id,
-            'key' => 'SERVICE-' . fake()->unique()->numerify('#####'),
-            'service_code' => 'service-' . fake()->unique()->numerify('#####'),
+            'key' => 'SERVICE-'.fake()->unique()->numerify('#####'),
+            'service_code' => 'service-'.fake()->unique()->numerify('#####'),
             'name' => 'Servicio de prueba',
             'credit_cost' => 1,
             'available_credits' => 1000,

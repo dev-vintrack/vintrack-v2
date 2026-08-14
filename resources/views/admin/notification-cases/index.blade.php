@@ -1,0 +1,17 @@
+@extends('layouts.app')
+@section('title', 'Proceso de Notificaciones')
+@section('content')
+<div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3 mb-0">Proceso de Notificaciones</h1><span class="text-muted">Expedientes, no historial de consultas</span></div>
+<form method="GET" class="card card-body shadow-sm mb-3"><div class="row g-2">
+<div class="col-md-2"><label class="form-label" for="folio">Folio</label><input class="form-control" id="folio" name="folio" value="{{ request('folio') }}"></div>
+<div class="col-md-2"><label class="form-label" for="vin">VIN</label><input class="form-control" id="vin" name="vin" value="{{ request('vin') }}"></div>
+<div class="col-md-3"><label class="form-label" for="user_id">Responsable</label><select class="form-select" id="user_id" name="user_id"><option value="">Todos</option>@foreach($owners as $owner)<option value="{{ $owner->id }}" @selected((string)request('user_id') === (string)$owner->id)>{{ $owner->name }} ({{ $owner->email }})</option>@endforeach</select></div>
+<div class="col-md-2"><label class="form-label" for="status">Estado</label><select class="form-select" id="status" name="status"><option value="">Todos</option>@foreach(\App\Domain\NotificationCases\Enums\NotificationCaseStatus::cases() as $status)<option value="{{ $status->value }}" @selected(request('status') === $status->value)>{{ $status->label() }}</option>@endforeach</select></div>
+<div class="col-md-1"><label class="form-label" for="date_from">Desde</label><input type="date" class="form-control" id="date_from" name="date_from" value="{{ request('date_from') }}"></div>
+<div class="col-md-1"><label class="form-label" for="date_to">Hasta</label><input type="date" class="form-control" id="date_to" name="date_to" value="{{ request('date_to') }}"></div>
+<div class="col-md-1 d-flex align-items-end"><button class="btn btn-primary w-100">Filtrar</button></div></div></form>
+<div class="card shadow-sm"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>Folio / VIN</th><th>Responsable</th><th>VehÃ­culo</th><th>Apertura / lÃ­mite</th><th>Estado</th><th>EnvÃ­o / actualizaciÃ³n</th><th></th></tr></thead><tbody>
+@forelse($cases as $case)<tr class="{{ $case->status->value === 'SUBMITTED' ? 'table-warning' : ($case->status->value === 'UNDER_REVIEW' ? 'table-info' : '') }}"><td><strong>{{ $case->case_number }}</strong><br><small>{{ $case->vin ?: 'VIN NO DISPONIBLE' }}</small></td><td>{{ $case->owner?->name }}<br><small>{{ $case->owner?->email }}</small></td><td>{{ $case->make }} {{ $case->model }} {{ $case->model_year }}<br><small>{{ $case->license_plate }}</small></td><td>{{ $case->opened_at?->format('d/m/Y H:i') }}<br><small>LÃ­mite {{ $case->notification_deadline_at->format('d/m/Y H:i:s') }}</small></td><td><span class="badge text-bg-secondary">{{ $case->status->label() }}</span><br><small>{{ $case->active_documents_count }} evidencias</small></td><td>{{ $case->last_submitted_at?->format('d/m/Y H:i') ?: 'Sin envÃ­o' }}<br><small>{{ $case->updated_at?->format('d/m/Y H:i') }}</small></td><td><a class="btn btn-sm btn-primary" href="{{ route('admin.notification-cases.show', $case) }}">Revisar</a></td></tr>
+@empty<tr><td colspan="7" class="text-center text-muted py-4">No hay expedientes con esos filtros.</td></tr>@endforelse
+</tbody></table></div><div class="card-footer">{{ $cases->links() }}</div></div>
+@endsection

@@ -58,6 +58,12 @@ Both portals use DataTables:
 - Administrative: all consultations, filterable by client.
 Queries must be efficient and server-side scoped.
 
+SPRINT-06 materializa esta arquitectura mediante una proyección de lectura
+`ConsultationHistoryQuery`: parte siempre de `consultations`, resuelve el case
+históricamente por consulta origen, identidad persistida y cronología de 90
+días, y expone páginas JSON limitadas. `notification_cases` y sus eventos sólo
+enriquecen la proyección; `vehicles` no participa.
+
 ## Files
 Evidence must be stored securely, with server-side validation and authorized download endpoints.
 

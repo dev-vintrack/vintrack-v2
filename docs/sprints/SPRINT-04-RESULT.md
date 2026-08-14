@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-08-13
 **Entorno:** local/testing
-**Estado:** READY FOR OWNER REVIEW
+**Estado:** APPROVED WITH OBSERVATIONS
 
 ## 1. Executive Summary
 
@@ -190,3 +190,35 @@ SPRINT-05: NO INICIADO
 READY FOR OWNER REVIEW
 
 STOP.
+
+## Owner Review / Governance Closure
+
+**Decisión formal:** `SPRINT-04 — APPROVED WITH OBSERVATIONS`
+**Fecha de aprobación:** 2026-08-13
+**Decisión de cierre:** `DEC-039`
+
+El Project Owner acepta formalmente la implementación documentada de SPRINT-04 sin requerir su reapertura ni modificaciones de código, migrations, base de datos o tests.
+
+### OBS-04-01 — Migration de menú
+
+La migration de datos del menú se acepta como válida y necesaria para el sistema persistente de menús. No cambia schema, permanece reversible, no requiere Change Request y deberá incluirse posteriormente en el procedimiento de deployment.
+
+### OBS-04-02 — Segundo submit concurrente
+
+La carrera real demostrada cierra la parte correspondiente de OBS-02-02: una única transición, un evento, un outbox, estado final `SUBMITTED` y `lock_version` consistente. El mensaje `No autorizado para enviar este expediente.` se acepta para SPRINT-04. Evaluar `CASE_ALREADY_SUBMITTED` o equivalente queda como mejora futura no bloqueante y no se implementa en este cierre.
+
+### OBS-04-03 — Production Gates
+
+Permanecen pendientes: MariaDB 10.6.27; idempotencia end-to-end request → consulta; doble asignación VIN; validación versus auto-close; deadlock/retry; índices/EXPLAIN con volumen representativo; deuda histórica de migrations; malware scanning; storage/fileinfo/GD/permisos reales en Neubox; y autorización separada de producción. No se resolvieron durante este cierre documental.
+
+### OBS-04-04 — VIN excepcional
+
+Se acepta que SPRINT-04 no expone una operación general para modificar VIN. VIN continúa inmutable en la experiencia normal. Los casos por placa sin VIN y su conciliación deberán considerarse explícitamente en el flujo administrativo/follow-up posterior, respetando las reglas de asignación única ya implementadas.
+
+### Elementos aceptados
+
+Quedan aceptados el Portal Cliente — Proceso de Notificaciones; listado paginado propio; ownership server-side; formulario, snapshot/defaults, folio/VIN inmutables, campos contractuales, IPH OR NUC, normalización, `recovered_at` no futuro, guardado parcial, submit/resubmit, seis estados, matriz de mutabilidad, Evidence SPRINT-03, IDOR, mass assignment, CSRF, auditoría/outbox, doble submit real, tests y regresión documentados.
+
+DEC-036 permanece como roadmap canónico. DEC-037 permanece como cierre de SPRINT-03. DEC-038 permanece como decisión contractual de `recovered_at`. SPRINT-05 y producción requieren autorización explícita separada.
+
+`APPROVED WITH OBSERVATIONS`

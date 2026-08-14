@@ -2,12 +2,12 @@
 
 namespace App\Presentation\Http\Controllers\Web;
 
-use App\Infrastructure\Persistence\Models\Consultation;
-use App\Infrastructure\Persistence\Models\Provider;
+use App\Application\ConsultationHistories\ConsultationHistoryQuery;
 use App\Infrastructure\Persistence\Models\ProviderService;
 use App\Infrastructure\Persistence\Models\UserProviderWallet;
 use App\Infrastructure\Persistence\Models\WalletLedgerEntry;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -73,51 +73,20 @@ class CustomerAccountController
     public function consultations(Request $request): View
     {
         $this->rejectUserFilter($request);
-        $filters = $request->validate([
-            'provider_id' => 'nullable|integer',
-            'criterio' => 'nullable|in:placa,niv,vin',
-            'date_from' => 'nullable|date',
-            'date_to' => 'nullable|date|after_or_equal:date_from',
-            'alerts_only' => 'nullable|boolean',
+
+        return view('customer.consultations');
+    }
+
+    public function consultationData(Request $request, ConsultationHistoryQuery $history): JsonResponse
+    {
+        $this->rejectUserFilter($request);
+        $request->validate([
+            'date_from' => ['nullable', 'date'], 'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+            'theft_status' => ['nullable', 'in:POSITIVO,NEGATIVO'],
+            'case_status' => ['nullable', 'in:NO_CASE,PENDING,SUBMITTED,UNDER_REVIEW,REJECTED,VALIDATED,CLOSED_NO_FOLLOW_UP'],
         ]);
 
-        $query = Consultation::with('provider')
-            ->where('user_id', Auth::id());
-
-        if (! empty($filters['provider_id'])) {
-            $query->where('provider_id', $filters['provider_id']);
-        }
-
-        if (! empty($filters['criterio'])) {
-            $query->where('criterio', $filters['criterio']);
-        }
-
-        if (! empty($filters['date_from'])) {
-            $query->whereDate('created_at', '>=', $filters['date_from']);
-        }
-
-        if (! empty($filters['date_to'])) {
-            $query->whereDate('created_at', '<=', $filters['date_to']);
-        }
-
-        if ($request->boolean('alerts_only')) {
-            $query->where('alerta_robo', true);
-        }
-
-        $kpis = $this->consultationKpis($query);
-        $consultations = $query->orderBy('created_at', 'desc')->get();
-        $providers = Provider::whereIn(
-            'id',
-            Consultation::where('user_id', Auth::id())->select('provider_id')
-        )->orderBy('name')->get(['id', 'name']);
-        $criteria = ['placa' => 'Placa', 'niv' => 'NIV', 'vin' => 'VIN'];
-
-        return view('customer.consultations', compact(
-            'consultations',
-            'providers',
-            'criteria',
-            'kpis'
-        ));
+        return response()->json($history->data($request, (int) Auth::id()));
     }
 
     public function vinDecoder(Request $request): View
@@ -175,17 +144,6 @@ class CustomerAccountController
             'credits' => $credits,
             'debits' => abs($debits),
             'balance' => $credits + $debits,
-        ];
-    }
-
-    private function consultationKpis(Builder $query): array
-    {
-        return [
-            'total' => (clone $query)->count(),
-            'today' => (clone $query)->whereDate('created_at', today())->count(),
-            'success' => (clone $query)->where('success', true)->count(),
-            'failure' => (clone $query)->where('success', false)->count(),
-            'alerts' => (clone $query)->where('alerta_robo', true)->count(),
         ];
     }
 }

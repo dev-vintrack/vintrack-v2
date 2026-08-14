@@ -14,6 +14,9 @@ $fields = [
 @endphp
 <div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><div><a href="{{ route('customer.notification-cases.index') }}" class="text-decoration-none">← Volver</a><h1 class="h3 mt-2 mb-0">{{ $case->case_number }}</h1></div><span class="badge text-bg-{{ $statusClass }} align-self-center fs-6">{{ $case->status->label() }}</span></div>
 <div class="alert alert-{{ $statusClass }}" role="status"><strong>Fecha límite:</strong> {{ $case->notification_deadline_at->timezone(config('app.timezone'))->format('d/m/Y H:i:s') }}. {{ $editable ? 'Puede guardar cambios y enviar el expediente.' : 'El expediente está en modo solo lectura.' }}</div>
+@if($case->status->value === 'REJECTED' && $latestRejection)
+<div class="alert alert-danger" role="alert"><h2 class="h5">Corrección requerida</h2><p class="mb-1"><strong>Motivo:</strong> {{ $latestRejection->reason }}</p><small>Rechazado el {{ $latestRejection->occurred_at->format('d/m/Y H:i:s') }}. Corrija los datos o evidencias indicados y vuelva a enviar el mismo expediente.</small></div>
+@endif
 
 <form method="POST" action="{{ route('customer.notification-cases.update', $case) }}" class="card shadow-sm mb-4">
 @csrf @method('PUT')

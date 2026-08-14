@@ -777,12 +777,11 @@ SPRINT-01 — Domain & Data Model Design is:
 
 The current implemented Sprint is:
 
-`SPRINT-04 — Client Portal — Notification Process`
+`SPRINT-06 — Vehicle Consultation Histories + Server-side DataTables`
 
-SPRINT-04 is `READY FOR OWNER REVIEW` after local implementation and testing
-under `docs/sprints/SPRINT-04-CLIENT-PORTAL-NOTIFICATION-PROCESS.md`.
-Production, SPRINT-05, the Administrative Portal, consultation histories,
-DataTables, notification delivery and Cron remain unauthorized.
+SPRINT-06 is `READY FOR OWNER REVIEW` after local implementation and testing
+under `docs/sprints/SPRINT-06-VEHICLE-CONSULTATION-HISTORIES.md`.
+Production, SPRINT-07, notification delivery and Cron remain unauthorized.
 
 
 # 39. Golden Rule

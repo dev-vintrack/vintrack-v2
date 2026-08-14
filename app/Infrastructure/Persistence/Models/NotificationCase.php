@@ -50,4 +50,9 @@ class NotificationCase extends Model
     {
         return $this->hasMany(NotificationCaseDocument::class);
     }
+
+    public function events(): HasMany
+    {
+        return $this->hasMany(NotificationCaseEvent::class)->orderBy('occurred_at')->orderBy('id');
+    }
 }

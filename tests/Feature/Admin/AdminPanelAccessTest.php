@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Infrastructure\Persistence\Models\AdminMenuPermission;
 use App\Infrastructure\Persistence\Models\NotificationPolicy;
 use App\Infrastructure\Persistence\Models\Provider;
 use App\Infrastructure\Persistence\Models\ProviderService;
 use App\Models\User;
+use Database\Seeders\AdminMenuPermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,7 +17,7 @@ class AdminPanelAccessTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\AdminMenuPermissionSeeder::class);
+        $this->seed(AdminMenuPermissionSeeder::class);
     }
 
     public function test_admin_can_access_new_admin_views(): void
@@ -92,13 +92,13 @@ class AdminPanelAccessTest extends TestCase
         ]);
     }
 
-    public function test_soporte_can_access_new_admin_views_except_permissions(): void
+    public function test_soporte_cannot_access_global_consultation_history_or_permissions(): void
     {
         $soporte = User::factory()->create(['rol' => 'soporte']);
 
         $this->actingAs($soporte)
             ->get(route('admin.consultations.index'))
-            ->assertOk();
+            ->assertForbidden();
 
         $this->actingAs($soporte)
             ->get(route('admin.menu-permissions.index'))
@@ -109,13 +109,13 @@ class AdminPanelAccessTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_analista_cannot_access_new_admin_views(): void
+    public function test_analista_can_access_authorized_global_consultation_history(): void
     {
         $analista = User::factory()->create(['rol' => 'analista']);
 
         $this->actingAs($analista)
             ->get(route('admin.consultations.index'))
-            ->assertForbidden();
+            ->assertOk();
     }
 
     public function test_customer_cannot_access_admin_views(): void

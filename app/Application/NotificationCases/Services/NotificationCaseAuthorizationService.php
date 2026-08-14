@@ -37,6 +37,11 @@ final class NotificationCaseAuthorizationService
         return in_array($actor->rol, ['analista', 'admin'], true);
     }
 
+    public function canEditAsAdministrator(User $actor, NotificationCase $case): bool
+    {
+        return $this->canReview($actor) && $case->status->value === 'UNDER_REVIEW';
+    }
+
     public function canListDocuments(User $actor, NotificationCase $case): bool
     {
         return $this->canView($actor, $case);
@@ -48,7 +53,7 @@ final class NotificationCaseAuthorizationService
             return $case->status->isEditableByOwner();
         }
 
-        return $this->isAdministrative($actor);
+        return false;
     }
 
     private function isAdministrative(User $actor): bool

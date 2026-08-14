@@ -24,6 +24,9 @@ class NotificationCaseAuditService
         ?string $requestKey = null,
         ?string $ipAddress = null,
         ?string $userAgent = null,
+        ?string $fieldName = null,
+        ?string $oldValue = null,
+        ?string $newValue = null,
     ): NotificationCaseEvent {
         if ($caseId === null && ! in_array($eventType, self::PRE_CASE_EVENTS, true)) {
             throw new DomainException("El evento {$eventType} requiere expediente.");
@@ -49,6 +52,9 @@ class NotificationCaseAuditService
             'correlation_id' => $correlationId,
             'request_key' => $requestKey,
             'metadata' => $safeMetadata,
+            'field_name' => $fieldName,
+            'old_value' => $oldValue,
+            'new_value' => $newValue,
             'created_at' => now(),
         ]);
     }

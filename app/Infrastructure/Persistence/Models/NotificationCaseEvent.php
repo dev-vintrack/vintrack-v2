@@ -2,7 +2,9 @@
 
 namespace App\Infrastructure\Persistence\Models;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use LogicException;
 
 class NotificationCaseEvent extends Model
@@ -28,5 +30,10 @@ class NotificationCaseEvent extends Model
     public function delete(): ?bool
     {
         throw new LogicException('Los eventos de expediente no pueden eliminarse.');
+    }
+
+    public function actor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'actor_user_id');
     }
 }

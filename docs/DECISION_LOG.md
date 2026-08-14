@@ -158,3 +158,49 @@ Estos gates se acumulan con OBS-02-01 a OBS-02-06. Producción permanece `NOT AU
 `recovered_at` debe ser menor o igual al datetime empresarial actual. No se permiten fechas u horas futuras. La timezone contractual es `America/Mexico_City`.
 
 La regla se valida obligatoriamente server-side dentro del servicio de ciclo de vida del expediente, tanto al guardar el borrador como al enviar. La restricción del navegador es exclusivamente una mejora UX y no constituye autoridad ni control de seguridad. **APPROVED**
+
+## DEC-039 — SPRINT-04 Governance Closure
+
+**Estado:** APPROVED WITH OBSERVATIONS
+**Aprobado por:** Project Owner
+**Fecha:** 2026-08-13
+
+SPRINT-04 — Client Portal — Notification Process queda cerrado como `APPROVED WITH OBSERVATIONS` sin reabrir ni modificar su implementación.
+
+Observaciones aceptadas:
+
+1. `OBS-04-01`: se acepta la migration reversible de datos del menú por ser necesaria para integrar el Portal Cliente con el sistema persistente de menús; no cambia schema, no requiere Change Request y deberá incluirse en el futuro procedimiento de deployment.
+2. `OBS-04-02`: la prueba real de doble submit cierra esa parte de `OBS-02-02`; demostró una transición, un evento, un outbox, estado final `SUBMITTED` y `lock_version` consistente. El mensaje del segundo proceso se acepta; un código como `CASE_ALREADY_SUBMITTED` queda como mejora futura no bloqueante.
+3. `OBS-04-03`: permanecen pendientes los Production Gates acumulados: MariaDB 10.6.27; idempotencia end-to-end request → consulta; doble asignación VIN; validación versus auto-close; deadlock/retry; índices/EXPLAIN con volumen representativo; deuda histórica de migrations; malware scanning; storage/fileinfo/GD/permisos reales en Neubox; y autorización separada de producción.
+4. `OBS-04-04`: SPRINT-04 no expone una operación general para modificar VIN. VIN permanece inmutable en la experiencia normal; los casos por placa sin VIN y su conciliación deberán considerarse explícitamente en un flujo administrativo/follow-up posterior respetando la asignación única existente.
+
+DEC-036 permanece como roadmap canónico, DEC-037 conserva el cierre de SPRINT-03 y DEC-038 conserva la regla contractual de `recovered_at`. Producción y SPRINT-05 permanecen no autorizados hasta instrucción explícita separada del Project Owner. **APPROVED WITH OBSERVATIONS**
+
+## DEC-040 — Mandatory Administrative Rejection Reason
+
+**Estado:** APPROVED / IMPLEMENTED LOCALLY IN SPRINT-05
+**Aprobado por:** Project Owner
+**Fecha:** 2026-08-13
+
+Toda transición administrativa a `REJECTED` requiere un motivo textual no vacío, validado y normalizado server-side conforme a la política textual contractual. El motivo queda asociado inequívocamente al evento append-only `CASE_REJECTED` mediante `notification_case_events.reason`, con actor y timestamp; permanece recuperable en todos los ciclos posteriores y se muestra al Cliente para permitir corrección y reenvío.
+
+La infraestructura existente de eventos es suficiente: `reason` es `TEXT`, la historia se ordena por expediente/fecha/id y no se sobrescribe. No se autoriza ni requiere una columna, tabla o migration de schema nueva para esta regla. La longitud máxima de entrada es 2000 caracteres y no existe truncamiento silencioso. **APPROVED**
+
+## DEC-041 — SPRINT-05 Governance Closure
+
+**Estado:** APPROVED WITH OBSERVATIONS
+**Aprobado por:** Project Owner
+**Fecha:** 2026-08-13
+
+SPRINT-05 — Administrative Portal — Review & Validation queda cerrado como `APPROVED WITH OBSERVATIONS` sin reabrir ni modificar su implementación.
+
+Observaciones aceptadas:
+
+1. `OBS-05-01`: se acepta la migration reversible de datos del menú administrativo; no cambia schema, fue probada `up → rollback → up`, no requiere Change Request y deberá incorporarse al procedimiento posterior de deployment.
+2. `OBS-05-02`: no existe capability administrativa aprobada para asignación excepcional de VIN y SPRINT-05 no la expone. La carrera técnica de doble asignación VIN queda cerrada localmente en MySQL. Exponer esa capability queda como follow-up separado. VIN normal y folio permanecen inmutables.
+3. `OBS-05-03`: se acepta el timeline con nombres técnicos de eventos. Su humanización es una mejora UX futura no bloqueante que no altera la auditoría subyacente.
+4. `OBS-05-04`: permanecen como Production Gates MariaDB 10.6.27 real; idempotencia end-to-end request → consulta; índices/EXPLAIN con volumen; deuda histórica de migrations; malware scanning; storage/fileinfo/GD/permisos Neubox; backup/rollback y autorización productiva explícita.
+
+Quedan cerradas localmente y no deben volver a registrarse como pendientes salvo fallo posterior en MariaDB/producción las carreras: doble submit, doble asignación VIN, validate vs reject, validate vs auto-close y reject vs auto-close.
+
+DEC-036 permanece como roadmap canónico, DEC-039 como cierre de SPRINT-04 y DEC-040 como regla contractual del motivo obligatorio de rechazo. Producción y SPRINT-06 permanecen no autorizados hasta instrucción explícita separada del Project Owner. **APPROVED WITH OBSERVATIONS**

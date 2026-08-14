@@ -2,84 +2,38 @@
 
 namespace App\Presentation\Http\Controllers\Web\Admin;
 
-use App\Infrastructure\Persistence\Models\Consultation;
-use App\Infrastructure\Persistence\Models\Provider;
+use App\Application\ConsultationHistories\ConsultationHistoryQuery;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AdminConsultationController
 {
     public function index(Request $request)
     {
-        $baseQuery = $this->buildFilteredQuery($request);
+        $this->authorizeHistory($request);
+        $users = User::whereHas('role.roleType', fn ($query) => $query->where('is_customer', true))
+            ->orderBy('name')->get(['id', 'name', 'email']);
 
-        $kpis = $this->buildKpis($baseQuery);
-
-        $consultations = $baseQuery
-            ->with(['user', 'provider'])
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        $users = User::orderBy('name')->get(['id', 'name', 'email']);
-        $providers = Provider::orderBy('name')->get(['id', 'name']);
-        $criteria = ['placa' => 'Placa', 'niv' => 'NIV', 'vin' => 'VIN'];
-
-        return view('admin.consultations.index', compact(
-            'consultations',
-            'users',
-            'providers',
-            'criteria',
-            'kpis'
-        ));
+        return view('admin.consultations.index', compact('users'));
     }
 
-    private function buildFilteredQuery(Request $request)
+    public function data(Request $request, ConsultationHistoryQuery $history): JsonResponse
     {
-        $query = Consultation::query();
+        $this->authorizeHistory($request);
+        $request->validate([
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'date_from' => ['nullable', 'date'], 'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+            'vin' => ['nullable', 'string', 'max:32'], 'plate' => ['nullable', 'string', 'max:32'],
+            'theft_status' => ['nullable', 'in:POSITIVO,NEGATIVO'],
+            'case_status' => ['nullable', 'in:NO_CASE,PENDING,SUBMITTED,UNDER_REVIEW,REJECTED,VALIDATED,CLOSED_NO_FOLLOW_UP'],
+        ]);
 
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->input('user_id'));
-        }
-
-        if ($request->filled('provider_id')) {
-            $query->where('provider_id', $request->input('provider_id'));
-        }
-
-        if ($request->filled('criterio')) {
-            $query->where('criterio', $request->input('criterio'));
-        }
-
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->input('date_from'));
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->input('date_to'));
-        }
-
-        if ($request->boolean('alerts_only')) {
-            $query->where('alerta_robo', true);
-        }
-
-        return $query;
+        return response()->json($history->data($request, null));
     }
 
-    private function buildKpis($query): array
+    private function authorizeHistory(Request $request): void
     {
-        $total = (clone $query)->count();
-        $today = (clone $query)->whereDate('created_at', today())->count();
-        $previous = (clone $query)->whereDate('created_at', '<', today())->count();
-        $success = (clone $query)->where('success', true)->count();
-        $failure = (clone $query)->where('success', false)->count();
-        $alerts = (clone $query)->where('alerta_robo', true)->count();
-
-        return [
-            'total' => $total,
-            'today' => $today,
-            'previous' => $previous,
-            'success' => $success,
-            'failure' => $failure,
-            'alerts' => $alerts,
-        ];
+        abort_unless(in_array($request->user()?->rol, ['admin', 'analista'], true), 403);
     }
 }

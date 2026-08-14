@@ -37,12 +37,14 @@ final class CustomerNotificationCaseController extends Controller
         $this->authorizeOwn($request, $case);
         $case->load('consultation');
         $documents = $this->documents->list($case, $request->user());
+        $latestRejection = $case->events()->where('event_type', 'CASE_REJECTED')->latest('occurred_at')->latest('id')->first();
 
         return view('customer.notification-cases.show', [
             'case' => $case,
             'documents' => $documents,
             'editable' => $this->authorization->canEditOwn($request->user(), $case),
             'canSubmit' => $this->authorization->canSubmit($request->user(), $case),
+            'latestRejection' => $latestRejection,
         ]);
     }
 

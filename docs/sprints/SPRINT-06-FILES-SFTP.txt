@@ -1,0 +1,16 @@
+AGENTS.md
+app/Application/ConsultationHistories/ConsultationHistoryQuery.php
+app/Application/ConsultationHistories/ConsultationHistoryRow.php
+app/Presentation/Http/Controllers/Web/Admin/AdminConsultationController.php
+app/Presentation/Http/Controllers/Web/CustomerAccountController.php
+database/migrations/2026_08_14_000000_update_vehicle_consultation_history_menus.php
+docs/ARCHITECTURE.md
+docs/PROJECT_STATE.md
+docs/sprints/SPRINT-06-RESULT.md
+resources/views/admin/consultations/index.blade.php
+resources/views/customer/consultations.blade.php
+routes/web.php
+tests/Feature/Admin/AdminPanelAccessTest.php
+tests/Feature/ConsultationHistories/ConsultationHistoryTest.php
+tests/Feature/Customer/CustomerAccountPrivacyTest.php
+tests/Feature/Customer/CustomerMenuPermissionTest.php

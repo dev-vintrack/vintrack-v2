@@ -4,6 +4,7 @@ use App\Presentation\Http\Controllers\Web\Admin\AdminConsultationController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminInventoryController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminMenuPermissionController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminNotificationController;
+use App\Presentation\Http\Controllers\Web\Admin\AdminNotificationCaseController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminPackageController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminProviderController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminProviderServiceRoleController;
@@ -90,6 +91,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/proceso-notificaciones', [CustomerNotificationCaseController::class, 'index'])->name('customer.notification-cases.index');
     });
 
+    Route::get('mi-cuenta/consultas/datos', [CustomerAccountController::class, 'consultationData'])
+        ->middleware(['active.customer'])->name('customer.consultations.data');
+
     Route::prefix('mi-cuenta/proceso-notificaciones')->middleware(['active.customer'])->name('customer.notification-cases.')->group(function () {
         Route::get('/{case}', [CustomerNotificationCaseController::class, 'show'])->name('show');
         Route::put('/{case}', [CustomerNotificationCaseController::class, 'update'])->name('update');
@@ -121,14 +125,26 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/packages/user-wallets', [AdminPackageController::class, 'userWallets'])->name('admin.packages.user-wallets');
     });
 
+    Route::prefix('admin/proceso-notificaciones')->middleware(['role:analista'])->name('admin.notification-cases.')->group(function () {
+        Route::get('/', [AdminNotificationCaseController::class, 'index'])->name('index');
+        Route::get('/{case}', [AdminNotificationCaseController::class, 'show'])->name('show');
+        Route::put('/{case}', [AdminNotificationCaseController::class, 'update'])->name('update');
+        Route::post('/{case}/start-review', [AdminNotificationCaseController::class, 'startReview'])->name('start-review');
+        Route::post('/{case}/validate', [AdminNotificationCaseController::class, 'validateCase'])->name('validate');
+        Route::post('/{case}/reject', [AdminNotificationCaseController::class, 'reject'])->name('reject');
+    });
+
+    Route::prefix('admin')->middleware(['role:analista'])->group(function () {
+        Route::get('/consultations', [AdminConsultationController::class, 'index'])->name('admin.consultations.index');
+        Route::get('/consultations/data', [AdminConsultationController::class, 'data'])->name('admin.consultations.data');
+    });
+
     Route::prefix('admin')->middleware(['role:admin,soporte'])->group(function () {
         Route::get('/users', [AdminUserController::class, 'index'])->name('admin.users.index');
         Route::get('/users/{id}/edit', [AdminUserController::class, 'edit'])->name('admin.users.edit');
         Route::put('/users/{id}', [AdminUserController::class, 'update'])->name('admin.users.update');
         Route::put('/users/{id}/approve', [AdminUserController::class, 'approve'])->name('admin.users.approve');
         Route::delete('/users/{id}', [AdminUserController::class, 'destroy'])->name('admin.users.destroy');
-
-        Route::get('/consultations', [AdminConsultationController::class, 'index'])->name('admin.consultations.index');
 
         Route::get('/wallets', [AdminWalletController::class, 'index'])->name('admin.wallets.index');
         Route::get('/wallets/movements', [AdminWalletController::class, 'movements'])->name('admin.wallets.movements');

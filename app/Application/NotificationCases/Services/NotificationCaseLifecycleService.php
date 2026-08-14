@@ -22,6 +22,8 @@ final class NotificationCaseLifecycleService
 
     private const DRAFT_FIELDS = [...self::TEXT_FIELDS, 'recovered_at', 'model_year'];
 
+    private const REJECTION_REASON_MAX_LENGTH = 2000;
+
     private const REQUIRED = ['vin', 'recovery_place', 'country', 'state', 'municipality', 'recovered_at', 'license_plate', 'make', 'model_year', 'origin', 'authority', 'investigation_file', 'safekeeping'];
 
     public function __construct(
@@ -65,6 +67,54 @@ final class NotificationCaseLifecycleService
             $this->audit->record($case->id, 'CASE_DRAFT_UPDATED', $eventKey, $requestKey, $actor->id, 'USER', $case->status->value, $case->status->value, null, [
                 'fields' => array_keys($allowed), 'lock_version' => $case->lock_version,
             ], $requestKey);
+
+            return $case;
+        }, 3);
+    }
+
+    /** @param array<string, mixed> $fields */
+    public function saveAdministrativeCorrections(User $actor, int $caseId, array $fields, int $expectedVersion, string $requestKey): NotificationCase
+    {
+        return DB::transaction(function () use ($actor, $caseId, $fields, $expectedVersion, $requestKey) {
+            $case = NotificationCase::lockForUpdate()->findOrFail($caseId);
+            if (! $this->authorization->canEditAsAdministrator($actor, $case)) {
+                throw new DomainException('No autorizado para corregir este expediente en su estado actual.');
+            }
+            $this->assertVersion($case, $expectedVersion);
+            $allowed = array_intersect_key($fields, array_flip(self::DRAFT_FIELDS));
+            foreach (self::TEXT_FIELDS as $field) {
+                if (array_key_exists($field, $allowed)) {
+                    $allowed[$field] = $this->normalizer->normalize($allowed[$field]);
+                }
+            }
+            if (array_key_exists('recovered_at', $allowed) && $allowed['recovered_at'] !== null && $allowed['recovered_at'] !== '') {
+                $recoveredAt = CarbonImmutable::parse((string) $allowed['recovered_at'], $this->settings->timezone());
+                if ($recoveredAt->greaterThan(CarbonImmutable::now($this->settings->timezone()))) {
+                    throw new DomainException('La fecha y hora de recuperaciÃ³n no puede estar en el futuro.');
+                }
+                $allowed['recovered_at'] = $recoveredAt;
+            }
+
+            $changes = [];
+            foreach ($allowed as $field => $value) {
+                $old = $case->{$field};
+                $oldComparable = $old instanceof \DateTimeInterface ? $old->format('Y-m-d H:i:s') : $old;
+                $newComparable = $value instanceof \DateTimeInterface ? $value->format('Y-m-d H:i:s') : $value;
+                if ((string) ($oldComparable ?? '') !== (string) ($newComparable ?? '')) {
+                    $changes[$field] = [$oldComparable, $value, $newComparable];
+                }
+            }
+            if ($changes === []) {
+                return $case;
+            }
+
+            $case->forceFill(array_map(fn (array $change) => $change[1], $changes));
+            $case->lock_version++;
+            $case->save();
+            foreach ($changes as $field => [$old, , $new]) {
+                $eventKey = 'admin-field-corrected:'.hash('sha256', $requestKey.':'.$field);
+                $this->audit->record($case->id, 'ADMIN_FIELD_CORRECTED', $eventKey, $requestKey, $actor->id, 'ANALYST', $case->status->value, $case->status->value, null, ['fields' => [$field], 'lock_version' => $case->lock_version], $requestKey, null, null, $field, $this->auditValue($old), $this->auditValue($new));
+            }
 
             return $case;
         }, 3);
@@ -196,12 +246,21 @@ final class NotificationCaseLifecycleService
             if ($to === NotificationCaseStatus::VALIDATED && ! $this->authorization->canValidate($actor)) {
                 throw new DomainException('No autorizado para validar.');
             }
-            if ($to === NotificationCaseStatus::REJECTED && ! $reason) {
-                throw new DomainException('El rechazo requiere motivo.');
+            if ($to === NotificationCaseStatus::REJECTED) {
+                $reason = $this->normalizer->normalize($reason);
+                if ($reason === null || $reason === '') {
+                    throw new DomainException('El rechazo requiere motivo.');
+                }
+                if (mb_strlen($reason) > self::REJECTION_REASON_MAX_LENGTH) {
+                    throw new DomainException('El motivo de rechazo excede la longitud permitida.');
+                }
             }
             $this->assertVersion($case, $expectedVersion);
             $from = $case->status;
             $this->stateMachine->assertTransition($from, $to);
+            if ($to === NotificationCaseStatus::VALIDATED) {
+                $this->assertComplete($case);
+            }
             $timeField = match ($to) {
                 NotificationCaseStatus::UNDER_REVIEW => 'review_started_at',
                 NotificationCaseStatus::REJECTED => 'rejected_at',
@@ -220,15 +279,18 @@ final class NotificationCaseLifecycleService
         }, 3);
     }
 
-    public function autoCloseDue(int $limit = 100): int
+    public function autoCloseDue(int $limit = 100, ?int $caseId = null, ?int $expectedVersion = null): int
     {
         $ids = NotificationCase::whereIn('status', ['PENDING', 'SUBMITTED', 'UNDER_REVIEW', 'REJECTED'])
-            ->where('auto_close_at', '<=', now($this->settings->timezone()))->orderBy('auto_close_at')->orderBy('id')->limit($limit)->pluck('id');
+            ->where('auto_close_at', '<=', now($this->settings->timezone()))
+            ->when($caseId !== null, fn ($query) => $query->whereKey($caseId))
+            ->when($expectedVersion !== null, fn ($query) => $query->where('lock_version', $expectedVersion))
+            ->orderBy('auto_close_at')->orderBy('id')->limit($limit)->pluck('id');
         $closed = 0;
         foreach ($ids as $id) {
-            $didClose = DB::transaction(function () use ($id) {
+            $didClose = DB::transaction(function () use ($id, $expectedVersion) {
                 $case = NotificationCase::lockForUpdate()->find($id);
-                if (! $case || ! $case->status->isPending() || $case->auto_close_at->isFuture()) {
+                if (! $case || ($expectedVersion !== null && $case->lock_version !== $expectedVersion) || ! $case->status->isPending() || $case->auto_close_at->isFuture()) {
                     return false;
                 }
                 $from = $case->status;
@@ -251,5 +313,25 @@ final class NotificationCaseLifecycleService
         if ($case->lock_version !== $expected) {
             throw new DomainException('Conflicto de versión del expediente.');
         }
+    }
+
+    private function assertComplete(NotificationCase $case): void
+    {
+        foreach (self::REQUIRED as $field) {
+            if ($case->{$field} === null || $case->{$field} === '') {
+                throw new DomainException("Campo obligatorio faltante: {$field}.");
+            }
+        }
+        if (! $case->iph && ! $case->nuc) {
+            throw new DomainException('Debe informarse IPH o NUC.');
+        }
+        if ($case->recovered_at->greaterThan(CarbonImmutable::now($this->settings->timezone()))) {
+            throw new DomainException('La fecha y hora de recuperaciÃ³n no puede estar en el futuro.');
+        }
+    }
+
+    private function auditValue(mixed $value): ?string
+    {
+        return $value === null ? null : mb_substr((string) $value, 0, 65535);
     }
 }

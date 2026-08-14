@@ -133,7 +133,7 @@ class CustomerMenuPermissionTest extends TestCase
             ->assertOk()
             ->assertDontSee('Mis créditos')
             ->assertSee('Mis movimientos')
-            ->assertSee('Mis consultas')
+            ->assertSee('Historial de Vehículos Consultados')
             ->assertSee('VIN Decoder');
     }
 
