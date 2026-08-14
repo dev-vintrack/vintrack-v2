@@ -3,7 +3,7 @@
 @section('title', 'Historial Global de Vehículos Consultados')
 
 @push('styles')
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="{{ asset('vendor/vintrack/datatables-1.13.6.bootstrap5.min.css') }}">
 @endpush
 
 @section('content')
@@ -23,9 +23,9 @@
 @endsection
 
 @push('scripts')
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script><script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script><script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="{{ asset('vendor/vintrack/jquery-3.7.1.min.js') }}"></script><script src="{{ asset('vendor/vintrack/datatables-1.13.6.min.js') }}"></script><script src="{{ asset('vendor/vintrack/datatables-1.13.6.bootstrap5.min.js') }}"></script>
 <script>
 $(function(){const esc=v=>$('<div>').text(v??'—').html();const table=$('#globalHistory').DataTable({processing:true,serverSide:true,pageLength:10,lengthMenu:[10,25,50,100],searchDelay:350,order:[[0,'desc']],ajax:{url:@json(route('admin.consultations.data')),data:d=>{$('.history-filter').each(function(){d[this.id]=this.value;});}},columns:[
-{data:'consulted_at'},{data:'user',render:u=>u?`${esc(u.name)}<small class="d-block text-muted">${esc(u.email)}</small>`:'—'},{data:'vin'},{data:'license_plate'},{data:'make'},{data:'model'},{data:'model_year'},{data:'service'},{data:'theft_status'},{data:'notified_status'},{data:'validated_status'},{data:'notification_deadline',defaultContent:'—'},{data:'general_status'},{data:'action',orderable:false,searchable:false,render:a=>a?`<a class="btn btn-sm btn-outline-primary" href="${esc(a.url)}">${esc(a.label)}</a>`:'—'}],language:{url:'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'}});$('.history-filter').on('change input',()=>table.ajax.reload());});
+{data:'consulted_at'},{data:'user',render:u=>u?`${esc(u.name)}<small class="d-block text-muted">${esc(u.email)}</small>`:'—'},{data:'vin'},{data:'license_plate'},{data:'make'},{data:'model'},{data:'model_year'},{data:'service'},{data:'theft_status'},{data:'notified_status'},{data:'validated_status'},{data:'notification_deadline',defaultContent:'—'},{data:'general_status'},{data:'action',orderable:false,searchable:false,render:a=>a?`<a class="btn btn-sm btn-outline-primary" href="${esc(a.url)}">${esc(a.label)}</a>`:'—'}],language:{url:'{{ asset('vendor/vintrack/datatables-es-ES-1.13.6.json') }}'}});$('.history-filter').on('change input',()=>table.ajax.reload());});
 </script>
 @endpush

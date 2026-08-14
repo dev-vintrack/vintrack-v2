@@ -258,3 +258,70 @@ de Scheduler/daemon y la evidencia de concurrencia, tests y regresión.
 DEC-036 permanece como roadmap canónico y DEC-042 como cierre de SPRINT-06.
 Producción permanece `NOT AUTHORIZED`. SPRINT-08 requiere autorización explícita
 separada del Project Owner. **APPROVED WITH OBSERVATIONS**
+
+## DEC-044 — SPRINT-08 Governance Closure
+
+**Estado:** APPROVED WITH OBSERVATIONS
+**Aprobado por:** Project Owner
+**Fecha:** 2026-08-14
+
+SPRINT-08 — Hardening & Production Readiness queda formalmente cerrado como `APPROVED WITH OBSERVATIONS`, incluidos sus dos Targeted Remediation Passes. Production Readiness queda aprobado como `READY WITH CONDITIONS`. Production Authorization permanece `NOT AUTHORIZED` y Deployment `NOT EXECUTED`.
+
+Observaciones aceptadas:
+
+1. `OBS-08-01`: PG-05 permanece `OPEN — OWNER RISK/ARCHITECTURE DECISION REQUIRED`. MIME y SHA-256 no equivalen a malware scanning. Cuarentena + scanner verificable queda recomendada para decisión posterior; este cierre no instala software o servicios.
+2. `OBS-08-02`: PG-18 permanece OPEN. DataTables CDN se acepta como baseline; CDN, CSP, SRI o distribución local requieren decisión explícita antes de producción. Este cierre no modifica frontend.
+3. `OBS-08-03`: PG-01, PG-06, PG-08–PG-17 y PG-20 permanecen `BLOCKED_EXTERNAL`. No se consideran verificados MariaDB, Neubox, cPanel Cron, SMTP, DNS ni configuración productiva.
+4. `OBS-08-04`: el RESULT se armoniza documentalmente distinguiendo estado inicial y estado final después de remediation, sin eliminar la historia.
+
+Quedan `CLOSED` con evidencia local reproducible: PG-02 idempotencia request→consultation (`1/1/1/1` same key; `2/2/2/2` different keys), PG-03 performance/EXPLAIN sobre dataset 200/100,000/10,000/10,000 sin escenarios medidos >5 s, PG-04 estrategia de migrations (bootstrap 43 tablas/53 FK/54 migrations y forward-only + restore/forward-fix), PG-07 backup/restore `VERIFIED LOCALLY` y PG-21 secrets/log sanitization `CLOSED LOCALLY`.
+
+La evidencia de performance es local y no constituye SLA productivo. `READY WITH CONDITIONS` no significa Ready for Deployment ni autoriza producción. DEC-036 permanece como roadmap canónico y DEC-043 como cierre de SPRINT-07. No se crea SPRINT-09. El siguiente paso posible es `Production Environment Verification Gate`, exclusivamente bajo autorización posterior del Project Owner. **APPROVED WITH OBSERVATIONS**
+
+## DEC-045 — Malware Scanning Architecture for Evidence
+
+**Estado:** APPROVED
+**Aprobado por:** Project Owner
+**Fecha:** 2026-08-14
+
+La arquitectura contractual aprobada para PG-05 es **QUARANTINE-FIRST + MALWARE SCANNING + FAIL-CLOSED**.
+
+Reglas contractuales:
+
+1. Toda nueva evidencia comienza en cuarentena privada. Un upload exitoso no equivale a evidencia limpia.
+2. Los estados mínimos equivalentes son `PENDING`, `SCANNING`, `CLEAN`, `INFECTED` y `ERROR`.
+3. Sólo `CLEAN` puede usarse normalmente. `PENDING`, `SCANNING`, `ERROR` e `INFECTED` permanecen bloqueados.
+4. Un fallo del scanner nunca equivale a `CLEAN`. Los documentos `INFECTED` no se eliminan automáticamente.
+5. `SUBMIT` y `RESUBMIT` se bloquean server-side si existe evidencia activa que no esté `CLEAN`; el servidor es la autoridad.
+6. El scanner debe exponerse detrás de una abstracción de Application/Domain; Infrastructure contiene el adapter del provider.
+7. Ningún provider específico está aprobado o seleccionado todavía.
+8. SHA-256 puede apoyar cache/deduplicación de resultados, pero nunca produce confianza permanente por sí solo.
+9. Los retries son acotados y todo scanning debe quedar auditado.
+10. SPRINT-03 conserva la autoridad contractual de storage y authorization: storage privado, sin URLs públicas y sin bypass del agregado Evidence.
+11. No se usarán servicios públicos que compartan muestras de evidencia.
+
+PG-05 cambia de `OPEN — OWNER RISK/ARCHITECTURE DECISION REQUIRED` a `DECIDED — IMPLEMENTATION REQUIRED BEFORE PRODUCTION`. No queda CLOSED. Para cerrarlo todavía se requieren implementación, tests, selección/aprobación de provider y verificación de integración productiva.
+
+Esta decisión es exclusivamente arquitectónica/documental: no implementa scanner, no selecciona provider, no autoriza uploads productivos ni inicia Production Environment Verification. Production Readiness permanece `READY WITH CONDITIONS`; Production Authorization `NOT AUTHORIZED`; Deployment `NOT EXECUTED`. **APPROVED**
+
+## DEC-046 — Frontend Critical Assets Self-Hosting and CSP Strategy
+
+**Estado:** APPROVED
+**Aprobado por:** Project Owner
+**Fecha:** 2026-08-14
+
+La arquitectura contractual aprobada para PG-18 es **SELF-HOST CRITICAL FRONTEND ASSETS**.
+
+Reglas contractuales:
+
+1. DataTables y las extensiones realmente utilizadas por VINTrack deben formar parte del artifact versionado de producción. No se dependerá de `cdn.datatables.net` durante runtime productivo.
+2. La migración inicial conserva la versión exacta actualmente utilizada y probada: DataTables `1.13.6`. PG-18 no autoriza actualizarla. Cualquier upgrade futuro requiere decisión independiente y regresión propia.
+3. Antes de implementar se hará inventario completo de recursos frontend externos, incluyendo como mínimo DataTables, jQuery, Bootstrap, icon libraries, fonts, JavaScript y CSS externos. Eliminar sólo el CDN de DataTables no se considera suficiente para CSP.
+4. Los assets críticos self-hosted deben estar versionados, formar parte del artifact, tener versión explícita o package lock equivalente, poder construirse/empacarse localmente, funcionar sin acceso al CDN y no requerir Node/NPM/Composer frontend en producción.
+5. No existirá fallback silencioso al CDN.
+6. La futura CSP partirá del inventario real, minimizará origins externos, preferirá `'self'` para scripts/styles y evitará `unsafe-inline`/`unsafe-eval` cuando sea razonablemente posible. Toda excepción necesaria deberá documentarse. No se fija todavía una CSP productiva sin inventario completo.
+7. Para recursos externos deliberadamente conservados se evaluará/exigirá SRI cuando sea técnicamente aplicable. Para assets locales, la integridad se controla mediante source control, commit aprobado, build reproducible, manifest/hash del artifact y verificación de deployment; SRI no es el control principal.
+
+PG-18 cambia de `OPEN` a `DECIDED — LOCAL ASSET MIGRATION REQUIRED BEFORE PRODUCTION`. No queda CLOSED. Para cerrarlo todavía se requieren inventario frontend, migración local aprobada, cero dependencia CDN crítica no aprobada, regresión verde, smoke test sin CDN y assessment CSP actualizado.
+
+Esta decisión es exclusivamente arquitectónica/documental: no modifica frontend, views o packages; no descarga assets; no actualiza DataTables; no implementa PG-18 ni inicia Production Environment Verification. Production Readiness permanece `READY WITH CONDITIONS`; Production Authorization `NOT AUTHORIZED`; Deployment `NOT EXECUTED`. **APPROVED**

@@ -3,6 +3,7 @@
 namespace App\Application\NotificationCases\Services;
 
 use App\Application\NotificationCases\Exceptions\CaseDocumentException;
+use App\Domain\NotificationCases\Enums\MalwareScanStatus;
 use App\Infrastructure\Persistence\Models\NotificationCase;
 use App\Infrastructure\Persistence\Models\NotificationCaseDocument;
 use App\Infrastructure\Persistence\Models\NotificationCaseEvent;
@@ -64,6 +65,7 @@ final class NotificationCaseDocumentService
                 $document->storage_disk = PrivateCaseDocumentStorage::DISK;
                 $document->storage_key = $storedKey;
                 $document->sha256 = $metadata['sha256'];
+                $document->malware_scan_status = MalwareScanStatus::PENDING;
                 $document->save();
 
                 $this->audit->record($lockedCase->id, 'DOCUMENT_UPLOADED', $eventKey, $correlationId, $actor->id, (string) $actor->rol, metadata: [
@@ -72,6 +74,7 @@ final class NotificationCaseDocumentService
                     'extension' => $document->extension,
                     'size_bytes' => $document->size_bytes,
                     'sha256' => $document->sha256,
+                    'malware_scan_status' => MalwareScanStatus::PENDING->value,
                 ], requestKey: $requestKey, ipAddress: $ip, userAgent: $userAgent);
 
                 return $document;
@@ -98,6 +101,8 @@ final class NotificationCaseDocumentService
                 'mime_type' => $document->mime_type,
                 'extension' => $document->extension,
                 'size_bytes' => $document->size_bytes,
+                'malware_scan_status' => $document->malware_scan_status->value,
+                'download_available' => $document->malware_scan_status->allowsOrdinaryUse(),
                 'created_at' => $document->created_at?->format('Y-m-d H:i:s'),
             ])->all();
     }
@@ -107,6 +112,9 @@ final class NotificationCaseDocumentService
         $this->assertDocumentBelongs($case, $document);
         if (! $this->authorization->canListDocuments($actor, $case) || $document->removed_at !== null) {
             throw new CaseDocumentException('DOCUMENT_NOT_AVAILABLE', 'El documento no está disponible.', 404);
+        }
+        if (! $document->malware_scan_status->allowsOrdinaryUse()) {
+            throw new CaseDocumentException('DOCUMENT_QUARANTINED', 'El documento permanece en cuarentena.', 423);
         }
         if (! $this->storage->exists($document->storage_key)) {
             throw new CaseDocumentException('DOCUMENT_FILE_MISSING', 'El archivo no está disponible.', 404);

@@ -2,7 +2,7 @@
 
 **Status:** APPROVED  
 **Version:** 1.0  
-**Approval date:** 2026-08-13
+**Approval date:** 2026-08-14
 
 ## Technology
 - Laravel 12
@@ -25,37 +25,46 @@
 `consultations.provider_service_id` exists locally and in production. Do not recreate.
 
 ## Current Phase
-SPRINT GOVERNANCE / MANDATORY PRE-PRODUCTION FOLLOW-UP
+PRODUCTION ENVIRONMENT VERIFICATION GATE — PENDING OWNER AUTHORIZATION
 
 ## Phase 0 Documentation
 APPROVED — Version 1.0
 
 ## Last Completed Sprint
-SPRINT-07 — Notifications, Outbox Delivery & Automation
+SPRINT-08 — Hardening & Production Readiness
 
 ## Last Sprint Status
 APPROVED WITH OBSERVATIONS
 
 ## Current Sprint
-SPRINT-08 — Hardening & Production Readiness
+None
 
 ## Current Sprint Status
-READY FOR OWNER REVIEW — TARGETED REMEDIATION COMPLETED
+NONE — SPRINT-08 CLOSED
 
 ## Next Sprint
-None authorized
+NONE / NOT DETERMINED
 
 ## Next Sprint Status
-NO NEXT SPRINT AUTHORIZED
+PENDING OWNER DETERMINATION
 
 ## Canonical Provider Service Field
 `consultations.provider_service_id`
 
 ## Approval
-SPRINT-08 fue ejecutado localmente y recibió decisión `NEEDS TARGETED FOLLOW-UP`. El remediation pass autorizado cerró localmente PG-02, PG-04, PG-07 y PG-21; PG-03 permanece OPEN por timeout reproducible de búsqueda global derivada. SPRINT-08 vuelve a `READY FOR OWNER REVIEW`, no está formalmente cerrado y producción permanece no autorizada.
+SPRINT-08 fue cerrado formalmente mediante DEC-044 como `APPROVED WITH OBSERVATIONS`. PG-05 fue implementado localmente con fake y permanece pendiente de provider/verificación productiva; PG-18 fue cerrado localmente con assets self-hosted y smoke offline. Los Gates del entorno objetivo permanecen BLOCKED_EXTERNAL. Production Readiness es `READY WITH CONDITIONS`; producción no está autorizada y no se ejecutó deployment.
 
 ## Production Status
 NOT AUTHORIZED
+
+## Production Readiness
+READY WITH CONDITIONS
+
+## Deployment
+NOT EXECUTED
+
+## Next Step
+Production Environment Verification Gate — PENDING OWNER AUTHORIZATION
 
 ## Canonical Roadmap Decision
 DEC-036
@@ -64,10 +73,10 @@ DEC-036
 
 1. `OBS-02-01`: execute migrations and relevant behavior on real MariaDB 10.6.27.
 2. `OBS-02-02`: CLOSED LOCALLY for double submit, double VIN assignment, validate vs reject, validate vs auto-close and reject vs auto-close. Reopen only if later MariaDB/production validation fails. General deadlock/retry behavior remains subject to later production-readiness validation where applicable.
-3. `OBS-02-03`: close end-to-end request → consultation idempotency before external provider/API reinvocation can occur on a late retry.
+3. `OBS-02-03`: CLOSED LOCALLY by SPRINT-08/DEC-044 for end-to-end request → consultation idempotency; no exactly-once externo is asserted.
 4. `OBS-02-04`: preserve `VIN_NOT_AVAILABLE` for plate consultations without a contractually verified VIN path; no heuristics.
-5. `OBS-02-05`: retain the historical MySQL migration-chain `adapter_code` dependency as technical debt; do not rewrite historical migrations in this closure.
-6. `OBS-02-06`: validate indexes and execution plans with representative volume.
+5. `OBS-02-05`: CLOSED LOCALLY by SPRINT-08/DEC-044 through versioned bootstrap plus forward-only/backup-restore/forward-fix strategy; historical migrations were not rewritten.
+6. `OBS-02-06`: CLOSED LOCALLY by SPRINT-08/DEC-044 with representative 100k dataset and EXPLAIN Before/After.
 
 These gates are additional to backup, rollback, compatibility validation and explicit production authorization.
 
@@ -95,35 +104,30 @@ Carreras cerradas localmente: doble submit, doble VIN, validate vs reject, valid
 
 ## SPRINT-06 Closure Observations
 
-1. `OBS-06-01`: EXPLAIN con volumen representativo e índices adicionales sólo con evidencia permanecen Production Gate.
+1. `OBS-06-01`: CLOSED LOCALLY by SPRINT-08/DEC-044 con dataset 100k, EXPLAIN Before/After e índices respaldados por evidencia.
 2. `OBS-06-02`: normalización actual de placas aceptada; no inferir identidad ausente; formatos futuros requieren evidencia.
-3. `OBS-06-03`: DataTables 1.13.6 vía CDN aceptado; revisar disponibilidad/CSP/dependencias externas antes de producción si aplica.
+3. `OBS-06-03`: DEC-046 implementada localmente. DataTables 1.13.6 y dependencias críticas están self-hosted; inventario/regresión/smoke offline completos. CSP productiva sigue pendiente.
 4. `OBS-06-04`: permanecen todos los Production Gates acumulados no cerrados.
 
 ## SPRINT-07 Closure Observations
 
 1. `OBS-07-01`: SMTP se acepta como at-least-once; no afirmar exactly-once externo sin garantía verificable del proveedor.
-2. `OBS-07-02`: clasificar destinatario inexistente/email inválido como non-retryable/skipped queda como hardening para SPRINT-08.
+2. `OBS-07-02`: CLOSED LOCALLY by SPRINT-08; destinatario inexistente/email inválido queda non-retryable/skipped y Portal permanece independiente.
 3. `OBS-07-03`: PHP CLI/cPanel/Artisan, working directory, Cron, logs/cache, URL, SMTP/TLS/remitente, SPF/DKIM/DMARC, límites y rebotes permanecen Production Gates.
 4. `OBS-07-04`: deuda histórica del rollback global en `2026_08_05_000002_drop_label_icon_from_menu_permissions_tables` preservada; ciclos reversibles recientes aceptados.
 
 ## Accumulated Production Gates
 
-1. MariaDB 10.6.27 real.
-2. Idempotencia end-to-end request → consulta.
-3. EXPLAIN/selectividad con volumen representativo.
-4. Deuda histórica de migrations.
-5. Malware scanning.
-6. Storage, fileinfo, GD y permisos reales en Neubox.
-7. Backup y rollback.
-8. DataTables CDN/CSP si la política técnica aplica.
-9. PHP CLI, ruta PHP, cPanel y ejecución Artisan.
-10. Working directory, frecuencia Cron, timeout y overlap.
-11. Logs, cache y URL productiva.
-12. SMTP, TLS y remitente.
-13. SPF, DKIM y DMARC.
-14. Límites/rate de correo y observabilidad de rebotes.
-15. Autorización productiva explícita.
+Closed locally: PG-02 idempotencia, PG-03 EXPLAIN/performance, PG-04 migration strategy, PG-07 backup/restore y PG-21 secrets/log sanitization.
+
+Decided, implementation required before production:
+
+- PG-05 malware scanning: IMPLEMENTED LOCALLY — PROVIDER SELECTION AND PRODUCTION VERIFICATION REQUIRED. No está CLOSED y no existe provider seleccionado.
+- PG-18 frontend assets: CLOSED LOCALLY; assets críticos self-hosted, DataTables 1.13.6 preservado y smoke offline verde. CSP productiva no activada.
+
+Blocked external: PG-01 MariaDB; PG-06 storage/extensiones/permisos Neubox; PG-08–PG-17 PHP CLI/cPanel/Cron/logs/cache/APP_URL/SMTP/DNS/límites/rebotes; PG-20 configuración productiva/APP_DEBUG.
+
+Deferred by Owner: PG-19 autorización productiva explícita.
 
 ## Approved Implementation Roadmap
 
@@ -135,7 +139,7 @@ Carreras cerradas localmente: doble submit, doble VIN, validate vs reject, valid
 6. SPRINT-08 — Hardening & Production Readiness.
 7. PRODUCTION GATE — explicit Project Owner authorization required.
 
-DEC-036 es el roadmap canónico. SPRINT-07 está cerrado mediante DEC-043. SPRINT-08 está `READY FOR OWNER REVIEW` después de targeted remediation, todavía no cerrado formalmente. Producción permanece no autorizada.
+DEC-036 es el roadmap canónico. SPRINT-07 está cerrado mediante DEC-043 y SPRINT-08 mediante DEC-044. No existe Sprint siguiente determinado/autorizado. Producción permanece no autorizada.
 
 ## Critical Rules
 1. Keep notification process separate from consultation history.
@@ -153,7 +157,7 @@ DEC-036 es el roadmap canónico. SPRINT-07 está cerrado mediante DEC-043. SPRIN
 13. Provisional retention is 5 years for cases/evidence/audit and 2 years for portal notifications; no purge is authorized.
 14. Primary future Cron executable is `/usr/local/bin/php`, subject to predeployment verification.
 15. SPRINT-02 is closed as APPROVED WITH OBSERVATIONS; its six observations are mandatory before production.
-16. Production is not authorized; SPRINT-07 is ready for Owner review.
+16. Production is not authorized; SPRINT-08 is closed as APPROVED WITH OBSERVATIONS.
 17. DEC-036 establishes SPRINT-03 through SPRINT-08 as the canonical approved roadmap; SPRINT-05 is closed with observations.
 18. DEC-038 prohíbe `recovered_at` futuro y fija `America/Mexico_City` para su comparación server-side.
 19. DEC-039 registra el cierre de SPRINT-04 como APPROVED WITH OBSERVATIONS.
@@ -161,6 +165,9 @@ DEC-036 es el roadmap canónico. SPRINT-07 está cerrado mediante DEC-043. SPRIN
 21. DEC-041 registra el cierre de SPRINT-05 como APPROVED WITH OBSERVATIONS.
 22. DEC-042 registra el cierre de SPRINT-06 como APPROVED WITH OBSERVATIONS.
 23. SPRINT-07 implementa localmente delivery/outbox/portal/commands; cPanel Cron y SMTP productivo no están configurados.
+24. DEC-044 registra SPRINT-08 como APPROVED WITH OBSERVATIONS y Production Readiness como READY WITH CONDITIONS; no autoriza deployment.
+25. DEC-045 aprueba la arquitectura quarantine-first/fail-closed de PG-05; implementación y tests locales con fake completados, pero provider aprobado e integración productiva siguen pendientes.
+26. DEC-046 aprueba self-hosting de assets frontend críticos; DataTables 1.13.6 no se actualizó y la migración/inventario/smoke quedaron completos localmente; CSP productiva sigue pendiente.
 
 ## SPRINT-07 Approved Result
 
@@ -169,4 +176,4 @@ DEC-036 es el roadmap canónico. SPRINT-07 está cerrado mediante DEC-043. SPRIN
 - Email de expedientes mediante Laravel Mail: implementado con transporte de pruebas; SMTP productivo no configurado.
 - Commands discretos para outbox, deadlines y auto-close: implementados localmente.
 - Scheduler no es requisito productivo; Cron real no configurado.
-- SPRINT-08 targeted remediation ejecutado localmente; pendiente de revisión del Owner. No se inició SPRINT-09.
+- SPRINT-08 cerrado mediante DEC-044 como APPROVED WITH OBSERVATIONS. No se inició SPRINT-09 ni Production Environment Verification.

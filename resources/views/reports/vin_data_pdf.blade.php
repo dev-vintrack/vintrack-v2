@@ -84,7 +84,7 @@
     <table class="header">
         <tr>
             <td style="vertical-align:middle;">
-                <img src="https://dev.vintrack.com.mx/images/logo-vintrack.png" alt="VINTrack" style="height:45px; vertical-align:middle; margin-right:10px;">
+                <img src="{{ public_path('images/logo-vintrack.png') }}" alt="VINTrack" style="height:45px; vertical-align:middle; margin-right:10px;">
                 <span style="font-size:16px; color:#0d6efd; font-weight:700; vertical-align:middle;">Reporte de historial vehicular</span>
             </td>
             <td class="meta">

@@ -4,6 +4,7 @@ namespace Tests\Feature\NotificationCases;
 
 use App\Application\NotificationCases\Services\NotificationCaseAuditService;
 use App\Application\NotificationCases\Services\NotificationCaseDocumentService;
+use App\Domain\NotificationCases\Enums\MalwareScanStatus;
 use App\Domain\NotificationCases\Enums\NotificationCaseStatus;
 use App\Infrastructure\Persistence\Models\Consultation;
 use App\Infrastructure\Persistence\Models\NotificationCase;
@@ -40,6 +41,8 @@ class NotificationCaseDocumentTest extends TestCase
 
         $this->actingAs($owner)->get(route('notification-cases.documents.index', $case))
             ->assertOk()->assertJsonCount(1, 'data')->assertJsonMissing(['storage_key' => $document->storage_key]);
+        $this->actingAs($owner)->get(route('notification-cases.documents.show', [$case, $document]))->assertStatus(423);
+        $document->forceFill(['malware_scan_status' => MalwareScanStatus::CLEAN, 'malware_scanned_at' => now()])->save();
         $this->actingAs($owner)->get(route('notification-cases.documents.show', [$case, $document]))
             ->assertOk()->assertHeader('x-content-type-options', 'nosniff');
 

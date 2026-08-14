@@ -1,7 +1,7 @@
 @push('styles')
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+<link rel="stylesheet" href="{{ asset('vendor/vintrack/datatables-1.13.6.bootstrap5.min.css') }}">
+<link rel="stylesheet" href="{{ asset('vendor/vintrack/datatables-buttons-2.4.2.bootstrap5.min.css') }}">
+<link rel="stylesheet" href="{{ asset('vendor/vintrack/datatables-responsive-2.5.0.bootstrap5.min.css') }}">
 <style>
     .customer-datatable-toolbar .dt-buttons {
         display: inline-flex !important;
@@ -45,17 +45,17 @@
 @endpush
 
 @push('scripts')
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="{{ asset('vendor/vintrack/jquery-3.7.1.min.js') }}"></script>
+<script src="{{ asset('vendor/vintrack/datatables-1.13.6.min.js') }}"></script>
+<script src="{{ asset('vendor/vintrack/datatables-1.13.6.bootstrap5.min.js') }}"></script>
+<script src="{{ asset('vendor/vintrack/datatables-responsive-2.5.0.min.js') }}"></script>
+<script src="{{ asset('vendor/vintrack/datatables-responsive-2.5.0.bootstrap5.min.js') }}"></script>
+<script src="{{ asset('vendor/vintrack/datatables-buttons-2.4.2.min.js') }}"></script>
+<script src="{{ asset('vendor/vintrack/datatables-buttons-2.4.2.bootstrap5.min.js') }}"></script>
+<script src="{{ asset('vendor/vintrack/jszip-3.10.1.min.js') }}"></script>
+<script src="{{ asset('vendor/vintrack/pdfmake-0.2.7.min.js') }}"></script>
+<script src="{{ asset('vendor/vintrack/pdfmake-0.2.7-vfs_fonts.js') }}"></script>
+<script src="{{ asset('vendor/vintrack/datatables-buttons-2.4.2.html5.min.js') }}"></script>
 <script>
 $(function () {
     const table = $('#{{ $tableId }}').DataTable({
@@ -68,7 +68,7 @@ $(function () {
         order: @json($order),
         autoWidth: false,
         language: {
-            url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json',
+            url: '{{ asset('vendor/vintrack/datatables-es-ES-1.13.6.json') }}',
             emptyTable: @json($emptyMessage),
             search: 'Búsqueda rápida:'
         },

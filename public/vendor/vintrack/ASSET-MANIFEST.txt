@@ -1,0 +1,22 @@
+# VINTrack critical frontend asset manifest — 2026-08-14
+# Format: relative-path | bytes | SHA-256
+bootstrap-5.3.2.bundle.min.js | 80663 | 82f64f62bb03c1bc1824b0f9c9e05f70dba33e146818e63cdf5c306c8cf3dedd
+bootstrap-5.3.2.min.css | 232948 | 3017df4a76db5f01c2b99b603d88b03106df13bcfe18e67b7c13c2341d3a67df
+bootstrap-icons-1.11.2.min.css | 85875 | 483e1bf6ead25d54b37456cf0e51ea0220d9de03ef6ba2a2d8c3f34a4bc34c17
+datatables-1.13.6.bootstrap5.min.css | 11981 | e16fe3d8fbf737955f6d50e1cc8f122b31c51c17da39d676099d655dfc4da1f5
+datatables-1.13.6.bootstrap5.min.js | 2358 | de25c7adf49de31cc8d58caba281748c6e0e5701a2480a14d7e59d6301306199
+datatables-1.13.6.min.js | 87103 | 24362c145a81e1e2fd95185c4300d2595afb2cadd9f1580c2ddce95bc19b2084
+datatables-buttons-2.4.2.bootstrap5.min.css | 7809 | 9b95ab65f388ab51ed80f302847d3a75b5ff5788b5e2950e73cbdec68b467d09
+datatables-buttons-2.4.2.bootstrap5.min.js | 1693 | 9eba0ca5629825c7ed44413dda25463a0bc8c810794f72b7b0eb93b1e431ec74
+datatables-buttons-2.4.2.html5.min.js | 25207 | 29df100ccf63a859a977447e2a43ec1885a5f8d06d1bb88a9523579954463ecb
+datatables-buttons-2.4.2.min.js | 25574 | a78080674bed087eeea2ecc95e9b8fc7b500ab54a5d50ef1c9878b81d7bb0b3f
+datatables-buttons-2.4.2.print.min.js | 2669 | f2aa5f3632ca46241a32c8f6bea3c5059fe36eda132cd594981d28870df60441
+datatables-es-ES-1.13.6.json | 8241 | fb8d059ee0e83297f9894e02684458b5fb85d51fa238c9b83c13e0d2822960e6
+datatables-responsive-2.5.0.bootstrap5.min.css | 4325 | d6b2febae651fb57a7a2e70c05182755ea089db38b9cc95fbdc7a9c5170efd0f
+datatables-responsive-2.5.0.bootstrap5.min.js | 1627 | 7f1266883b7c2b4f5e962780fc9dbcbec12f4ac98580652fa0bb04807fee531e
+datatables-responsive-2.5.0.min.js | 14778 | 8772af4fa77a5dda526f6f7f745e83c6d0ae977803a8e43630902741bf91037d
+fonts/bootstrap-icons.woff2 | 130648 | 5b2dd4d4f81cd1f52a50b0833ea12c8f63f2c4ae4d2c5a799fcc741feb2ea40f
+jquery-3.7.1.min.js | 87533 | fc9a93dd241f6b045cbff0481cf4e1901becd0e12fb45166a8f17f95823f0b1a
+jszip-3.10.1.min.js | 97630 | acc7e41455a80765b5fd9c7ee1b8078a6d160bbbca455aeae854de65c947d59e
+pdfmake-0.2.7.min.js | 1357654 | 21af5bb8ba1561f9f99d4125aa6d3cd08fa6d2351eaf4ec8d1097e69ecc00828
+pdfmake-0.2.7-vfs_fonts.js | 798324 | 271e1b64fb048b408b5731f298c3d80c18fe6a51854e08072c3763862691ee5c

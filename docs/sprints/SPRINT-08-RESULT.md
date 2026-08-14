@@ -3,6 +3,8 @@
 Fecha: 2026-08-14
 Entorno: local
 Producción: NOT AUTHORIZED
+Estado formal: **APPROVED WITH OBSERVATIONS**
+Fecha de aprobación: 2026-08-14
 
 ## 1. Executive Summary
 
@@ -55,7 +57,7 @@ Prueba multiproceso real contra MySQL 8.4.3: misma key produjo un worker `COMPLE
 
 ## 10. Idempotency Failure Injection
 
-Provider exception fue inyectada: operation `FAILED_AMBIGUOUS`, segundo intento no reinvoca provider, 0 débito, 0 consultation. Se cubrieron replay, payload conflict y claves distintas. La matriz completa A–G no quedó ejecutada.
+Estado inicial: provider exception fue inyectada y se cubrieron replay, payload conflict y claves distintas; la matriz A–G todavía no estaba completa. Estado final después de remediation: matriz A–G ejecutada con fakes/fault injection y documentada en §52; los fallos ambiguos bloquean retry automático y requieren reconciliación.
 
 ## 11. Provider Crash Window
 
@@ -151,7 +153,7 @@ Comandos candidatos y checklist documentados; no se configuró Cron.
 
 ## 33. Backup Assessment
 
-Runbook preparado. Restauración integral local no ejecutada: NOT VERIFIED.
+Estado inicial: runbook preparado y restauración integral pendiente. Estado final después de remediation: dump, evidence archive y manifest SHA-256 fueron restaurados en DB/storage desechables; 10 verificaciones pasaron. **VERIFIED LOCALLY**, no verificado en producción.
 
 ## 34. Rollback Assessment
 
@@ -159,19 +161,19 @@ Migration SPRINT-08 reversible localmente. Cadena global requiere forward-fix/re
 
 ## 35. Failure Injection
 
-Ejecutada para provider exception y email inválido. Matriz DB/filesystem/stale lease/malformed outbox no completada.
+Estado inicial: provider exception y email inválido ejecutados; la matriz ampliada estaba incompleta. Estado final después de remediation: matriz de idempotencia A–G completada para los fallos técnicamente representables, con recovery/reconciliation documentado. No se afirma exactly-once externo.
 
 ## 36. Data Integrity
 
-Suite y constraints verdes; diagnóstico masivo formal de todas las inconsistencias no quedó ejecutado.
+Estado inicial: suite/constraints verdes y diagnóstico masivo pendiente. Estado final después de remediation: diagnósticos reproducibles ejecutados con cero duplicados incompatibles, orphans, estados imposibles, deadlines inválidos, abiertos fuera de regla o relaciones activas incompatibles; detalle en §52.
 
 ## 37. Concurrency Regression
 
-Regresiones existentes pasan. Request/request multiproceso y stress/deadlock permanecen pendientes.
+Estado inicial: regresiones históricas verdes y request/request multiproceso pendiente. Estado final después de remediation: misma key produjo provider/debit/consultation/operation `1/1/1/1`; keys distintas `2/2/2/2`. PG-02 quedó CLOSED localmente. Stress externo/productivo no fue ejecutado ni se requiere para reinterpretar esta evidencia local.
 
 ## 38. Deadlock/Retry Assessment
 
-Operaciones DB críticas conservan transacciones/retries acotados. No se envolvieron llamadas externas en retry. Stress controlado no ejecutado.
+Operaciones DB críticas conservan transacciones/retries acotados y las llamadas externas no se envuelven en retry ciego. La concurrencia crítica request/request fue verificada multiproceso en MySQL local; cualquier validación específica de MariaDB/Neubox permanece BLOCKED_EXTERNAL.
 
 ## 39. Configuration Hardening
 
@@ -298,4 +300,13 @@ Las regresiones cubren origin, OWN/OTHER/NO_CASE, validated other, >90 days/prev
 
 **PG-03 = CLOSED**
 
-READY FOR OWNER REVIEW
+## 54. Owner Closure Observations
+
+- `OBS-08-01`: PG-05 permanece `OPEN — OWNER RISK/ARCHITECTURE DECISION REQUIRED`. MIME/SHA-256 no son malware scanning; cuarentena + scanner verificable queda recomendada para decisión posterior. No se instaló software.
+- `OBS-08-02`: PG-18 permanece OPEN. DataTables CDN es baseline aceptado; CDN/CSP/SRI/assets locales requieren decisión explícita antes de producción. No se modificó frontend.
+- `OBS-08-03`: PG-01, PG-06, PG-08–PG-17 y PG-20 permanecen `BLOCKED_EXTERNAL`; ninguna evidencia local se reinterpretó como verificación Neubox/MariaDB/SMTP.
+- `OBS-08-04`: RESULT armonizado conservando la distinción entre estado inicial y estado final después de remediation.
+
+Production Readiness: **READY WITH CONDITIONS**. Esto no significa Ready for Deployment ni verifica MariaDB, Neubox o SMTP. Production Authorization: **NOT AUTHORIZED**. Deployment: **NOT EXECUTED**.
+
+SPRINT-08 — APPROVED WITH OBSERVATIONS

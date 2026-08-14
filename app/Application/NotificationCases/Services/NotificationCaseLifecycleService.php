@@ -193,6 +193,9 @@ final class NotificationCaseLifecycleService
             if (DB::table('notification_case_vin_reconciliations')->where('notification_case_id', $case->id)->where('status', 'OPEN')->exists()) {
                 throw new DomainException('El expediente tiene una conciliación VIN pendiente.');
             }
+            if (DB::table('notification_case_documents')->where('notification_case_id', $case->id)->whereNull('removed_at')->where('malware_scan_status', '<>', 'CLEAN')->exists()) {
+                throw new DomainException('Todas las evidencias activas deben estar limpias antes del envio.');
+            }
             foreach (self::REQUIRED as $field) {
                 if ($case->{$field} === null || $case->{$field} === '') {
                     throw new DomainException("Campo obligatorio faltante: {$field}.");

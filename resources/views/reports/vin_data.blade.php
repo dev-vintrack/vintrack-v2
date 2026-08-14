@@ -7,7 +7,7 @@
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center">
-                <img src="https://vintrack.com.mx/images/vintrack-auto5.jpeg" alt="VINTrack" height="50" class="me-3">
+                <img src="{{ asset('images/logo-vintrack.png') }}" alt="VINTrack" height="50" class="me-3">
                 <div>
                     <h4 class="mb-0">VINTrack</h4>
                     <small class="text-muted">Reporte de historial vehicular</small>
