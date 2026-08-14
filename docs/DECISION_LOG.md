@@ -204,3 +204,22 @@ Observaciones aceptadas:
 Quedan cerradas localmente y no deben volver a registrarse como pendientes salvo fallo posterior en MariaDB/producción las carreras: doble submit, doble asignación VIN, validate vs reject, validate vs auto-close y reject vs auto-close.
 
 DEC-036 permanece como roadmap canónico, DEC-039 como cierre de SPRINT-04 y DEC-040 como regla contractual del motivo obligatorio de rechazo. Producción y SPRINT-06 permanecen no autorizados hasta instrucción explícita separada del Project Owner. **APPROVED WITH OBSERVATIONS**
+
+## DEC-042 — SPRINT-06 Governance Closure
+
+**Estado:** APPROVED WITH OBSERVATIONS
+**Aprobado por:** Project Owner
+**Fecha:** 2026-08-14
+
+SPRINT-06 — Vehicle Consultation Histories + Server-side DataTables queda cerrado como `APPROVED WITH OBSERVATIONS`, sin reabrir ni modificar su implementación.
+
+Observaciones aceptadas:
+
+1. `OBS-06-01`: se acepta no crear índices especulativos con el volumen local. Arquitectura server-side, ausencia de N+1, `LIMIT/OFFSET`, filtros SQL y ordering allowlist quedan aceptados localmente. Repetir EXPLAIN con volumen representativo, validar selectividad/planes y crear índices sólo con evidencia permanece Production Gate.
+2. `OBS-06-02`: se acepta la normalización actual de placas para separadores persistidos comunes. No se infiere ni fabrica identidad ausente. Formatos históricos adicionales sólo se evaluarán con evidencia real futura.
+3. `OBS-06-03`: se acepta DataTables 1.13.6 mediante el CDN del baseline existente. Disponibilidad, CSP y dependencias externas se revisarán antes de producción si la política técnica lo requiere.
+4. `OBS-06-04`: permanecen como Production Gates MariaDB 10.6.27 real; idempotencia end-to-end request → consulta; índices/EXPLAIN con volumen representativo; deuda histórica de migrations; malware scanning; storage/fileinfo/GD/permisos Neubox; backup/rollback y autorización productiva explícita.
+
+Quedan formalmente aceptados ambos historiales, DataTables server-side, paginación/búsqueda/filtros/ordering server-side, filtro Cliente, scope autenticado, resolución histórica Consultation → Case, 90 días, múltiples cases, prevención retroactiva, ownership proyectado, `VIN_NOT_AVAILABLE`, estados derivados, deadline/primer submit, acciones server-side, IDOR, ausencia de N+1, regresión y tests documentados.
+
+DEC-036 permanece como roadmap canónico y DEC-041 como cierre de SPRINT-05. Producción permanece `NOT AUTHORIZED`. SPRINT-07 queda `PENDING OWNER AUTHORIZATION` y no fue iniciado. **APPROVED WITH OBSERVATIONS**

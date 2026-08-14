@@ -70,6 +70,20 @@ Evidence must be stored securely, with server-side validation and authorized dow
 ## Automation
 Production automation uses cPanel Cron with `/usr/local/bin/php` and a specific future Artisan command as primary path; a signed HTTPS endpoint is contingency only. Jobs must be idempotent and auditable. No Cron is implemented by this decision.
 
+SPRINT-07 implementa localmente tres comandos Artisan discretos y acotados:
+`notifications:process-outbox`, `notifications:queue-deadline-reminders` y
+`notifications:auto-close`. El primero reclama mensajes mediante transacciones
+cortas y entrega fuera del lock; los otros reutilizan el deadline persistido y
+el lifecycle canónico. Ninguno requiere Scheduler, daemon, queue worker,
+Supervisor u Horizon. La configuración real de cPanel Cron permanece pendiente
+de Production Gate.
+
+El outbox transaccional existente es la única fuente de intenciones de entrega.
+Email y Portal se modelan como mensajes independientes, con `dedup_key` propio;
+un fallo de canal no revierte el dominio ni el otro canal. Portal persiste en
+`portal_notifications`; email reutiliza `notification_deliveries` como registro
+auditable y Laravel Mail como transporte.
+
 ## Time and Retention
 Functional module `DATETIME` values have `America/Mexico_City` semantics end-to-end, without implicit engine/browser conversion. Deadline uses `DATETIME(0)` at exactly 23:59:59; other timestamps may use microseconds. Provisional retention is five years for cases/evidence/audit and two years for portal notifications; no automatic purge is authorized.
 

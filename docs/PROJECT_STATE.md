@@ -25,25 +25,25 @@
 `consultations.provider_service_id` exists locally and in production. Do not recreate.
 
 ## Current Phase
-SPRINT-06 LOCAL IMPLEMENTATION / OWNER REVIEW
+SPRINT-07 LOCAL IMPLEMENTATION / OWNER REVIEW
 
 ## Phase 0 Documentation
 APPROVED — Version 1.0
 
 ## Last Completed Sprint
-SPRINT-05 — Administrative Portal — Review & Validation
+SPRINT-06 — Vehicle Consultation Histories + Server-side DataTables
 
 ## Last Sprint Status
 APPROVED WITH OBSERVATIONS
 
 ## Current Sprint
-SPRINT-06 — Vehicle Consultation Histories + Server-side DataTables
+SPRINT-07 — Notifications, Outbox Delivery & Automation
 
 ## Current Sprint Status
 READY FOR OWNER REVIEW
 
 ## Next Sprint
-SPRINT-07 — Notifications, Outbox Delivery & Automation
+SPRINT-08 — Hardening & Production Readiness
 
 ## Next Sprint Status
 NOT AUTHORIZED
@@ -52,7 +52,7 @@ NOT AUTHORIZED
 `consultations.provider_service_id`
 
 ## Approval
-SPRINT-05 fue aprobado por el Project Owner como `APPROVED WITH OBSERVATIONS` el 2026-08-13. DEC-041 registra el cierre y DEC-040 conserva la regla del motivo obligatorio de rechazo. Las observaciones no reabren ni modifican la implementación. Producción permanece no autorizada y SPRINT-06 requiere autorización explícita.
+SPRINT-06 fue aprobado por el Project Owner como `APPROVED WITH OBSERVATIONS` el 2026-08-14. DEC-042 registra el cierre. Las observaciones no reabren ni modifican la implementación. SPRINT-07 fue autorizado para ejecución local, está `READY FOR OWNER REVIEW` y producción permanece no autorizada.
 
 ## Production Status
 NOT AUTHORIZED
@@ -93,6 +93,13 @@ These gates are additional to backup, rollback, compatibility validation and exp
 
 Carreras cerradas localmente: doble submit, doble VIN, validate vs reject, validate vs auto-close y reject vs auto-close.
 
+## SPRINT-06 Closure Observations
+
+1. `OBS-06-01`: EXPLAIN con volumen representativo e índices adicionales sólo con evidencia permanecen Production Gate.
+2. `OBS-06-02`: normalización actual de placas aceptada; no inferir identidad ausente; formatos futuros requieren evidencia.
+3. `OBS-06-03`: DataTables 1.13.6 vía CDN aceptado; revisar disponibilidad/CSP/dependencias externas antes de producción si aplica.
+4. `OBS-06-04`: permanecen todos los Production Gates acumulados no cerrados.
+
 ## Approved Implementation Roadmap
 
 1. SPRINT-03 — Evidence & Secure File Management.
@@ -103,7 +110,7 @@ Carreras cerradas localmente: doble submit, doble VIN, validate vs reject, valid
 6. SPRINT-08 — Hardening & Production Readiness.
 7. PRODUCTION GATE — explicit Project Owner authorization required.
 
-DEC-036 es el roadmap canónico. SPRINT-04 está cerrado mediante DEC-039. SPRINT-05 está cerrado como APPROVED WITH OBSERVATIONS mediante DEC-041. SPRINT-06 fue implementado localmente y queda READY FOR OWNER REVIEW. SPRINT-07 y producción permanecen no autorizados.
+DEC-036 es el roadmap canónico. SPRINT-05 está cerrado mediante DEC-041. SPRINT-06 está cerrado como APPROVED WITH OBSERVATIONS mediante DEC-042. SPRINT-07 está `READY FOR OWNER REVIEW`; SPRINT-08 no fue iniciado y producción permanece no autorizada.
 
 ## Critical Rules
 1. Keep notification process separate from consultation history.
@@ -121,9 +128,20 @@ DEC-036 es el roadmap canónico. SPRINT-04 está cerrado mediante DEC-039. SPRIN
 13. Provisional retention is 5 years for cases/evidence/audit and 2 years for portal notifications; no purge is authorized.
 14. Primary future Cron executable is `/usr/local/bin/php`, subject to predeployment verification.
 15. SPRINT-02 is closed as APPROVED WITH OBSERVATIONS; its six observations are mandatory before production.
-16. Production is not authorized; SPRINT-06 is pending explicit Owner authorization.
+16. Production is not authorized; SPRINT-07 is ready for Owner review.
 17. DEC-036 establishes SPRINT-03 through SPRINT-08 as the canonical approved roadmap; SPRINT-05 is closed with observations.
 18. DEC-038 prohíbe `recovered_at` futuro y fija `America/Mexico_City` para su comparación server-side.
 19. DEC-039 registra el cierre de SPRINT-04 como APPROVED WITH OBSERVATIONS.
 20. DEC-040 exige motivo textual obligatorio, normalizado, persistente, histórico y visible al Cliente para todo rechazo administrativo.
 21. DEC-041 registra el cierre de SPRINT-05 como APPROVED WITH OBSERVATIONS.
+22. DEC-042 registra el cierre de SPRINT-06 como APPROVED WITH OBSERVATIONS.
+23. SPRINT-07 implementa localmente delivery/outbox/portal/commands; cPanel Cron y SMTP productivo no están configurados.
+
+## SPRINT-07 Local Result
+
+- Outbox processor, retry/backoff/dedup y canales independientes: implementados localmente.
+- Portal notifications propias, read/unread, contador, listado y enlace autorizado: implementados localmente.
+- Email de expedientes mediante Laravel Mail: implementado con transporte de pruebas; SMTP productivo no configurado.
+- Commands discretos para outbox, deadlines y auto-close: implementados localmente.
+- Scheduler no es requisito productivo; Cron real no configurado.
+- SPRINT-08 no iniciado y no autorizado.

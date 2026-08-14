@@ -23,6 +23,7 @@ use App\Presentation\Http\Controllers\Web\ForgotPasswordController;
 use App\Presentation\Http\Controllers\Web\HomeController;
 use App\Presentation\Http\Controllers\Web\LoginController;
 use App\Presentation\Http\Controllers\Web\NotificationCaseDocumentController;
+use App\Presentation\Http\Controllers\Web\PortalNotificationController;
 use App\Presentation\Http\Controllers\Web\RegisterController;
 use App\Presentation\Http\Controllers\Web\ReportController;
 use App\Presentation\Http\Controllers\Web\ResetPasswordController;
@@ -98,6 +99,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{case}', [CustomerNotificationCaseController::class, 'show'])->name('show');
         Route::put('/{case}', [CustomerNotificationCaseController::class, 'update'])->name('update');
         Route::post('/{case}/submit', [CustomerNotificationCaseController::class, 'submit'])->name('submit');
+    });
+
+    Route::prefix('mi-cuenta/notificaciones')->middleware(['active.customer'])->name('customer.notifications.')->group(function () {
+        Route::get('/', [PortalNotificationController::class, 'index'])->name('index');
+        Route::get('/unread-count', [PortalNotificationController::class, 'unreadCount'])->name('unread-count');
+        Route::post('/{notification}/read', [PortalNotificationController::class, 'markRead'])->name('read');
     });
 
     Route::prefix('admin')->middleware(['role:admin,analista,soporte'])->group(function () {

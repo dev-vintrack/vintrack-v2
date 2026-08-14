@@ -104,9 +104,9 @@ final class NotificationCaseCreationService
                 'consultation_id' => $consultation->id(), 'case_number' => $caseNumber,
                 'deadline_at' => $case->notification_deadline_at->format('Y-m-d H:i:s'),
             ]);
-            $this->outbox->queue($case->id, $case->user_id, 'CASE_CREATED', 'PORTAL', $eventKey.':portal', [
+            $this->outbox->queueChannels($case->id, $case->user_id, 'CASE_CREATED', $eventKey, [
                 'case_number' => $caseNumber, 'deadline_at' => $case->notification_deadline_at->format('Y-m-d H:i:s'), 'status' => 'PENDING',
-            ]);
+            ], false);
             $this->consumeReservation($reservationId);
 
             return $case;

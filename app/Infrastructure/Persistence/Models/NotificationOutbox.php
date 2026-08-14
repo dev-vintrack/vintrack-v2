@@ -12,6 +12,12 @@ class NotificationOutbox extends Model
 
     protected function casts(): array
     {
-        return ['payload' => 'array', 'available_at' => 'immutable_datetime'];
+        return [
+            'payload' => 'array',
+            'available_at' => 'immutable_datetime',
+            'locked_at' => 'immutable_datetime',
+            'sent_at' => 'immutable_datetime',
+            'failed_at' => 'immutable_datetime',
+        ];
     }
 }

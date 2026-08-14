@@ -22,4 +22,13 @@ final class NotificationCaseOutboxService
             'attempts' => 0,
         ]);
     }
+
+    /** @param array<string, scalar|null> $payload */
+    public function queueChannels(?int $caseId, int $recipientUserId, string $eventType, string $dedupPrefix, array $payload, bool $email = true): void
+    {
+        $this->queue($caseId, $recipientUserId, $eventType, 'PORTAL', $dedupPrefix.':portal', $payload);
+        if ($email) {
+            $this->queue($caseId, $recipientUserId, $eventType, 'EMAIL', $dedupPrefix.':email', $payload);
+        }
+    }
 }

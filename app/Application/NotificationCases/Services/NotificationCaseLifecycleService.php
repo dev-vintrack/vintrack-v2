@@ -217,7 +217,7 @@ final class NotificationCaseLifecycleService
             $eventType = $from === NotificationCaseStatus::REJECTED ? 'CASE_RESUBMITTED' : 'CASE_SUBMITTED';
             $eventKey = strtolower($eventType).':'.hash('sha256', $requestKey);
             $this->audit->record($case->id, $eventType, $eventKey, $requestKey, $actor->id, 'USER', $from->value, 'SUBMITTED', null, ['lock_version' => $case->lock_version], $requestKey);
-            $this->outbox->queue($case->id, $case->user_id, $eventType, 'PORTAL', $eventKey.':portal', ['case_number' => $case->case_number, 'status' => 'SUBMITTED']);
+            $this->outbox->queueChannels($case->id, $case->user_id, $eventType, $eventKey, ['case_number' => $case->case_number, 'status' => 'SUBMITTED']);
 
             return $case;
         }, 3);
@@ -273,7 +273,11 @@ final class NotificationCaseLifecycleService
             }
             $case->forceFill($values)->save();
             $this->audit->record($case->id, $eventType, $eventKey, $requestKey, $actor->id, 'ANALYST', $from->value, $to->value, $reason, ['lock_version' => $case->lock_version], $requestKey);
-            $this->outbox->queue($case->id, $case->user_id, $eventType, 'PORTAL', $eventKey.':portal', ['case_number' => $case->case_number, 'status' => $to->value]);
+            $this->outbox->queueChannels($case->id, $case->user_id, $eventType, $eventKey, [
+                'case_number' => $case->case_number,
+                'status' => $to->value,
+                'message' => $to === NotificationCaseStatus::REJECTED ? $reason : null,
+            ], in_array($eventType, ['CASE_REJECTED', 'CASE_VALIDATED'], true));
 
             return $case;
         }, 3);
@@ -298,7 +302,7 @@ final class NotificationCaseLifecycleService
                 $case->forceFill(['status' => NotificationCaseStatus::CLOSED_NO_FOLLOW_UP, 'closed_at' => now($this->settings->timezone()), 'lock_version' => $case->lock_version + 1])->save();
                 $eventKey = 'case-auto-closed:'.$case->id.':'.$case->auto_close_at->format('YmdHis');
                 $this->audit->record($case->id, 'CASE_AUTO_CLOSED', $eventKey, $eventKey, null, 'SYSTEM', $from->value, 'CLOSED_NO_FOLLOW_UP', null, ['lock_version' => $case->lock_version]);
-                $this->outbox->queue($case->id, $case->user_id, 'CASE_AUTO_CLOSED', 'PORTAL', $eventKey.':portal', ['case_number' => $case->case_number, 'status' => 'CLOSED_NO_FOLLOW_UP']);
+                $this->outbox->queueChannels($case->id, $case->user_id, 'CASE_AUTO_CLOSED', $eventKey, ['case_number' => $case->case_number, 'status' => 'CLOSED_NO_FOLLOW_UP']);
 
                 return true;
             }, 3);

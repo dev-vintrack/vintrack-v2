@@ -167,6 +167,13 @@
 
             @auth
                 <div class="d-flex align-items-center text-white ms-auto">
+                    @if(\App\Presentation\Support\RoleHelper::isCustomer(Auth::user()))
+                        @php($unreadNotifications = \App\Infrastructure\Persistence\Models\PortalNotification::where('recipient_user_id', Auth::id())->whereNull('read_at')->count())
+                        <a class="btn btn-outline-light btn-sm me-3 position-relative" href="{{ route('customer.notifications.index') }}" aria-label="Notificaciones">
+                            <i class="bi bi-bell"></i>
+                            @if($unreadNotifications > 0)<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{{ min($unreadNotifications, 99) }}</span>@endif
+                        </a>
+                    @endif
                     <span class="me-3 d-none d-sm-inline">{{ Auth::user()->name }} ({{ \App\Presentation\Support\RoleHelper::label(Auth::user()->rol) }})</span>
                     <form method="POST" action="{{ route('logout') }}" class="d-inline">
                         @csrf

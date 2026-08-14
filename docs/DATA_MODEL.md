@@ -53,6 +53,19 @@ Support:
 
 Include `CASE_VIN_ASSIGNED` for the idempotent first VIN assignment and reconciliation events. Pre-case events may have nullable case reference only under their explicit allowlist.
 
+## Notification Delivery
+
+SPRINT-07 reutiliza `notification_outbox` como única cola durable. Cada fila es
+un canal (`PORTAL` o `EMAIL`) y su `dedup_key` es único. Los estados operativos
+son `PENDING`, `PROCESSING`, `DELIVERED` y `FAILED`; `available_at`, intentos y
+lease permiten retry acotado y recuperación de claims abandonados.
+
+`portal_notifications.outbox_id` único materializa exactamente una proyección
+local por mensaje y mantiene scope por `recipient_user_id` y read/unread.
+`notification_deliveries.dedup_key` único registra el intento de correo
+existente. La identidad del destinatario siempre se resuelve desde `users` en
+servidor; el payload no es autoridad de routing.
+
 ## Configuration
 The final design must support configurable business values such as the 90-day reuse window, 30-day maximum open period, 3-day deadline, maximum pending count and file limits.
 
