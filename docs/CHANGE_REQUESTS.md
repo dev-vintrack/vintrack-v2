@@ -64,7 +64,7 @@ Reason: Generic text/flag aggregation can classify historical, technical, financ
 Impacted documents: `VINTRACK_MASTER_SPEC.md`, `BUSINESS_RULES.md`, `DATA_MODEL.md`, `ARCHITECTURE.md`, `DECISION_LOG.md`, `PROJECT_STATE.md`, and this log.
 Impacted application/database areas: Provider-result interpretation for `provider_services.service_code = placas_service` and `nmvtis_plus`; consultation risk flags; history projection; report warning presentation; notification-case admission/creation; audit and outbox intent. No schema, migration, historical data rewrite, provider call, wallet, Cron, SMTP, deployment or production action is authorized by this record.
 Risk: Medium. An incorrect mapping can create false-positive notification cases, trigger Portal/Email notifications, or hide a truly qualifying event. The implementation must be contract-tested with provider fixtures, preserve raw provider evidence, remain concurrent-safe and retain server-side authorization and outbox guarantees.
-Status: APPROVED — IMPLEMENTED LOCALLY — OWNER LOCAL VALIDATION ACCEPTED — RELEASE COMMIT `c23d662` CREATED — STAGING ARTIFACT REGENERATED — OWNER RELEASE REVIEW PENDING
+Status: APPROVED — IMPLEMENTED LOCALLY — OWNER LOCAL VALIDATION ACCEPTED — RELEASE COMMIT `c23d662` CREATED — WINDOWS-COMPATIBLE STAGING ARTIFACT REGENERATED — OWNER MANUAL EXTRACTION / RELEASE REVIEW PENDING
 Approval: Explicit Project Owner approval on 2026-08-17.
 Outcome / approved scope:
 1. Select behavior by immutable `provider_services.service_code`, never by mutable service ID, key or display name.
