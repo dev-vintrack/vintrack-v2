@@ -35,7 +35,7 @@ GOLDEN STAGING CANDIDATE — READY FOR OWNER REVIEW
 
 ## Current Class A Changes
 - CR-003 — Restore Report Access from History Tables: IMPLEMENTED LOCALLY — READY FOR OWNER REVIEW. It restores the existing `/reports/{consultation_id}` access from Client and Administrative history rows without changing report generation, providers, workflows, schema, migrations, or production.
-- CR-004 — Provider Result Assessment for `placas_service` and `nmvtis_plus`: IMPLEMENTED LOCALLY — OWNER LOCAL VALIDATION ACCEPTED — RELEASE COMMIT `c23d662` CREATED — WINDOWS-COMPATIBLE STAGING ARTIFACT REGENERATED — OWNER MANUAL EXTRACTION / RELEASE REVIEW PENDING. DEC-050 establishes explicit, service-code-based qualification; only current documented robbery/theft or fraud signals may create notification cases and their case-driven intents. Contract fixtures, local visual validation and the 130-test/605-assertion regression passed without billable provider calls. The local candidate artifact is identified in `docs/production/deployment/CR-004-STAGING-ARTIFACT-MANIFEST.md`; no upload, activation or production action is authorized or performed.
+- CR-004 — Provider Result Assessment for `placas_service` and `nmvtis_plus`: IMPLEMENTED LOCALLY — OWNER LOCAL VALIDATION ACCEPTED — STAGING DEPLOYED AND VALIDATED WITH OBSERVATIONS — PRODUCTION RELEASE NOT AUTHORIZED. DEC-050 establishes explicit, service-code-based qualification; only current documented robbery/theft or fraud signals may create notification cases and their case-driven intents. Contract fixtures and the 130-test/605-assertion regression passed without billable provider calls. The Owner validated the Windows-compatible artifact after its authorized upload/extraction in `dev.vintrack.com.mx` / `public_html_dev`, preserving `.env` and `storage/`. See `docs/production/deployment/CR-004-STAGING-ARTIFACT-MANIFEST.md`; no production action is authorized or performed.
 
 ## Phase 0 Documentation
 APPROVED — Version 1.0
@@ -83,7 +83,7 @@ READY WITH CONDITIONS
 NOT EXECUTED
 
 ## Next Step
-Owner manual Windows File Explorer extraction and review of the regenerated CR-004 staging artifact and its manifest/hash. The runtime source commit is `c23d662803c89f47477bd77803e2a90587746693`; the code, PHP 8.3.32, 44-table `vintrack_dev` target, authentication and authorized Client/Admin validation passed. Do not upload or activate the artifact, create/clone `vintrack_app`, modify production, or perform additional SQL without new Owner authorization.
+Owner decision on the documented CR-004 staging observations, then separate Production Environment Verification / production-release authorization if and when the remaining gates permit it. Do not create/clone `vintrack_app`, modify production, or perform additional SQL without new Owner authorization.
 
 ## Canonical Roadmap Decision
 DEC-036

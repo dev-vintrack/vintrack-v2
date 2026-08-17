@@ -382,7 +382,7 @@ Esta decisión no autoriza SQL, bundle 01–06, backups, clones, creación de `v
 
 ## DEC-050 — Provider Result Assessment and Notification Qualification
 
-**Estado:** APPROVED — IMPLEMENTED LOCALLY — OWNER LOCAL VALIDATION ACCEPTED — DEPLOYMENT PREPARATION ONLY
+**Estado:** APPROVED — IMPLEMENTED LOCALLY — OWNER LOCAL VALIDATION ACCEPTED — STAGING DEPLOYED AND VALIDATED WITH OBSERVATIONS — PRODUCTION RELEASE NOT AUTHORIZED
 **Aprobado por:** Project Owner
 **Fecha:** 2026-08-17
 
@@ -394,4 +394,4 @@ Para `placas_service`, la interpretación debe usar los campos/estados fuente-es
 
 La respuesta cruda del proveedor se conserva como evidencia y la implementación debe guardar una instantánea normalizada y auditable de su evaluación. No se reescribe automáticamente el historial. Fallos, falta de datos o variantes de payload desconocidas son `INDETERMINATE` para calificación, nunca `CLEAR`; la integración debe fallar cerrada respecto de la creación del expediente.
 
-La implementación debe seguir la arquitectura Application/Domain/Infrastructure existente, usar fixtures de contrato versionados, preservar idempotencia/concurrencia, autorización, la regla de 90 días y el outbox de Portal/Email independiente. La implementación local fue realizada con fixtures sin llamadas facturables, sin schema, migrations, cambios de datos, Cron, SMTP, staging ni producción. El Owner aceptó la validación local de la implementación el 2026-08-17; el alcance local queda cerrado. La preparación de artifact y cualquier despliegue de staging/producción siguen sujetos a autorización independiente. **APPROVED**
+La implementación debe seguir la arquitectura Application/Domain/Infrastructure existente, usar fixtures de contrato versionados, preservar idempotencia/concurrencia, autorización, la regla de 90 días y el outbox de Portal/Email independiente. La implementación local fue realizada con fixtures sin llamadas facturables, sin schema, migrations, cambios de datos, Cron o SMTP. El Owner aceptó la validación local y, mediante autorización separada, validó en staging el artifact de runtime `c23d662` el 2026-08-17 sin consultas nuevas, provider calls, SMTP, Cron, Artisan o SQL. La evidencia de staging acepta dos observaciones no corregidas: mensaje técnico histórico de CARFAX visible en un reporte y mojibake de codificación en Proceso de Notificaciones. Ninguna cambia la calificación CR-004 ni autoriza producción. **APPROVED**

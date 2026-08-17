@@ -1,6 +1,6 @@
 # CR-004 — Provider Result Assessment Result
 
-**Status:** APPROVED — IMPLEMENTED LOCALLY — OWNER LOCAL VALIDATION ACCEPTED — STAGING ARTIFACT PREPARED — OWNER RELEASE REVIEW PENDING
+**Status:** APPROVED — IMPLEMENTED LOCALLY — OWNER LOCAL VALIDATION ACCEPTED — STAGING DEPLOYED AND VALIDATED WITH OBSERVATIONS — PRODUCTION RELEASE NOT AUTHORIZED
 **Date:** 2026-08-17
 **Authorization:** Project Owner authorization to implement CR-004 using contract fixtures and without billable provider calls.
 
@@ -35,9 +35,24 @@ Unknown, unavailable and unmapped payload forms are `INDETERMINATE`; they fail c
 ## Constraints and production impact
 
 - No external provider HTTP request was made by the tests.
-- No provider credentials, wallet behavior, report generation, notification workflow, migration, schema, existing consultation data, staging or production environment was modified.
+- No provider credentials, wallet behavior, report generation, notification workflow, migration, schema or existing consultation data was modified. The Owner separately authorized and performed the staging artifact upload/extraction in `dev.vintrack.com.mx` / `public_html_dev`, preserving `.env` and `storage/`.
 - Historical consultations are not rewritten. Their raw responses remain unchanged.
-- This closes the local implementation and validation scope. A local staging candidate is prepared and recorded in `docs/production/deployment/CR-004-STAGING-ARTIFACT-MANIFEST.md`; it has not been uploaded or activated. It does not authorize a staging deployment or production changes.
+- The authorized staging deployment and manual validation are recorded below and in `docs/production/deployment/CR-004-STAGING-ARTIFACT-MANIFEST.md`. This does not authorize production changes.
+
+## Staging validation evidence — 2026-08-17
+
+- Artifact: `vintrack-staging-cr004-c23d662-20260817-windows.zip`, SHA-256 `df55e505fd370f4ace987d4e165ea9937678ecc792ca2eae88006dda76676b72`.
+- Owner confirmed complete local Windows Explorer extraction before upload; remote upload transferred the expected `66,835,751` bytes.
+- Owner extracted the archive into `public_html_dev`; `.env` and `storage/` were preserved. cPanel reported a backslash-separator warning, then the Owner confirmed expected source paths exist as real paths and no literal backslash-named object exists.
+- Administrator login and Global History were functional; applicable rows exposed `Ver` in `Acciones`.
+- An existing Placas report with `robo = No` did not show a red theft alert.
+- Existing VinData reports showed non-qualifying historical/warning data without creating a notification case or a new notification. `Active Theft` remained visibly serious; `Open Lien` remained a warning.
+- Owner reported no HTTP 500 or visible runtime failure attributable to the release, and performed no new vehicle consultation, provider request, SMTP, Cron, Artisan or SQL operation.
+
+### Accepted staging observations — not corrected in CR-004
+
+1. **OBS-CR004-STG-01 — Historical CARFAX technical message exposed.** Existing report #32 displays `Error: Sí` and `Cannot read properties of null (reading 'statusCode')` from persisted CARFAX data. This is not an HTTP 500 and does not change the CR-004 assessment or notification outcome, but it is a future presentation/log-sanitization hardening item.
+2. **OBS-CR004-STG-02 — Notification Process mojibake.** The staging Notification Process page displays malformed UTF-8 labels such as `VehÃ­culo` and `EnvÃ­o / actualizaciÃ³n`. This is outside CR-004 and requires separate encoding diagnosis before correction.
 
 ## Files added or modified for CR-004
 
