@@ -1,0 +1,53 @@
+-- VINTrack PG-01 ledger reconciliation. APPLY ONCE after 02-04 complete cleanly; 06 validates the result.
+-- Batch 3 = explicit historical reconciliation (34 effects already present before this deployment).
+-- Batch 4 = this reviewed deployment bundle (10 newly applied migrations).
+-- These batches are operational reconciliation markers, not reconstructed historical runs.
+
+SELECT COUNT(*) AS before_count, MAX(batch) AS before_max_batch FROM migrations;
+
+INSERT INTO migrations (migration,batch) SELECT '2026_07_10_000001_create_credit_packages_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_10_000001_create_credit_packages_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_13_000000_update_users_roles_and_status',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_13_000000_update_users_roles_and_status');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_13_000001_create_admin_menu_permissions_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_13_000001_create_admin_menu_permissions_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_14_000000_create_vehicles_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_14_000000_create_vehicles_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_17_000000_create_purchase_items_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_17_000000_create_purchase_items_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_17_000001_create_provider_services_sections_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_17_000001_create_provider_services_sections_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_17_000002_create_provider_service_section_roles_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_17_000002_create_provider_service_section_roles_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_17_000003_add_available_credits_to_provider_services_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_17_000003_add_available_credits_to_provider_services_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_17_000004_restructure_provider_services_for_placas_service',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_17_000004_restructure_provider_services_for_placas_service');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_17_000005_add_provider_service_id_to_user_provider_wallets_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_17_000005_add_provider_service_id_to_user_provider_wallets_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_17_000006_add_provider_service_id_to_wallet_ledger_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_17_000006_add_provider_service_id_to_wallet_ledger_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_17_000007_add_provider_service_id_to_credit_package_items_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_17_000007_add_provider_service_id_to_credit_package_items_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_17_000008_add_provider_service_id_to_vehicles_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_17_000008_add_provider_service_id_to_vehicles_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_20_000000_create_inventory_movements_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_20_000000_create_inventory_movements_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_21_000001_add_min_alert_columns_to_provider_services_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_21_000001_add_min_alert_columns_to_provider_services_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_21_190000_create_roles_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_21_190000_create_roles_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_21_190001_add_id_rol_to_users_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_21_190001_add_id_rol_to_users_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_21_190002_add_id_rol_to_admin_menu_permissions_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_21_190002_add_id_rol_to_admin_menu_permissions_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_21_190003_add_id_rol_to_provider_service_section_roles_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_21_190003_add_id_rol_to_provider_service_section_roles_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_21_200000_create_provider_service_roles_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_21_200000_create_provider_service_roles_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_23_033124_create_role_types_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_23_033124_create_role_types_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_23_033142_add_role_type_id_and_meta_to_roles_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_23_033142_add_role_type_id_and_meta_to_roles_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_23_101000_add_status_to_user_packages_and_wallets_tables',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_23_101000_add_status_to_user_packages_and_wallets_tables');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_24_200000_create_global_configuration_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_24_200000_create_global_configuration_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_27_131900_add_package_price_fields_to_global_configuration_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_27_131900_add_package_price_fields_to_global_configuration_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_27_210000_create_notification_policies_and_deliveries_tables',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_27_210000_create_notification_policies_and_deliveries_tables');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_28_200000_create_customer_menu_permissions_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_28_200000_create_customer_menu_permissions_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_28_230000_add_otp_fields_to_users_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_28_230000_add_otp_fields_to_users_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_31_000001_add_adapter_code_to_providers_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_31_000001_add_adapter_code_to_providers_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_07_31_000002_add_service_code_to_provider_services_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_07_31_000002_add_service_code_to_provider_services_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_08_04_000001_add_vin_decoder_to_customer_menu_permissions',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_08_04_000001_add_vin_decoder_to_customer_menu_permissions');
+INSERT INTO migrations (migration,batch) SELECT '2026_08_05_000001_create_menu_items_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_08_05_000001_create_menu_items_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_08_05_000002_drop_label_icon_from_menu_permissions_tables',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_08_05_000002_drop_label_icon_from_menu_permissions_tables');
+INSERT INTO migrations (migration,batch) SELECT '2026_08_10_210000_add_provider_service_id_to_consultations_table',3 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_08_10_210000_add_provider_service_id_to_consultations_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_08_12_220000_add_notification_case_settings_to_global_configuration',4 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_08_12_220000_add_notification_case_settings_to_global_configuration');
+INSERT INTO migrations (migration,batch) SELECT '2026_08_12_220100_create_notification_case_guards_and_sequences',4 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_08_12_220100_create_notification_case_guards_and_sequences');
+INSERT INTO migrations (migration,batch) SELECT '2026_08_12_220200_create_notification_cases_table',4 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_08_12_220200_create_notification_cases_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_08_12_220300_create_notification_case_support_tables',4 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_08_12_220300_create_notification_case_support_tables');
+INSERT INTO migrations (migration,batch) SELECT '2026_08_13_120000_add_notification_process_customer_menu',4 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_08_13_120000_add_notification_process_customer_menu');
+INSERT INTO migrations (migration,batch) SELECT '2026_08_13_180000_add_notification_process_admin_menu',4 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_08_13_180000_add_notification_process_admin_menu');
+INSERT INTO migrations (migration,batch) SELECT '2026_08_14_000000_update_vehicle_consultation_history_menus',4 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_08_14_000000_update_vehicle_consultation_history_menus');
+INSERT INTO migrations (migration,batch) SELECT '2026_08_14_120000_add_malware_scanning_to_notification_case_documents',4 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_08_14_120000_add_malware_scanning_to_notification_case_documents');
+INSERT INTO migrations (migration,batch) SELECT '2026_08_14_120000_create_consultation_operations_table',4 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_08_14_120000_create_consultation_operations_table');
+INSERT INTO migrations (migration,batch) SELECT '2026_08_14_130000_add_normalized_value_to_consultations',4 WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration='2026_08_14_130000_add_normalized_value_to_consultations');
+
+SELECT COUNT(*) AS after_count, MAX(batch) AS after_max_batch FROM migrations;

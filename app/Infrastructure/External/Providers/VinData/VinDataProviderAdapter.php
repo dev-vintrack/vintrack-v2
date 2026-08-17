@@ -3,8 +3,10 @@
 namespace App\Infrastructure\External\Providers\VinData;
 
 use App\Domain\Consultas\Services\ProviderAdapterInterface;
+use App\Domain\Consultas\Services\ProviderResultAssessor;
 use App\Domain\Consultas\ValueObjects\ConsultationRequest;
 use App\Domain\Consultas\ValueObjects\ConsultationResponse;
+use App\Domain\Consultas\ValueObjects\ProviderResultAssessment;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Cache;
@@ -18,12 +20,15 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
 
     private Client $client;
 
-    public function __construct(?Client $client = null)
+    private ProviderResultAssessor $resultAssessor;
+
+    public function __construct(?Client $client = null, ?ProviderResultAssessor $resultAssessor = null)
     {
         $this->client = $client ?? new Client([
             'timeout' => (int) Config::get('providers.vindata.http_timeout', self::DEFAULT_TIMEOUT),
             'connect_timeout' => 10,
         ]);
+        $this->resultAssessor = $resultAssessor ?? new ProviderResultAssessor;
     }
 
     public function supports(string $adapterCode): bool
@@ -115,13 +120,19 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
 
         $data = array_merge($buyBody, ['rawData' => $reportBody]);
 
+        $assessment = $serviceCode === 'nmvtis_plus'
+            ? $this->resultAssessor->assess('nmvtis_plus', $reportBody)
+            : null;
+
         return new ConsultationResponse(
             true,
             200,
             null,
             $data,
             $uuid,
-            $this->detectAlerts($reportBody)
+            $assessment ? $this->flagsFromAssessment($assessment) : $this->detectAlerts($reportBody),
+            null,
+            $assessment,
         );
     }
 
@@ -208,6 +219,17 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
         }
 
         return $alerts;
+    }
+
+    /** @return array<string, int> */
+    private function flagsFromAssessment(ProviderResultAssessment $assessment): array
+    {
+        return [
+            'active_theft' => $assessment->qualifies() ? 1 : 0,
+            'open_lien' => 0,
+            'junk_salvage' => 0,
+            'odometer_issue' => 0,
+        ];
     }
 
     private function errorResponse(int $status, string $message, ?string $apiId = null): ConsultationResponse

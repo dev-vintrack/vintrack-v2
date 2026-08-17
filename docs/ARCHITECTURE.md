@@ -1,8 +1,8 @@
 # VINTrack — Architecture Baseline
 
 **Status:** APPROVED  
-**Version:** 1.0  
-**Approval date:** 2026-08-12
+**Version:** 1.1
+**Approval date:** 2026-08-17
 
 ## Technology
 - Laravel 12
@@ -25,6 +25,11 @@
 `consultations` is the authoritative source of individual consultation events.
 `vehicles` is a consolidated/reporting structure and must not become the notification-expedient master.
 `consultations.provider_service_id` is already implemented and must not be recreated.
+
+## Provider Result Assessment
+Provider adapters retain responsibility for acquiring and preserving raw responses. A common Domain/Application assessment policy interprets each result using the immutable `provider_services.service_code` and versioned, source-specific predicates; controllers, views and generic JSON text scans are not the authority for qualification.
+
+The assessment produces `ACTIVE_QUALIFYING`, `HISTORICAL_RECORD`, `NON_QUALIFYING_WARNING`, `CLEAR` or `INDETERMINATE`. Only `ACTIVE_QUALIFYING` flows to the compatibility projection `alerta_robo` and then to notification-case creation. Historical/warning categories may be rendered as report context but cannot enter the case workflow. `INDETERMINATE` is fail-closed for qualification. The notification-case service remains responsible for idempotent case creation and the transactional outbox remains the sole durable source of Portal/Email delivery intent.
 
 ## New Notification Architecture
 Dedicated structures are expected for:

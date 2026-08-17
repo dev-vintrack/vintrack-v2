@@ -43,3 +43,38 @@ Risk: Medium documentation risk if historical wording remains; future implementa
 Status: APPROVED — DOCUMENTATION COMPLETED  
 Approval: APPROVED by Project Owner on 2026-08-12.  
 Outcome: Documentation harmonized; DEC-028 through DEC-034 record the final decisions. This is not functional implementation and does not authorize SPRINT-02.
+
+## CR-003
+Date: 2026-08-15
+Requester: Project Owner
+Requested change: Restore access to the existing HTML consultation report from the Client and Administrative consultation-history DataTables, grouping it in the existing final `Acciones` column.
+Reason: The report endpoint already existed, but the History/DataTable refactor no longer exposed row-level access to it. This restores existing capability; it does not add report generation.
+Impacted documents: `CHANGE_REQUESTS.md`, `PROJECT_STATE.md`, and `docs/change-results/CR-003-RESTORE-REPORT-ACCESS-FROM-HISTORY-TABLES-RESULT.md`.
+Impacted application/database areas: Read-model projection for consultation histories, the two History DataTable views, and controlled 404 handling for consultations without an available report. No provider, workflow, wallet, schema, migration, or data change.
+Risk: Low. The report route keeps server-side ownership/administrator authorization; the UI is not the authorization authority.
+Status: APPROVED — IMPLEMENTED
+Approval: Explicit Project Owner Change Request, 2026-08-15.
+Outcome: Successful consultations expose `📄 Ver` in `Acciones`; failed/non-reportable consultations expose no report link. Existing notification-case actions remain grouped in the same column. Direct missing, failed, and unauthorized report requests receive controlled 404 responses.
+
+## CR-004
+Date: 2026-08-17
+Requester: Project Owner
+Requested change: Establish one normalized, source-specific assessment of provider results for the immutable services `placas_service` and `nmvtis_plus`. Only an explicitly mapped, current robbery/theft or fraud signal may qualify a consultation for a notification case and its consequential notifications.
+Reason: Generic text/flag aggregation can classify historical, technical, financial, safety or report-severity signals as `alerta_robo`. A VINData `Recovered Theft` event is historical according to the provider but currently matches active-theft text detection. The PlacasInfo review likewise identified source-specific statuses that must not be inferred from generic text.
+Impacted documents: `VINTRACK_MASTER_SPEC.md`, `BUSINESS_RULES.md`, `DATA_MODEL.md`, `ARCHITECTURE.md`, `DECISION_LOG.md`, `PROJECT_STATE.md`, and this log.
+Impacted application/database areas: Provider-result interpretation for `provider_services.service_code = placas_service` and `nmvtis_plus`; consultation risk flags; history projection; report warning presentation; notification-case admission/creation; audit and outbox intent. No schema, migration, historical data rewrite, provider call, wallet, Cron, SMTP, deployment or production action is authorized by this record.
+Risk: Medium. An incorrect mapping can create false-positive notification cases, trigger Portal/Email notifications, or hide a truly qualifying event. The implementation must be contract-tested with provider fixtures, preserve raw provider evidence, remain concurrent-safe and retain server-side authorization and outbox guarantees.
+Status: APPROVED — IMPLEMENTED LOCALLY — OWNER LOCAL VALIDATION ACCEPTED — STAGING ARTIFACT PREPARED — OWNER RELEASE REVIEW PENDING
+Approval: Explicit Project Owner approval on 2026-08-17.
+Outcome / approved scope:
+1. Select behavior by immutable `provider_services.service_code`, never by mutable service ID, key or display name.
+2. Introduce a common provider-result assessment with explicit source predicates and classifications equivalent to `ACTIVE_QUALIFYING`, `HISTORICAL_RECORD`, `NON_QUALIFYING_WARNING`, `CLEAR` and `INDETERMINATE`.
+3. Only `ACTIVE_QUALIFYING` may set the compatibility projection `alerta_robo`, create/reuse a notification case, or enqueue its case-driven Portal/Email notifications. Historical and non-qualifying warnings remain visible/auditable but do not enter the notification workflow.
+4. Preserve the raw provider response and an auditable normalized assessment snapshot; do not rewrite historical consultations automatically. Provider failures, unavailable data and unknown payload variants must fail closed for qualification and be visible as indeterminate rather than clean.
+
+Provider contract baseline:
+- `placas_service`: use official PlacasInfo source-specific status fields, not generic JSON word matching. CARFAX `data.robo = false` is not a robbery signal; REPUVE vehicle data is not independently a theft determination.
+- `nmvtis_plus`: `Active Theft` is potentially qualifying; `Recovered Theft` is historical and non-qualifying. Open lien, recall, towing/impound, odometer, title-brand, junk, salvage and insurance-total-loss signals are not, by themselves, robbery/fraud qualification. A generic red/yellow provider summary is not a qualifying predicate.
+- A fraud qualification requires an explicit, provider-documented current fraud signal approved in the implementation mapping. Title washing, VIN cloning and title brands remain risk/history information unless such a predicate exists.
+
+Implementation outcome: versioned contract fixtures cover active, historical, warning, clear and unknown-payload outcomes for both services. Unit and integration regressions verify that `Recovered Theft` is historical and cannot create a case or case outbox intent, while `Active Theft` creates the normal case and Portal intent. The immediate Placas banner also uses the persisted assessment, preventing a generic compatibility flag from reintroducing the CARFAX `robo=false` false positive. The full local suite passed with 130 tests and 605 assertions; the Owner accepted local visual validation. No external billable provider calls were made. The detailed result is `docs/change-results/CR-004-PROVIDER-RESULT-ASSESSMENT-RESULT.md`. This closes the local implementation/validation scope only; any staging or production release remains separately authorized.

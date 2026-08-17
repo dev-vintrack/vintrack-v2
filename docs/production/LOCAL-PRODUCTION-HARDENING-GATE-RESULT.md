@@ -54,4 +54,19 @@ Deployment: **NOT EXECUTED**
 
 PG-05 still requires Owner-approved provider selection, production adapter implementation/tests and authorized target integration verification. PG-18 requires artifact/hash verification in the target environment and a separately authorized CSP rollout. All existing `BLOCKED_EXTERNAL` Gates remain unchanged. No production, Neubox, SFTP, cPanel, Cron, SMTP, DNS, paid API, real scanner, SPRINT-09 or Production Environment Verification action occurred.
 
-READY FOR OWNER REVIEW
+## 7. Owner Review / Formal Closure
+
+**Decision:** APPROVED WITH OBSERVATIONS
+**Approval date:** 2026-08-14
+**Governance closure:** DEC-047
+
+- `OBS-LPH-01 — Malware Provider Pending`: PG-05 permanece `IMPLEMENTED LOCALLY — PROVIDER SELECTION AND PRODUCTION VERIFICATION REQUIRED`; no está CLOSED. El fake demuestra el workflow, no scanning productivo. Provider, privacidad/retención/contrato, adapter, tests e integración/verificación productiva siguen pendientes.
+- `OBS-LPH-02 — Production CSP Pending`: PG-18 queda `CLOSED LOCALLY` por inventario, self-hosting, eliminación de CDN crítico y verificación offline. CSP, tratamiento de inline scripts/styles y artifact/hash del entorno objetivo siguen pendientes.
+- `OBS-LPH-03 — Laravel Welcome Scaffold`: `welcome` conserva Bunny Fonts y deberá excluirse del routing/artifact productivo o limpiarse antes de CSP. No fue modificado en este cierre.
+
+Production Readiness: **READY WITH CONDITIONS**
+Production Authorization: **NOT AUTHORIZED**
+Deployment: **NOT EXECUTED**
+Production Environment Verification: **NOT STARTED**
+
+LOCAL PRODUCTION HARDENING GATE PG-05 + PG-18 — APPROVED WITH OBSERVATIONS

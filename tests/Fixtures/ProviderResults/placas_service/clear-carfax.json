@@ -1,0 +1,9 @@
+{
+  "carfax": {
+    "data": {
+      "robo": false,
+      "message": "El VIN no cuenta con reporte de robo"
+    }
+  },
+  "repuve": {"placa": "MVR7055"}
+}

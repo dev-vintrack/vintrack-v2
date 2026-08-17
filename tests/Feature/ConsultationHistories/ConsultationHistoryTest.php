@@ -140,6 +140,30 @@ class ConsultationHistoryTest extends TestCase
         $this->assertSame('NO', $response->json('data.0.notified_status'));
     }
 
+    public function test_history_actions_expose_only_available_reports_and_preserve_case_actions(): void
+    {
+        [$owner, $other, $provider, $service] = $this->baseline();
+        $report = $this->consultation($owner, $provider, $service, 'vin', '1HGCM82633A123456', '2026-01-01 10:00:00');
+        $this->case($report, $owner, NotificationCaseStatus::PENDING);
+        $missingReport = $this->consultation($owner, $provider, $service, 'vin', '1HGCM82633A123457', '2026-01-02 10:00:00', false);
+
+        $customerRows = collect($this->jsonFor($owner, 'customer.consultations.data')->json('data'))->keyBy('consultation_id');
+        $reportActions = $customerRows[$report->id]['actions'];
+
+        $this->assertSame('report', $reportActions[0]['type']);
+        $this->assertSame(route('reports.show', $report->id), $reportActions[0]['url']);
+        $this->assertSame('notification_case', $reportActions[1]['type']);
+        $this->assertSame([], $customerRows[$missingReport->id]['actions']);
+
+        $admin = User::factory()->create(['rol' => 'admin', 'activo' => true]);
+        $otherReport = $this->consultation($other, $provider, $service, 'vin', '1HGCM82633A123458', '2026-01-03 10:00:00');
+        $adminRows = collect($this->jsonFor($admin, 'admin.consultations.data', ['user_id' => $other->id])->json('data'))->keyBy('consultation_id');
+        $this->assertSame(route('reports.show', $otherReport->id), $adminRows[$otherReport->id]['actions'][0]['url']);
+
+        $this->actingAs($owner)->get(route('reports.show', $missingReport->id))->assertNotFound();
+        $this->actingAs($owner)->get(route('reports.show', 999999))->assertNotFound();
+    }
+
     private function jsonFor(User $user, string $route, array $parameters = [])
     {
         return $this->actingAs($user)->getJson(route($route, $parameters));
@@ -155,9 +179,9 @@ class ConsultationHistoryTest extends TestCase
         return [$a, $b, $provider, $service];
     }
 
-    private function consultation(User $user, Provider $provider, ProviderService $service, string $criterion, string $value, string $at): Consultation
+    private function consultation(User $user, Provider $provider, ProviderService $service, string $criterion, string $value, string $at, bool $success = true): Consultation
     {
-        $consultation = Consultation::create(['user_id' => $user->id, 'provider_id' => $provider->id, 'provider_service_id' => $service->id, 'criterio' => $criterion, 'valor' => $value, 'services' => ['vhr'], 'success' => true, 'alerta_robo' => true]);
+        $consultation = Consultation::create(['user_id' => $user->id, 'provider_id' => $provider->id, 'provider_service_id' => $service->id, 'criterio' => $criterion, 'valor' => $value, 'services' => ['vhr'], 'success' => $success, 'alerta_robo' => true]);
         $consultation->forceFill(['created_at' => $at, 'updated_at' => $at])->save();
 
         return $consultation;

@@ -2,13 +2,19 @@
 
 namespace Tests\Feature\Consultations;
 
+use App\Application\Consultas\Notifications\ConsultationNotifierInterface;
 use App\Application\Consultas\Services\ConsultationService;
 use App\Application\Credits\CommandHandlers\DebitCreditsCommandHandler;
 use App\Application\Vehicles\Services\VehicleUpserter;
+use App\Domain\Consultas\Repositories\ConsultationRepositoryInterface;
 use App\Domain\Consultas\Services\ProviderAdapterInterface;
 use App\Domain\Consultas\Services\ProviderAdapterRegistry;
+use App\Domain\Consultas\Services\ProviderResultAssessor;
 use App\Domain\Consultas\ValueObjects\ConsultationRequest;
 use App\Domain\Consultas\ValueObjects\ConsultationResponse;
+use App\Domain\Credits\Repositories\WalletRepositoryInterface;
+use App\Domain\Providers\Repositories\ProviderRepositoryInterface;
+use App\Domain\Providers\Repositories\ProviderServiceRepositoryInterface;
 use App\Infrastructure\Persistence\Models\Provider;
 use App\Infrastructure\Persistence\Models\ProviderService;
 use App\Models\User;
@@ -110,9 +116,77 @@ class ConsultationTest extends TestCase
         $response->assertStatus(200)
             ->assertJson(['success' => true]);
 
-        $walletRepo = app(\App\Domain\Credits\Repositories\WalletRepositoryInterface::class);
+        $walletRepo = app(WalletRepositoryInterface::class);
         $wallet = $walletRepo->findByUserAndService($user->id, $service->id);
         $this->assertEquals(9.0, $wallet->balance()->amount());
+    }
+
+    public function test_placas_non_qualifying_carfax_message_does_not_render_theft_banner(): void
+    {
+        $user = User::factory()->create([
+            'password' => 'password123',
+            'rol' => 'admin',
+            'activo' => true,
+            'approved_at' => now(),
+        ]);
+
+        $provider = Provider::create([
+            'code' => 'PLACAS',
+            'adapter_code' => 'placas',
+            'name' => 'Placas.info',
+            'base_url' => 'https://placas.info/api/v2/consultar/',
+            'policies_json' => ['creditCost' => 1.0],
+            'enabled' => true,
+        ]);
+
+        $service = ProviderService::create([
+            'provider_id' => $provider->id,
+            'key' => 'Placas_Service',
+            'service_code' => 'placas_service',
+            'name' => 'Placas Service',
+            'credit_cost' => 1,
+            'available_credits' => 10,
+            'enabled' => true,
+        ]);
+
+        $rawData = [
+            'carfax' => [
+                'data' => [
+                    'robo' => false,
+                    'message' => 'El VIN no cuenta con reporte de robo.',
+                ],
+            ],
+            'repuve' => ['Message' => 'Sin datos.'],
+        ];
+        $assessment = app(ProviderResultAssessor::class)->assess('placas_service', $rawData);
+        $this->mockAdapter(new ConsultationResponse(
+            true,
+            200,
+            null,
+            $rawData,
+            'fake-api-id',
+            ['carfax_robo' => 0],
+            null,
+            $assessment,
+        ));
+
+        $this->actingAs($user)->postJson(route('admin.credits.purchase.store'), [
+            'user_id' => $user->id,
+            'provider_service_id' => $service->id,
+            'amount' => 10,
+            'validity_days' => 30,
+            'reason' => 'Test credits',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(route('consult'), [
+                'provider_id' => $provider->id,
+                'type' => 'placa',
+                'value' => 'ABC1234',
+                'services' => ['placas_service'],
+            ])
+            ->assertOk()
+            ->assertJsonPath('banner.level', 'no_inscrito');
     }
 
     /**
@@ -192,9 +266,12 @@ class ConsultationTest extends TestCase
         ];
     }
 
-    private function mockAdapter(): void
+    private function mockAdapter(?ConsultationResponse $configuredResponse = null): void
     {
-        $fakeAdapter = new class implements ProviderAdapterInterface {
+        $fakeAdapter = new class($configuredResponse) implements ProviderAdapterInterface
+        {
+            public function __construct(private readonly ?ConsultationResponse $configuredResponse) {}
+
             public function supports(string $adapterCode): bool
             {
                 return strtolower($adapterCode) === 'placas';
@@ -202,6 +279,10 @@ class ConsultationTest extends TestCase
 
             public function consult(ConsultationRequest $request): ConsultationResponse
             {
+                if ($this->configuredResponse !== null) {
+                    return $this->configuredResponse;
+                }
+
                 return new ConsultationResponse(
                     true,
                     200,
@@ -220,7 +301,7 @@ class ConsultationTest extends TestCase
         };
 
         app()->singleton(ProviderAdapterRegistry::class, function () use ($fakeAdapter) {
-            $registry = new ProviderAdapterRegistry();
+            $registry = new ProviderAdapterRegistry;
             $registry->register($fakeAdapter);
 
             return $registry;
@@ -228,13 +309,13 @@ class ConsultationTest extends TestCase
 
         app()->singleton(ConsultationService::class, function ($app) {
             return new ConsultationService(
-                $app->make(\App\Domain\Providers\Repositories\ProviderRepositoryInterface::class),
-                $app->make(\App\Domain\Providers\Repositories\ProviderServiceRepositoryInterface::class),
+                $app->make(ProviderRepositoryInterface::class),
+                $app->make(ProviderServiceRepositoryInterface::class),
                 $app->make(ProviderAdapterRegistry::class),
-                $app->make(\App\Domain\Credits\Repositories\WalletRepositoryInterface::class),
+                $app->make(WalletRepositoryInterface::class),
                 $app->make(DebitCreditsCommandHandler::class),
-                $app->make(\App\Domain\Consultas\Repositories\ConsultationRepositoryInterface::class),
-                $app->make(\App\Application\Consultas\Notifications\ConsultationNotifierInterface::class),
+                $app->make(ConsultationRepositoryInterface::class),
+                $app->make(ConsultationNotifierInterface::class),
                 $app->make(VehicleUpserter::class)
             );
         });
@@ -242,10 +323,9 @@ class ConsultationTest extends TestCase
 
     private function mockAdapterWithFailure(int $upstreamStatus): void
     {
-        $fakeAdapter = new class($upstreamStatus) implements ProviderAdapterInterface {
-            public function __construct(private readonly int $upstreamStatus)
-            {
-            }
+        $fakeAdapter = new class($upstreamStatus) implements ProviderAdapterInterface
+        {
+            public function __construct(private readonly int $upstreamStatus) {}
 
             public function supports(string $adapterCode): bool
             {
@@ -272,7 +352,7 @@ class ConsultationTest extends TestCase
         };
 
         app()->singleton(ProviderAdapterRegistry::class, function () use ($fakeAdapter) {
-            $registry = new ProviderAdapterRegistry();
+            $registry = new ProviderAdapterRegistry;
             $registry->register($fakeAdapter);
 
             return $registry;
@@ -280,13 +360,13 @@ class ConsultationTest extends TestCase
 
         app()->singleton(ConsultationService::class, function ($app) {
             return new ConsultationService(
-                $app->make(\App\Domain\Providers\Repositories\ProviderRepositoryInterface::class),
-                $app->make(\App\Domain\Providers\Repositories\ProviderServiceRepositoryInterface::class),
+                $app->make(ProviderRepositoryInterface::class),
+                $app->make(ProviderServiceRepositoryInterface::class),
                 $app->make(ProviderAdapterRegistry::class),
-                $app->make(\App\Domain\Credits\Repositories\WalletRepositoryInterface::class),
+                $app->make(WalletRepositoryInterface::class),
                 $app->make(DebitCreditsCommandHandler::class),
-                $app->make(\App\Domain\Consultas\Repositories\ConsultationRepositoryInterface::class),
-                $app->make(\App\Application\Consultas\Notifications\ConsultationNotifierInterface::class),
+                $app->make(ConsultationRepositoryInterface::class),
+                $app->make(ConsultationNotifierInterface::class),
                 $app->make(VehicleUpserter::class)
             );
         });

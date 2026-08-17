@@ -8,8 +8,8 @@ use DateTimeImmutable;
 class Consultation
 {
     /**
-     * @param string[] $services
-     * @param array<string, mixed> $responseJson
+     * @param  string[]  $services
+     * @param  array<string, mixed>  $responseJson
      */
     public function __construct(
         private readonly ?int $id,
@@ -31,11 +31,10 @@ class Consultation
         private readonly array $responseJson,
         private readonly ?int $creditsApi,
         private readonly DateTimeImmutable $createdAt
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<string, int> $flags
+     * @param  array<string, int>  $flags
      */
     private static function hasAnyFlag(array $flags): bool
     {
@@ -59,6 +58,12 @@ class Consultation
         ConsultationResponse $response,
         DateTimeImmutable $createdAt
     ): self {
+        $assessment = $response->assessment();
+        $flagsJson = $response->theftFlags();
+        if ($assessment) {
+            $flagsJson['_provider_result_assessment'] = $assessment->toArray();
+        }
+
         return new self(
             null,
             $userId,
@@ -73,9 +78,9 @@ class Consultation
             null,
             $response->success(),
             $response->errorMessage(),
-            self::hasAnyFlag($response->theftFlags()),
+            $assessment?->qualifies() ?? self::hasAnyFlag($response->theftFlags()),
             $response->theftFlags(),
-            $response->theftFlags(),
+            $flagsJson,
             $response->data(),
             $response->creditsApi(),
             $createdAt

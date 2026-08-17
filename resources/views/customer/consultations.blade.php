@@ -35,7 +35,7 @@ $(function () {
         {data:'theft_status',render:v=>`<span class="badge ${v==='POSITIVO'?'text-bg-danger':'text-bg-success'}">${esc(v)}</span>`},
         {data:'notified_status'},{data:'validated_status'},{data:'notification_deadline',defaultContent:'—'},
         {data:'general_status',render:(v,t,row)=>row.case_relation==='OTHER_USER_CASE'?`<span class="badge text-bg-info">${esc(row.case_message)}</span>`:`<span class="badge text-bg-secondary">${esc(v)}</span>`},
-        {data:'action',orderable:false,searchable:false,render:a=>a?`<a class="btn btn-sm btn-outline-primary" href="${esc(a.url)}">${esc(a.label)}</a>`:'—'}
+        {data:'actions',orderable:false,searchable:false,render:actions=>actions?.length?actions.map(action=>`<a class="btn btn-sm btn-outline-primary me-1" href="${esc(action.url)}">${action.type==='report'?'&#128196; ':''}${esc(action.label)}</a>`).join(''):'—'}
     ],createdRow:(row,data)=>{if(data.case_relation==='OWN_CASE'&&data.general_status==='PENDING')row.classList.add('table-danger');else if(data.case_relation==='OTHER_USER_CASE')row.classList.add('table-info');},language:{url:'{{ asset('vendor/vintrack/datatables-es-ES-1.13.6.json') }}'}});
     $('.history-filter').on('change',()=>table.ajax.reload());
 });

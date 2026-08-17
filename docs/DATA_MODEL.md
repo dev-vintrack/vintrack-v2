@@ -1,11 +1,16 @@
 # VINTrack — Data Model Governance
 
 **Status:** APPROVED  
-**Version:** 1.0  
-**Approval date:** 2026-08-12
+**Version:** 1.1
+**Approval date:** 2026-08-17
 
 ## Existing Baseline
 `consultations.provider_service_id` already exists locally and in production. Do not recreate it.
+
+## Provider Result Assessment
+The provider response remains the immutable consultation evidence. CR-004 preserves both the raw response and an auditable normalized assessment snapshot in existing `consultations.flags_json`. The snapshot contains the immutable `service_code`, mapping/assessment version, classification, qualifying predicate(s) and source evidence references; the related immutable `consultations.created_at` anchors the evaluation time. The approved minimum classifications are `ACTIVE_QUALIFYING`, `HISTORICAL_RECORD`, `NON_QUALIFYING_WARNING`, `CLEAR` and `INDETERMINATE`.
+
+`alerta_robo` remains a compatibility/read-model projection only: it is true exclusively for `ACTIVE_QUALIFYING`. It must not be a lossy aggregate of unrelated provider warnings. The assessment does not duplicate the canonical consultation identity into `notification_cases`, and this documentation decision does not prescribe or authorize a new schema, migration or historical backfill.
 
 ## vehicles
 `vehicles` is a consolidated/reporting structure and must NOT be the notification-expedient master because it lacks the required direct relationship to the user who performed the consultation.

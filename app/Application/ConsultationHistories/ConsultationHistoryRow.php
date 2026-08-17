@@ -15,7 +15,11 @@ final class ConsultationHistoryRow
         $notified = in_array($row->general_status, ['SUBMITTED', 'UNDER_REVIEW', 'REJECTED', 'VALIDATED'], true)
             || ($row->general_status === 'CLOSED_NO_FOLLOW_UP' && $row->first_submitted_at !== null);
         $validated = $row->general_status === 'VALIDATED';
-        $action = self::action($row, $relation, $viewerUserId === null);
+        $action = self::caseAction($row, $relation, $viewerUserId === null);
+        $actions = array_values(array_filter([
+            self::reportAction($row),
+            $action,
+        ]));
 
         return [
             'consultation_id' => (int) $row->consultation_id,
@@ -30,17 +34,31 @@ final class ConsultationHistoryRow
             'notification_deadline' => $row->notification_deadline_at,
             'general_status' => $row->general_status ?: 'NO APLICA',
             'case_message' => $relation === 'OTHER_USER_CASE' ? 'EXPEDIENTE DE NOTIFICACION EN PROCESO POR OTRO USUARIO' : null,
+            'actions' => $actions,
             'action' => $action,
         ];
     }
 
-    private static function action(stdClass $row, string $relation, bool $admin): ?array
+    private static function reportAction(stdClass $row): ?array
+    {
+        if (! (bool) $row->success) {
+            return null;
+        }
+
+        return [
+            'type' => 'report',
+            'label' => 'Ver',
+            'url' => route('reports.show', $row->consultation_id),
+        ];
+    }
+
+    private static function caseAction(stdClass $row, string $relation, bool $admin): ?array
     {
         if ($row->applicable_case_id === null || $relation === 'OTHER_USER_CASE') {
             return null;
         }
         if ($admin) {
-            return ['label' => 'VER EXPEDIENTE', 'url' => route('admin.notification-cases.show', $row->applicable_case_id)];
+            return ['type' => 'notification_case', 'label' => 'VER EXPEDIENTE', 'url' => route('admin.notification-cases.show', $row->applicable_case_id)];
         }
         $status = $row->general_status ? NotificationCaseStatus::from($row->general_status) : null;
         $label = match ($status) {
@@ -49,6 +67,6 @@ final class ConsultationHistoryRow
             default => 'VER',
         };
 
-        return ['label' => $label, 'url' => route('customer.notification-cases.show', $row->applicable_case_id)];
+        return ['type' => 'notification_case', 'label' => $label, 'url' => route('customer.notification-cases.show', $row->applicable_case_id)];
     }
 }

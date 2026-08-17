@@ -3,8 +3,10 @@
 namespace App\Infrastructure\External\Providers\Placas;
 
 use App\Domain\Consultas\Services\ProviderAdapterInterface;
+use App\Domain\Consultas\Services\ProviderResultAssessor;
 use App\Domain\Consultas\ValueObjects\ConsultationRequest;
 use App\Domain\Consultas\ValueObjects\ConsultationResponse;
+use App\Domain\Consultas\ValueObjects\ProviderResultAssessment;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Config;
@@ -26,7 +28,9 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
 
     private int $pollIntervalSeconds;
 
-    public function __construct(?Client $client = null)
+    private ProviderResultAssessor $resultAssessor;
+
+    public function __construct(?Client $client = null, ?ProviderResultAssessor $resultAssessor = null)
     {
         $httpTimeout = (int) Config::get('providers.placas.http_timeout', self::DEFAULT_TIMEOUT);
         $this->pollMaxSeconds = (int) Config::get('providers.placas.poll_max_seconds', self::POLL_MAX_SECONDS);
@@ -36,6 +40,7 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
             'timeout' => $httpTimeout,
             'connect_timeout' => 10,
         ]);
+        $this->resultAssessor = $resultAssessor ?? new ProviderResultAssessor;
     }
 
     public function supports(string $adapterCode): bool
@@ -106,7 +111,8 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
         $apiId = $body['id'] ?? null;
         $creditsApi = $body['credits'] ?? $body['credits_API'] ?? null;
 
-        [$alert, $flags] = $this->detectTheftFlags($body);
+        $assessment = $this->resultAssessor->assess($request->serviceCode() ?? 'placas_service', $body);
+        $flags = $this->flagsFromAssessment($assessment);
 
         return new ConsultationResponse(
             true,
@@ -115,7 +121,8 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
             $body,
             $apiId,
             $flags,
-            $creditsApi ? (int) $creditsApi : null
+            $creditsApi ? (int) $creditsApi : null,
+            $assessment,
         );
     }
 
@@ -198,7 +205,8 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
         return [false, $lastHttp, $lastErr ?: 'Timeout esperando resultado', $lastData];
     }
 
-    private function detectTheftFlags(array $data): array
+    /** @return array<string, int> */
+    private function flagsFromAssessment(ProviderResultAssessment $assessment): array
     {
         $flags = [
             'repuve_robo' => 0,
@@ -208,58 +216,23 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
             'rapi_robo' => 0,
         ];
 
-        $pgj = $data['pgj'] ?? null;
-        if (is_array($pgj)) {
-            $id = isset($pgj['ID_ESTATUS_VHI_ROBO']) ? (int) $pgj['ID_ESTATUS_VHI_ROBO'] : null;
-            $st = isset($pgj['ESTATUS_VHI_ROBO']) ? strtoupper((string) $pgj['ESTATUS_VHI_ROBO']) : '';
-            if ($id === 1 || strpos($st, 'ROBA') !== false) {
-                $flags['pgj_robo'] = 1;
-            }
-            if ($id === 4 || strpos($st, 'RECUP') !== false) {
-                $flags['pgj_robo'] = 1;
-            }
+        if (! $assessment->qualifies()) {
+            return $flags;
         }
 
-        $ocra = $data['ocra'] ?? null;
-        if (is_array($ocra)) {
-            $rep = $ocra['reporte']['estatus'] ?? '';
-            $has = $ocra['conReporteRoboRecuperacion'] ?? '';
-            $t = strtoupper(json_encode([$rep, $has]));
-            if (strpos($t, 'ROBO') !== false || strpos($t, 'RECUP') !== false || strpos($t, 'TRUE') !== false) {
+        foreach ($assessment->toArray()['predicates'] as $predicate) {
+            if (str_starts_with($predicate, 'pgj.')) {
+                $flags['pgj_robo'] = 1;
+            } elseif (str_starts_with($predicate, 'ocra.')) {
                 $flags['ocra_robo'] = 1;
-            }
-        }
-
-        $carfax = $data['carfax'] ?? null;
-        if ($carfax) {
-            $txt = strtoupper(json_encode($carfax));
-            if (strpos($txt, 'THEFT') !== false || strpos($txt, 'STOLEN') !== false || strpos($txt, 'ROBO') !== false) {
+            } elseif (str_starts_with($predicate, 'carfax.')) {
                 $flags['carfax_robo'] = 1;
+            } elseif (str_starts_with($predicate, 'rapi.')) {
+                $flags['rapi_robo'] = 1;
             }
         }
 
-        $rapi = $data['rapi'] ?? null;
-        if (is_array($rapi)) {
-            if (array_key_exists('tiene_delito', $rapi)) {
-                $v = $rapi['tiene_delito'];
-                $truthy = is_bool($v) ? $v : (is_string($v) ? (strcasecmp($v, 'true') === 0 || $v === '1' || strcasecmp($v, 'si') === 0 || strcasecmp($v, 'sí') === 0) : ((int) $v === 1));
-                if ($truthy) {
-                    $flags['rapi_robo'] = 1;
-                }
-            }
-        }
-
-        $repuve = $data['repuve'] ?? null;
-        if ($repuve) {
-            $txt = strtoupper(json_encode($repuve));
-            if (strpos($txt, 'ROBO') !== false || strpos($txt, 'ROBADO') !== false) {
-                $flags['repuve_robo'] = 1;
-            }
-        }
-
-        $alerta = ($flags['repuve_robo'] || $flags['pgj_robo'] || $flags['ocra_robo'] || $flags['carfax_robo'] || $flags['rapi_robo']) ? 1 : 0;
-
-        return [$alerta, $flags];
+        return $flags;
     }
 
     private function errorResponse(int $status, string $message, ?string $apiId = null): ConsultationResponse

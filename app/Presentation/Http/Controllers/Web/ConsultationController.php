@@ -81,7 +81,10 @@ class ConsultationController
             $banner = null;
             if ($response->success() && $adapterCode === 'placas') {
                 $sections = PlacasReportPresenter::sections($responseData);
-                $alertaRobo = in_array(1, array_map('intval', $response->theftFlags()), true);
+                // La alerta visual debe usar la misma decisión persistida que gobierna
+                // expedientes y notificaciones. Los flags del adaptador son sólo una
+                // proyección de compatibilidad y no una fuente de verdad contractual.
+                $alertaRobo = $consultation->alertaRobo();
                 $banner = PlacasReportPresenter::computeBanner($sections, $alertaRobo);
             }
 

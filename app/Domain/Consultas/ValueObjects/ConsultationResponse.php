@@ -5,8 +5,8 @@ namespace App\Domain\Consultas\ValueObjects;
 class ConsultationResponse
 {
     /**
-     * @param array<string, mixed> $data
-     * @param array<string, int> $theftFlags
+     * @param  array<string, mixed>  $data
+     * @param  array<string, int>  $theftFlags
      */
     public function __construct(
         private readonly bool $success,
@@ -15,9 +15,9 @@ class ConsultationResponse
         private readonly array $data,
         private readonly ?string $apiId,
         private readonly array $theftFlags,
-        private readonly ?int $creditsApi = null
-    ) {
-    }
+        private readonly ?int $creditsApi = null,
+        private readonly ?ProviderResultAssessment $assessment = null,
+    ) {}
 
     public function success(): bool
     {
@@ -52,5 +52,10 @@ class ConsultationResponse
     public function creditsApi(): ?int
     {
         return $this->creditsApi;
+    }
+
+    public function assessment(): ?ProviderResultAssessment
+    {
+        return $this->assessment;
     }
 }

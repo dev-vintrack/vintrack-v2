@@ -10,6 +10,7 @@ use App\Application\NotificationCases\Services\NotificationCaseLifecycleService;
 use App\Domain\Consultas\Repositories\ConsultationRepositoryInterface;
 use App\Domain\Consultas\Services\ProviderAdapterInterface;
 use App\Domain\Consultas\Services\ProviderAdapterRegistry;
+use App\Domain\Consultas\Services\ProviderResultAssessor;
 use App\Domain\Consultas\ValueObjects\ConsultationRequest;
 use App\Domain\Consultas\ValueObjects\ConsultationResponse;
 use App\Domain\NotificationCases\Enums\NotificationCaseStatus;
@@ -86,6 +87,110 @@ class NotificationCaseCoreTest extends TestCase
         $this->assertDatabaseCount('consultations', 1);
         $this->assertDatabaseCount('wallet_ledger', 1);
         $this->assertDatabaseHas('consultation_operations', ['status' => 'COMPLETED', 'consultation_id' => $result->consultation()->id()]);
+    }
+
+    public function test_nmvtis_recovered_theft_is_historical_and_never_creates_a_case_or_case_notifications(): void
+    {
+        [$user, $provider, $service] = $this->baseline('admin', 'nmvtis_plus');
+        UserProviderWallet::create([
+            'user_id' => $user->id, 'provider_id' => $provider->id, 'provider_service_id' => $service->id,
+            'balance' => 5, 'status' => 'active', 'validity_start' => now()->subDay(), 'validity_end' => now()->addMonth(),
+        ]);
+        $adapter = new class implements ProviderAdapterInterface
+        {
+            public ?string $seenServiceCode = null;
+
+            public function supports(string $adapterCode): bool
+            {
+                return strtolower($adapterCode) === 'vindata';
+            }
+
+            public function consult(ConsultationRequest $request): ConsultationResponse
+            {
+                $this->seenServiceCode = $request->serviceCode();
+                $rawData = ['otherInformation' => [['event' => 'Recovered Theft']], 'reportSummary' => ['color' => 'red']];
+
+                return new ConsultationResponse(
+                    true,
+                    200,
+                    null,
+                    ['vin' => $request->value(), 'rawData' => $rawData],
+                    'nmvtis-fixture',
+                    ['active_theft' => 0],
+                    null,
+                    app(ProviderResultAssessor::class)->assess('nmvtis_plus', $rawData),
+                );
+            }
+        };
+        $this->bindAdapter($adapter);
+
+        $result = app(ConsultationService::class)->consult(
+            $user->id,
+            $provider->id,
+            'vin',
+            '1HGCM82633A123456',
+            ['nmvtis_plus'],
+            'nmvtis-recovered-theft',
+        );
+
+        $this->assertSame('nmvtis_plus', $adapter->seenServiceCode);
+        $this->assertFalse($result->consultation()->alertaRobo());
+        $this->assertSame('HISTORICAL_RECORD', $result->consultation()->flagsJson()['_provider_result_assessment']['classification']);
+        $this->assertDatabaseCount('notification_cases', 0);
+        $this->assertDatabaseCount('notification_case_events', 0);
+        $this->assertDatabaseCount('notification_outbox', 0);
+    }
+
+    public function test_nmvtis_active_theft_creates_one_case_and_case_delivery_intents(): void
+    {
+        [$user, $provider, $service] = $this->baseline('admin', 'nmvtis_plus');
+        UserProviderWallet::create([
+            'user_id' => $user->id, 'provider_id' => $provider->id, 'provider_service_id' => $service->id,
+            'balance' => 5, 'status' => 'active', 'validity_start' => now()->subDay(), 'validity_end' => now()->addMonth(),
+        ]);
+        $adapter = new class implements ProviderAdapterInterface
+        {
+            public function supports(string $adapterCode): bool
+            {
+                return strtolower($adapterCode) === 'vindata';
+            }
+
+            public function consult(ConsultationRequest $request): ConsultationResponse
+            {
+                $rawData = ['otherInformation' => [['event' => 'Active Theft']]];
+
+                return new ConsultationResponse(
+                    true,
+                    200,
+                    null,
+                    ['vin' => $request->value(), 'rawData' => $rawData],
+                    'nmvtis-active-fixture',
+                    ['active_theft' => 1],
+                    null,
+                    app(ProviderResultAssessor::class)->assess('nmvtis_plus', $rawData),
+                );
+            }
+        };
+        $this->bindAdapter($adapter);
+
+        $result = app(ConsultationService::class)->consult(
+            $user->id,
+            $provider->id,
+            'vin',
+            '1HGCM82633A123456',
+            ['nmvtis_plus'],
+            'nmvtis-active-theft',
+        );
+
+        $this->assertTrue($result->consultation()->alertaRobo());
+        $this->assertSame('ACTIVE_QUALIFYING', $result->consultation()->flagsJson()['_provider_result_assessment']['classification']);
+        $this->assertDatabaseCount('notification_cases', 1);
+        $this->assertDatabaseCount('notification_case_events', 1);
+        $this->assertDatabaseHas('notification_outbox', [
+            'event_type' => 'CASE_CREATED',
+            'channel' => 'PORTAL',
+            'recipient_user_id' => $user->id,
+        ]);
     }
 
     public function test_different_keys_are_distinct_and_key_cannot_be_reused_for_another_payload(): void
@@ -325,11 +430,11 @@ class NotificationCaseCoreTest extends TestCase
         $lifecycle->transition($admin, $case->id, NotificationCaseStatus::CLOSED_NO_FOLLOW_UP, $case->lock_version, 'manual-close');
     }
 
-    private function baseline(string $role = 'admin'): array
+    private function baseline(string $role = 'admin', string $serviceCode = 'vhr'): array
     {
         $user = User::factory()->create(['rol' => $role, 'activo' => true, 'approved_at' => now()]);
         $provider = Provider::create(['code' => 'VINDATA', 'adapter_code' => 'vindata', 'name' => 'VINData', 'base_url' => 'https://example.test', 'enabled' => true]);
-        $service = ProviderService::create(['provider_id' => $provider->id, 'key' => 'VHR', 'service_code' => 'vhr', 'name' => 'VHR', 'credit_cost' => 1, 'available_credits' => 100, 'enabled' => true]);
+        $service = ProviderService::create(['provider_id' => $provider->id, 'key' => strtoupper($serviceCode), 'service_code' => $serviceCode, 'name' => strtoupper($serviceCode), 'credit_cost' => 1, 'available_credits' => 100, 'enabled' => true]);
 
         return [$user, $provider, $service];
     }

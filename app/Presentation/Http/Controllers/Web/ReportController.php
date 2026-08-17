@@ -18,8 +18,7 @@ class ReportController
     public function __construct(
         private readonly ConsultationRepositoryInterface $consultationRepository,
         private readonly ProviderRepositoryInterface $providerRepository
-    ) {
-    }
+    ) {}
 
     public function show(int $id): Response
     {
@@ -40,11 +39,11 @@ class ReportController
         $viewName = $isPlacas ? 'reports.placas_pdf' : 'reports.vin_data_pdf';
         $viewData = $isPlacas ? $this->placasViewData($consultation) : $this->vinDataViewData($consultation);
 
-        $options = new Options();
+        $options = new Options;
         $options->set('isRemoteEnabled', true);
         $options->set('defaultFont', 'DejaVu Sans');
 
-        $viewData['qrUrl'] = 'https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=' . urlencode('https://vintrack.com.mx/');
+        $viewData['qrUrl'] = 'https://api.qrserver.com/v1/create-qr-code/?size=120x120&data='.urlencode('https://vintrack.com.mx/');
         $viewData['reportId'] = $consultation->apiId() ?? (string) $consultation->id();
         $viewData['generatedAt'] = $consultation->createdAt()->format('m/d/Y');
 
@@ -55,25 +54,29 @@ class ReportController
 
         $criterio = preg_replace('/[^A-Za-z0-9_-]/', '_', $consultation->criterio());
         $valor = preg_replace('/[^A-Za-z0-9_-]/', '_', $consultation->valor());
-        $filename = 'reporte-vintrack-' . $criterio . '-' . $valor . '.pdf';
+        $filename = 'reporte-vintrack-'.$criterio.'-'.$valor.'.pdf';
 
         return response($dompdf->output(), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
         ]);
     }
 
     private function findOwnedConsultation(int $id): Consultation
     {
         $consultation = $this->consultationRepository->findById($id);
-        if (!$consultation) {
+        if (! $consultation) {
+            throw new NotFoundHttpException('Reporte no encontrado.');
+        }
+
+        if (! $consultation->success()) {
             throw new NotFoundHttpException('Reporte no encontrado.');
         }
 
         $user = Auth::user();
         $isAdmin = $user && $user->role?->roleType?->is_admin === true;
 
-        if (!$isAdmin && $consultation->userId() !== Auth::id()) {
+        if (! $isAdmin && $consultation->userId() !== Auth::id()) {
             throw new NotFoundHttpException('Reporte no encontrado.');
         }
 

@@ -325,3 +325,73 @@ Reglas contractuales:
 PG-18 cambia de `OPEN` a `DECIDED — LOCAL ASSET MIGRATION REQUIRED BEFORE PRODUCTION`. No queda CLOSED. Para cerrarlo todavía se requieren inventario frontend, migración local aprobada, cero dependencia CDN crítica no aprobada, regresión verde, smoke test sin CDN y assessment CSP actualizado.
 
 Esta decisión es exclusivamente arquitectónica/documental: no modifica frontend, views o packages; no descarga assets; no actualiza DataTables; no implementa PG-18 ni inicia Production Environment Verification. Production Readiness permanece `READY WITH CONDITIONS`; Production Authorization `NOT AUTHORIZED`; Deployment `NOT EXECUTED`. **APPROVED**
+
+## DEC-047 — Local Production Hardening Gate PG-05 + PG-18 Governance Closure
+
+**Estado:** APPROVED WITH OBSERVATIONS
+**Aprobado por:** Project Owner
+**Fecha:** 2026-08-14
+
+El Local Production Hardening Gate PG-05 + PG-18 queda formalmente cerrado como `APPROVED WITH OBSERVATIONS`.
+
+1. `OBS-LPH-01 — Malware Provider Pending`: PG-05 queda `IMPLEMENTED LOCALLY — PROVIDER SELECTION AND PRODUCTION VERIFICATION REQUIRED` y no CLOSED. Quedan pendientes selección/aprobación del provider real, revisión de privacidad/retención/contrato, adapter real, tests del adapter, integración autorizada y verificación productiva. `FakeMalwareScanner` demuestra el workflow VINTrack, no scanning productivo.
+2. `OBS-LPH-02 — Production CSP Pending`: PG-18 queda `CLOSED LOCALLY` respecto de inventario, assets críticos self-hosted, eliminación de dependencias CDN críticas en runtime y verificación offline. CSP productiva no está activada; scripts/styles inline y verificación de artifact/hash en el entorno objetivo permanecen pendientes.
+3. `OBS-LPH-03 — Laravel Welcome Scaffold`: el scaffold `welcome` no utilizado conserva Bunny Fonts. Antes de CSP productiva deberá excluirse de routing/artifact productivo o eliminarse/limpiarse. Este cierre no lo modifica.
+
+Para PG-05 se acepta quarantine-first, estados persistentes `PENDING/SCANNING/CLEAN/INFECTED/ERROR`, fail-closed, descarga y submit/resubmit sólo con CLEAN, retención aislada de INFECTED, retry acotado, stale-claim recovery, comando discreto, abstracción `MalwareScanner` y fake/test únicamente. Con dos processors sobre el mismo documento: scanner calls=1, persisted attempts=1 y estado final=CLEAN.
+
+Para PG-18 se acepta el baseline self-hosted jQuery 3.7.1, Bootstrap 5.3.2, Bootstrap Icons 1.11.2, DataTables 1.13.6, Buttons 2.4.2, Responsive 2.5.0, JSZip 3.10.1, pdfmake 0.2.7 y DataTables Spanish 1.13.6. No hubo upgrade ni fallback CDN; se retiraron los orígenes críticos aprobados y la verificación offline quedó aceptada.
+
+Baseline de calidad: 112 tests/496 assertions/0 failures. Final: 116/545/0. Migration up/down/up, Pint afectados y `git diff --check`: PASS.
+
+DEC-044 permanece cierre de SPRINT-08; DEC-045 y DEC-046 conservan autoridad sobre PG-05 y PG-18. Production Readiness permanece `READY WITH CONDITIONS`; Production Authorization `NOT AUTHORIZED`; Deployment `NOT EXECUTED`; Production Environment Verification `NOT STARTED`. Ningún Gate `BLOCKED_EXTERNAL` se cierra. No se crea SPRINT-09. El siguiente paso es `Production Environment Verification Gate — PENDING OWNER AUTHORIZATION`. **APPROVED WITH OBSERVATIONS**
+
+## DEC-048 — PG-01 Production Schema Reconciliation and MariaDB Deployment Rehearsal Closure
+
+**Estado:** APPROVED / CLOSED — VERIFIED FOR SCHEMA COMPATIBILITY
+**Aprobado por:** Project Owner
+**Fecha:** 2026-08-14
+
+PG-01 queda formalmente cerrado como `CLOSED — VERIFIED FOR SCHEMA COMPATIBILITY`.
+
+Se acepta el rehearsal local, aislado y desechable sobre `10.6.27-MariaDB` usando el ZIP oficial Windows x64 con SHA-256 oficial/local coincidente `cc18bc6a0d42df6990ed91d1d7695e893b15168779272df43adf45dd75705a50`. El baseline productivo estructural fue 31 tablas, 11 migrations y batch máximo 2. Los seis archivos SQL aprobados conservaron sus hashes y pasaron en orden. El target resultó en 44 tablas, 462 columnas, 147 índices, 54 FKs, cero objetos faltantes y ocho defaults `notification_case_*` correctos.
+
+El ledger final contiene 55 migrations únicas: 34 reconciliaciones `APPLIED_UNREGISTERED` en batch 3 y 10 migrations de deployment en batch 4. La historia anterior permanece `FORWARD-ONLY`; recuperación se realiza mediante backup/restore o forward-fix, no mediante una supuesta reversibilidad histórica.
+
+La compatibilidad Laravel read-only pasó para consultations/history, notification cases, Evidence/scans, events, outbox, portal notifications y consultation operations. La segunda pasada confirmó `APPLY-ONCE BUNDLE WITH STRICT PRECHECK`: PRECHECK rechazó el baseline actualizado, POSTCHECK pasó y 02–05 no se repitieron.
+
+Duración con filas productivas, metadata locks, backfill de `normalized_value`, construcción de índices, espacio temporal/disco, tráfico concurrente y comportamiento Linux/Neubox se clasifican como `DEPLOYMENT OPERATIONAL RISKS`; no reabren PG-01.
+
+Production Readiness permanece `READY WITH CONDITIONS`; Production Authorization `NOT AUTHORIZED`; Deployment `NOT EXECUTED`. Esta decisión no autoriza SQL, phpMyAdmin ni deployment productivo. **APPROVED**
+
+## DEC-049 — Database Promotion Strategy: Migrate Staging → Validate → Clone to Production
+
+**Estado:** APPROVED — DOCUMENTAL ONLY
+**Aprobado por:** Project Owner
+**Fecha:** 2026-08-14
+
+`vintrack_system_db` es la base legacy de 11 tablas usada exclusivamente por el PHP legacy de `vintrack.com.mx`; queda fuera del proyecto Laravel, del bundle 01–06 y de cualquier migration/schema delta. Debe permanecer intacta como rollback del legacy.
+
+`vintrack_dev` es la base Laravel de staging de 31 tablas usada por `dev.vintrack.com.mx`. Es el baseline canónico del bundle 01–06 y de los rehearsals PG-01: el bundle transforma **31 → 44 tablas** con datos existentes preservados. No transforma `vintrack_system_db`.
+
+El modelo aprobado es: aplicar el bundle en `vintrack_dev`; validar el target Laravel de 44 tablas en staging; y sólo después crear `vintrack_app` mediante clon completo de schema, datos, índices, constraints, migration ledger y configuración/referencia requerida desde el staging validado. `vintrack_app` no se crea vacía, no se inicializa desde legacy y no se crea antes de la validación salvo nueva decisión explícita.
+
+No existe tráfico de clientes ni sincronización incremental requerida durante esta transición controlada; no se autorizan CDC, replicación, dual-write, merge ni limpieza de datos. La recuperación continúa siendo backup/restore o forward-fix, pues el bundle es forward-only. PG-01 permanece `CLOSED — VERIFIED FOR SCHEMA COMPATIBILITY`; PG-06 permanece `PARTIALLY VERIFIED — FINAL LAYOUT/STORAGE VERIFICATION REQUIRED`.
+
+Esta decisión no autoriza SQL, bundle 01–06, backups, clones, creación de `vintrack_app`, cambios de hosting, Document Root ni deployment. Production Readiness permanece `READY WITH CONDITIONS`; Production Authorization `NOT AUTHORIZED`; Deployment `NOT EXECUTED`. **APPROVED**
+
+## DEC-050 — Provider Result Assessment and Notification Qualification
+
+**Estado:** APPROVED — IMPLEMENTED LOCALLY — OWNER LOCAL VALIDATION ACCEPTED — DEPLOYMENT PREPARATION ONLY
+**Aprobado por:** Project Owner
+**Fecha:** 2026-08-17
+
+La calificación de resultados de proveedor se decide mediante una evaluación normalizada y explícita por el inmutable `provider_services.service_code`; no depende de `provider_service_id`, `key` o `name` como contrato de negocio. La evaluación distingue, como mínimo, `ACTIVE_QUALIFYING`, `HISTORICAL_RECORD`, `NON_QUALIFYING_WARNING`, `CLEAR` e `INDETERMINATE`.
+
+Sólo `ACTIVE_QUALIFYING`, sustentado por un predicado específico y documentado del proveedor para robo/theft o fraude actual, puede proyectarse como `alerta_robo`, crear/reutilizar `notification_cases` y causar las intenciones de entrega Portal/Email derivadas del expediente. Los avisos históricos, de seguridad, gravamen, daño, odómetro, marca, recall o severidad visual no originan por sí mismos un expediente ni una notificación de caso.
+
+Para `placas_service`, la interpretación debe usar los campos/estados fuente-específicos de PlacasInfo; no se autoriza inferir robo mediante búsqueda genérica de palabras en el JSON. Para `nmvtis_plus`, `Active Theft` es potencialmente calificable y `Recovered Theft` es histórico no calificable; el resumen de color, lien, recall, towing/impound, odómetro, title-brand y junk/salvage/total-loss no califican por sí solos. Un resultado de fraude exige una señal actual, explícita y documentada por el proveedor; no se infiere de marcas o antecedentes.
+
+La respuesta cruda del proveedor se conserva como evidencia y la implementación debe guardar una instantánea normalizada y auditable de su evaluación. No se reescribe automáticamente el historial. Fallos, falta de datos o variantes de payload desconocidas son `INDETERMINATE` para calificación, nunca `CLEAR`; la integración debe fallar cerrada respecto de la creación del expediente.
+
+La implementación debe seguir la arquitectura Application/Domain/Infrastructure existente, usar fixtures de contrato versionados, preservar idempotencia/concurrencia, autorización, la regla de 90 días y el outbox de Portal/Email independiente. La implementación local fue realizada con fixtures sin llamadas facturables, sin schema, migrations, cambios de datos, Cron, SMTP, staging ni producción. El Owner aceptó la validación local de la implementación el 2026-08-17; el alcance local queda cerrado. La preparación de artifact y cualquier despliegue de staging/producción siguen sujetos a autorización independiente. **APPROVED**

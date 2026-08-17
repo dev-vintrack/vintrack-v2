@@ -117,7 +117,7 @@ class ConsultationService
             $userId
         );
 
-        $request = new ConsultationRequest($userId, $adapterCode, $value, $type, $adapterServices);
+        $request = new ConsultationRequest($userId, $adapterCode, $value, $type, $adapterServices, $debitServiceCode);
         $adapter = $this->adapterRegistry->resolve($adapterCode);
         $operations->providerStarted($operation->id);
         try {

@@ -1,8 +1,8 @@
 # VINTrack — Business Rules
 
 **Status:** APPROVED  
-**Version:** 1.0  
-**Approval date:** 2026-08-12
+**Version:** 1.1
+**Approval date:** 2026-08-17
 
 | ID | Rule |
 |---|---|
@@ -41,3 +41,6 @@
 | BR-033 | Provisional retention: cases/evidence/audit 5 years; portal notifications 2 years. No automatic purge or physical deletion is authorized pending legal and Owner approval. |
 | BR-034 | Primary future automation is cPanel Cron → `/usr/local/bin/php` → specific Artisan command → reusable application service; signed HTTPS is contingency only. |
 | BR-035 | Module permissions are explicit by Client/Police, Analyst and Global Administrator; immutable identity/history and automatic closure cannot be overridden silently. |
+| BR-036 | Provider-result qualification is selected by immutable `provider_services.service_code` and uses explicit provider predicates. Only `ACTIVE_QUALIFYING` current robbery/theft or explicitly documented current fraud may set `alerta_robo`, create/reuse a notification case, or cause its case-driven notifications. |
+| BR-037 | `HISTORICAL_RECORD`, `NON_QUALIFYING_WARNING`, `CLEAR` and `INDETERMINATE` results never qualify by themselves. `Recovered Theft`, liens, recalls, towing/impound, odometer issues, title brands, junk/salvage/total-loss and provider red/yellow presentation are non-qualifying absent a separate explicit current robbery/fraud predicate. Unknown, unavailable and error payloads fail closed for qualification. |
+| BR-038 | Preserve the raw provider response and an auditable normalized assessment snapshot. Do not automatically rewrite historical consultations; provider mappings require versioned contract fixtures and regression of case, history, authorization and independent Portal/Email outbox behavior. |

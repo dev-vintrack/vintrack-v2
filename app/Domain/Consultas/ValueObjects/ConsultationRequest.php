@@ -5,16 +5,16 @@ namespace App\Domain\Consultas\ValueObjects;
 class ConsultationRequest
 {
     /**
-     * @param string[] $services
+     * @param  string[]  $services
      */
     public function __construct(
         private readonly int $userId,
         private readonly string $adapterCode,
         private readonly string $value,
         private readonly string $type,
-        private readonly array $services
-    ) {
-    }
+        private readonly array $services,
+        private readonly ?string $serviceCode = null,
+    ) {}
 
     public function userId(): int
     {
@@ -39,5 +39,10 @@ class ConsultationRequest
     public function services(): array
     {
         return $this->services;
+    }
+
+    public function serviceCode(): ?string
+    {
+        return $this->serviceCode;
     }
 }

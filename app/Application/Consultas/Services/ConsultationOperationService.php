@@ -4,6 +4,7 @@ namespace App\Application\Consultas\Services;
 
 use App\Application\Consultas\Exceptions\ConsultationOperationException;
 use App\Domain\Consultas\ValueObjects\ConsultationResponse;
+use App\Domain\Consultas\ValueObjects\ProviderResultAssessment;
 use Illuminate\Support\Facades\DB;
 
 final class ConsultationOperationService
@@ -91,6 +92,7 @@ final class ConsultationOperationService
             'error_message' => $response->errorMessage(), 'data' => $response->data(),
             'api_id' => $response->apiId(), 'theft_flags' => $response->theftFlags(),
             'credits_api' => $response->creditsApi(),
+            'assessment' => $response->assessment()?->toArray(),
         ], JSON_THROW_ON_ERROR);
 
         DB::table('consultation_operations')->where('id', $operationId)->update([
@@ -104,6 +106,14 @@ final class ConsultationOperationService
         return new ConsultationResponse(
             $snapshot['success'], $snapshot['http_status'], $snapshot['error_message'],
             $snapshot['data'], $snapshot['api_id'], $snapshot['theft_flags'], $snapshot['credits_api'],
+            isset($snapshot['assessment']) && is_array($snapshot['assessment'])
+                ? new ProviderResultAssessment(
+                    $snapshot['assessment']['service_code'],
+                    $snapshot['assessment']['classification'],
+                    $snapshot['assessment']['predicates'] ?? [],
+                    $snapshot['assessment']['evidence_paths'] ?? [],
+                )
+                : null,
         );
     }
 }

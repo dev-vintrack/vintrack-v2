@@ -2,8 +2,8 @@
 
 **Phase:** 0 — Project Governance  
 **Status:** APPROVED  
-**Version:** 1.0  
-**Approval date:** 2026-08-12  
+**Version:** 1.1
+**Approval date:** 2026-08-17
 **Framework:** Laravel 12  
 **PHP:** 8.3
 
@@ -31,7 +31,9 @@ VINTrack has a Client Portal and Administrative Portal sharing one database. Ind
 Consultation history and notification expedients are separate concerns. A consultation is a historical event; an expedient is a documentary business process associated with a qualifying consultation and responsible user.
 
 ## 6. Qualifying Result
-A notification process applies when a consultation produces a positive robbery/theft or fraud result according to VINTrack's existing provider/service interpretation.
+A notification process applies only when a consultation produces an explicitly mapped, current robbery/theft or fraud result according to the normalized provider-result assessment approved in DEC-050. Generic text, generic flag aggregation, a report color or a warning category are not qualifying evidence by themselves.
+
+Provider behavior is selected by immutable `provider_services.service_code`, never by service ID, key or display name. Assessments distinguish active qualifying results from historical records, non-qualifying warnings, clear results and indeterminate provider outcomes. Only an active qualifying result may project `alerta_robo`, create/reuse an expedient, or initiate its case-driven Portal/Email notifications. Raw provider evidence and its normalized assessment remain auditable; unknown/error/unavailable responses fail closed for qualification and do not become clean.
 
 VINTrack is exclusively a documentary evidence system. It does not replace official authorities or certify legal validity.
 

@@ -1,0 +1,7 @@
+{
+  "pgj": {
+    "ID_ESTATUS_VHI_ROBO": 1,
+    "ESTATUS_VHI_ROBO": "CON REPORTE"
+  },
+  "carfax": {"data": {"robo": false}}
+}
