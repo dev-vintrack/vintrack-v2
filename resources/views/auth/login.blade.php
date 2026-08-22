@@ -1,6 +1,16 @@
 @extends('layouts.auth')
 
 @section('title', 'Iniciar sesión - VINTRACK')
+@section('body_class', 'auth-login-page')
+
+@push('styles')
+<style>
+    .password-recovery-link:hover,
+    .password-recovery-link:focus-visible {
+        color: #0d6efd !important;
+    }
+</style>
+@endpush
 
 @section('content')
     <h2 class="text-center mb-4">Iniciar sesión</h2>
@@ -29,7 +39,8 @@
         <button type="submit" class="btn btn-primary w-100" id="btnLogin">Ingresar</button>
 
         <div class="text-center mt-3">
-            <a href="{{ route('password.request') }}" class="text-light text-decoration-none">¿Olvidaste tu contraseña?</a>
+            <!--<a href="{{ route('password.request') }}" class="text-light text-decoration-none">¿Olvidaste tu contraseña?</a>-->
+            <a href="{{ route('password.request') }}" class="link-light password-recovery-link">¿Olvidaste tu contraseña?</a>
         </div>
 
         <div class="text-center mt-3">

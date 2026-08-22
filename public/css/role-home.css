@@ -52,11 +52,17 @@
 }
 
 .rh-hero-toptitle-white,
-.rh-hero-toptitle-blue {
+.rh-hero-toptitle-blue{
     font-size: clamp(2rem, 5vw, 3.6rem);
     font-weight: 800;
     letter-spacing: 1px;
     text-transform: uppercase;
+}
+
+.rh-hero-toptitle-green{
+    font-size: clamp(2rem, 5vw, 3.6rem);
+    font-weight: 800;
+    letter-spacing: 1px;
 }
 
 .rh-hero-toptitle-white {
@@ -65,6 +71,10 @@
 
 .rh-hero-toptitle-blue {
     color: rgba(37, 99, 235, 0.85);
+}
+
+.rh-hero-toptitle-green {
+    color: rgba(34, 197, 94, 0.85); /* Verde con transparencia */
 }
 
 .rh-hero-badge {

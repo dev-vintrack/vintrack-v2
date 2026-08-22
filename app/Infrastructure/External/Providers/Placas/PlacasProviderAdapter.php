@@ -8,7 +8,7 @@ use App\Domain\Consultas\ValueObjects\ConsultationRequest;
 use App\Domain\Consultas\ValueObjects\ConsultationResponse;
 use App\Domain\Consultas\ValueObjects\ProviderResultAssessment;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\TransferException;
 use Illuminate\Support\Facades\Config;
 
 class PlacasProviderAdapter implements ProviderAdapterInterface
@@ -16,7 +16,9 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
     // Fallbacks unicamente si config/providers.php no define los valores; los valores
     // reales usados en runtime vienen de PLACAS_HTTP_TIMEOUT / PLACAS_POLL_MAX_SECONDS /
     // PLACAS_POLL_INTERVAL_SECONDS (ver config/providers.php).
-    private const DEFAULT_TIMEOUT = 30;
+    private const DEFAULT_INITIAL_HTTP_TIMEOUT = 45;
+
+    private const DEFAULT_POLL_HTTP_TIMEOUT = 30;
 
     private const POLL_MAX_SECONDS = 40;
 
@@ -28,17 +30,18 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
 
     private int $pollIntervalSeconds;
 
+    private int $maxExecutionSeconds;
+
     private ProviderResultAssessor $resultAssessor;
 
     public function __construct(?Client $client = null, ?ProviderResultAssessor $resultAssessor = null)
     {
-        $httpTimeout = (int) Config::get('providers.placas.http_timeout', self::DEFAULT_TIMEOUT);
         $this->pollMaxSeconds = (int) Config::get('providers.placas.poll_max_seconds', self::POLL_MAX_SECONDS);
         $this->pollIntervalSeconds = (int) Config::get('providers.placas.poll_interval_seconds', self::POLL_INTERVAL_SECONDS);
+        $this->maxExecutionSeconds = (int) Config::get('providers.placas.max_execution_seconds', 330);
 
         $this->client = $client ?? new Client([
-            'timeout' => $httpTimeout,
-            'connect_timeout' => 10,
+            'connect_timeout' => (int) Config::get('providers.placas.connect_timeout', 10),
         ]);
         $this->resultAssessor = $resultAssessor ?? new ProviderResultAssessor;
     }
@@ -50,11 +53,7 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
 
     public function consult(ConsultationRequest $request): ConsultationResponse
     {
-        // Algunos hosting compartidos matan la petición a los 30s; intentamos darle más tiempo.
-        // El presupuesto real es POST inicial + ventana de polling (ambos configurables via
-        // PLACAS_HTTP_TIMEOUT / PLACAS_POLL_MAX_SECONDS), mas margen de seguridad.
-        $httpTimeout = (int) Config::get('providers.placas.http_timeout', self::DEFAULT_TIMEOUT);
-        @set_time_limit(max(90, $httpTimeout + $this->pollMaxSeconds + 30));
+        @set_time_limit(max(90, $this->maxExecutionSeconds));
 
         [$ok, $message, $value] = $this->validateInput($request->type(), $request->value());
         if (! $ok) {
@@ -85,19 +84,20 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
                     'User-Agent' => 'VINTRACK/2.0 (+https://vintrack.com.mx)',
                 ],
                 'json' => $payload,
+                'timeout' => (int) Config::get('providers.placas.initial_http_timeout', self::DEFAULT_INITIAL_HTTP_TIMEOUT),
             ]);
 
             $httpStatus = $response->getStatusCode();
             $body = json_decode($response->getBody()->getContents(), true);
-        } catch (RequestException $e) {
-            $httpStatus = $e->getResponse()?->getStatusCode() ?? 0;
+        } catch (TransferException $e) {
+            $httpStatus = $this->statusFromException($e);
             $body = null;
 
-            return $this->errorResponse($httpStatus, 'No fue posible conectar con el proveedor de placas.');
+            return $this->errorResponse($httpStatus, self::synchronizationFailureMessage());
         }
 
         if (! is_array($body)) {
-            return $this->errorResponse($httpStatus, 'Respuesta no válida de la API de placas');
+            return $this->errorResponse($httpStatus, self::synchronizationFailureMessage());
         }
 
         if (isset($body['status']) && $body['status'] === 'processing' && isset($body['id'])) {
@@ -171,20 +171,21 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
                         'Authorization' => 'Token '.$token,
                         'User-Agent' => 'VINTRACK/2.0 (+https://vintrack.com.mx)',
                     ],
+                    'timeout' => (int) Config::get('providers.placas.poll_http_timeout', self::DEFAULT_POLL_HTTP_TIMEOUT),
                 ]);
 
                 $lastHttp = $response->getStatusCode();
                 $data = json_decode($response->getBody()->getContents(), true);
-            } catch (RequestException $e) {
-                $lastHttp = $e->getResponse()?->getStatusCode() ?? 0;
-                $lastErr = 'Fallo temporal al consultar el proveedor de placas.';
+            } catch (TransferException $e) {
+                $lastHttp = $this->statusFromException($e);
+                $lastErr = self::synchronizationFailureMessage();
                 sleep($interval);
 
                 continue;
             }
 
             if (! is_array($data)) {
-                $lastErr = 'No-JSON ('.$lastHttp.')';
+                $lastErr = self::synchronizationFailureMessage();
                 sleep($interval);
 
                 continue;
@@ -202,7 +203,19 @@ class PlacasProviderAdapter implements ProviderAdapterInterface
             sleep($interval);
         }
 
-        return [false, $lastHttp, $lastErr ?: 'Timeout esperando resultado', $lastData];
+        return [false, $lastHttp, $lastErr ?: self::synchronizationFailureMessage(), $lastData];
+    }
+
+    private static function synchronizationFailureMessage(): string
+    {
+        return 'Problema en la sincronización de la respuesta, por favor intente de nuevo en unos minutos.';
+    }
+
+    private function statusFromException(TransferException $exception): int
+    {
+        return method_exists($exception, 'getResponse')
+            ? ($exception->getResponse()?->getStatusCode() ?? 0)
+            : 0;
     }
 
     /** @return array<string, int> */

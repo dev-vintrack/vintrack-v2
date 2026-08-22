@@ -1,32 +1,10 @@
 @extends('layouts.app')
-
 @section('title', 'Proceso de Notificaciones')
-
+@include('partials.datatables-export-assets')
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div><h1 class="h3 mb-1">Proceso de Notificaciones</h1><p class="text-muted mb-0">Expedientes bajo su responsabilidad.</p></div>
-</div>
-
-<div class="card shadow-sm"><div class="card-body p-0"><div class="table-responsive">
-<table class="table table-hover align-middle mb-0">
-    <thead class="table-light"><tr><th>Folio</th><th>VIN</th><th>Vehículo</th><th>Fecha límite</th><th>Estado general</th><th>Actualizado</th><th>Acciones</th></tr></thead>
-    <tbody>
-    @forelse($cases as $item)
-        @php($needsAction = in_array($item->status->value, ['PENDING', 'REJECTED'], true))
-        <tr class="{{ $needsAction ? 'table-danger' : '' }}">
-            <td class="fw-semibold">{{ $item->case_number }}</td>
-            <td>{{ $item->vin ?: 'PENDIENTE DE ASIGNACIÓN' }}</td>
-            <td>{{ $item->license_plate ?: '—' }} / {{ $item->make ?: '—' }} {{ $item->model ?: '' }} {{ $item->model_year ?: '' }}</td>
-            <td>{{ $item->notification_deadline_at->timezone(config('app.timezone'))->format('d/m/Y H:i:s') }}</td>
-            <td><span class="badge text-bg-{{ $needsAction ? 'danger' : 'secondary' }}">{{ $item->status->label() }}</span></td>
-            <td>{{ $item->updated_at->timezone(config('app.timezone'))->format('d/m/Y H:i') }}</td>
-            <td><a class="btn btn-sm btn-primary" href="{{ route('customer.notification-cases.show', $item) }}">{{ $needsAction ? 'Completar' : 'Ver' }}</a></td>
-        </tr>
-    @empty
-        <tr><td colspan="7" class="text-center text-muted py-5">No tiene expedientes de notificación.</td></tr>
-    @endforelse
-    </tbody>
-</table>
-</div></div></div>
-<div class="mt-3">{{ $cases->links() }}</div>
+<div class="d-flex justify-content-between align-items-center mb-4"><div><h1 class="h3 mb-1">Proceso de Notificaciones</h1><p class="text-muted mb-0">Expedientes bajo su responsabilidad.</p></div></div>
+<div class="row g-3 mb-4"><div class="col-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><small class="text-muted">Expedientes</small><h3 class="mb-0">{{ number_format($kpis['total']) }}</h3></div></div></div><div class="col-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><small class="text-muted">Pendientes</small><h3 class="mb-0 text-danger">{{ number_format($kpis['pending']) }}</h3></div></div></div><div class="col-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><small class="text-muted">En revisión</small><h3 class="mb-0 text-warning">{{ number_format($kpis['submitted']) }}</h3></div></div></div><div class="col-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><small class="text-muted">Validados</small><h3 class="mb-0 text-success">{{ number_format($kpis['validated']) }}</h3></div></div></div></div>
+<form method="GET" class="card border-0 shadow-sm mb-4"><div class="card-body"><div class="row g-3 align-items-end"><div class="col-md-4"><label class="form-label" for="status">Estado general</label><select class="form-select" id="status" name="status"><option value="">Todos</option>@foreach(\App\Domain\NotificationCases\Enums\NotificationCaseStatus::cases() as $status)<option value="{{ $status->value }}" @selected(request('status') === $status->value)>{{ $status->label() }}</option>@endforeach</select></div><div class="col-md-3"><label class="form-label" for="date_from">Desde</label><input type="date" class="form-control" id="date_from" name="date_from" value="{{ request('date_from') }}"></div><div class="col-md-3"><label class="form-label" for="date_to">Hasta</label><input type="date" class="form-control" id="date_to" name="date_to" value="{{ request('date_to') }}"></div><div class="col-md-2 d-flex gap-2"><button class="btn btn-primary flex-grow-1"><i class="bi bi-funnel me-1"></i>Filtrar</button><a class="btn btn-outline-secondary" href="{{ route('customer.notification-cases.index') }}" aria-label="Limpiar filtros"><i class="bi bi-x-lg"></i></a></div></div></div></form>
+<div class="card border-0 shadow-sm"><div class="card-body p-0"><div class="table-responsive"><table id="customerNotificationCases" class="table table-hover align-middle mb-0 w-100"><thead class="table-light"><tr><th>Folio</th><th>VIN</th><th>Vehículo</th><th>Fecha límite</th><th>Estado general</th><th>Actualizado</th><th>Acciones</th></tr></thead><tbody>@forelse($cases as $item)@php($needsAction = in_array($item->status->value, ['PENDING', 'REJECTED'], true))<tr class="{{ $needsAction ? 'table-danger' : '' }}"><td class="fw-semibold">{{ $item->case_number }}</td><td>{{ $item->vin ?: 'PENDIENTE DE ASIGNACIÓN' }}</td><td>{{ $item->license_plate ?: '—' }} / {{ $item->make ?: '—' }} {{ $item->model ?: '' }} {{ $item->model_year ?: '' }}</td><td data-order="{{ $item->notification_deadline_at?->timestamp }}">{{ $item->notification_deadline_at->timezone(config('app.timezone'))->format('d/m/Y H:i:s') }}</td><td><span class="badge text-bg-{{ $item->status->value === 'VALIDATED' ? 'success' : ($item->status->value === 'PENDING' ? 'danger' : 'warning') }}">{{ $item->status->label() }}</span></td><td data-order="{{ $item->updated_at?->timestamp }}">{{ $item->updated_at->timezone(config('app.timezone'))->format('d/m/Y H:i') }}</td><td><a class="btn btn-sm btn-primary" href="{{ route('customer.notification-cases.show', $item) }}">{{ $needsAction ? 'Completar' : 'Ver' }}</a></td></tr>@empty<tr><td colspan="7" class="text-center text-muted py-5">No tiene expedientes de notificación.</td></tr>@endforelse</tbody></table></div></div></div>
 @endsection
+@push('scripts')<script>$(function(){$('#customerNotificationCases').DataTable({ordering:true,searching:true,pageLength:10,language:{url:@json(asset('vendor/vintrack/datatables-es-ES-1.13.6.json')),search:'Búsqueda rápida:'},dom:"<'vintrack-table-toolbar row g-3 align-items-center px-3 pt-3'<'col-lg-6'B><'col-lg-6'f>>rt<'row px-3 py-3'<'col-md-5'i><'col-md-7 d-flex justify-content-md-end'p>>",buttons:[{extend:'excelHtml5',text:'<i class="bi bi-file-earmark-excel me-1"></i> Excel',className:'buttons-excel',title:'Proceso de Notificaciones',filename:'proceso-notificaciones',exportOptions:{columns:[0,1,2,3,4,5]}},{extend:'pdfHtml5',text:'<i class="bi bi-file-earmark-pdf me-1"></i> PDF',className:'buttons-pdf',title:'Proceso de Notificaciones',filename:'proceso-notificaciones',orientation:'landscape',exportOptions:{columns:[0,1,2,3,4,5]}}],columnDefs:[{targets:6,orderable:false,searchable:false}]});});</script>@endpush

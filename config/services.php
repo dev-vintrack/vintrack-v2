@@ -35,4 +35,17 @@ return [
         ],
     ],
 
+    'cloudmersive' => [
+        'enabled' => env('CLOUDMERSIVE_ENABLED', false),
+        'api_key' => env('CLOUDMERSIVE_API_KEY'),
+        'base_url' => env('CLOUDMERSIVE_BASE_URL', 'https://api.cloudmersive.com'),
+        'timeout' => env('CLOUDMERSIVE_TIMEOUT', 20),
+    ],
+    
+    'repuve' => [
+        'base_url' => env('REPUVE_BASE_URL'),
+        'username' => env('REPUVE_USERNAME'),
+        'password' => env('REPUVE_PASSWORD'),
+    ],
+
 ];

@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'VINTRACK')</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="images/favicon-48x48.png">
     <link href="{{ asset('vendor/vintrack/bootstrap-5.3.2.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('vendor/vintrack/bootstrap-icons-1.11.2.min.css') }}">
     @stack('styles')
@@ -19,9 +21,15 @@
         }
 
         @media (max-width: 768px) {
-            body {
-                background-size: contain;
+            body.auth-login-page {
+                align-items: flex-start;
+                padding: 0;
+                background-size: 100% auto;
                 background-attachment: scroll;
+            }
+
+            .auth-login-page .auth-container {
+                margin-top: 66.6667vw;
             }
         }
 
@@ -33,6 +41,7 @@
             padding: 2rem;
             color: #fff;
         }
+
         .otp-input {
             width: 45px;
             height: 55px;
@@ -45,8 +54,14 @@
         }
     </style>
 </head>
-<body>
+<body class="@yield('body_class')">
     <div class="auth-container">
+        @if(session('session_expired'))
+            <div class="alert alert-warning" role="alert" aria-live="assertive">
+                {{ session('session_expired') }}
+            </div>
+        @endif
+
         @if($errors->any())
             <div class="alert alert-danger">
                 <ul class="mb-0">
@@ -65,6 +80,7 @@
     </div>
 
     @stack('scripts')
+    <script src="{{ asset('js/session-expiry-handler.js') }}"></script>
     <script src="{{ asset('vendor/vintrack/bootstrap-5.3.2.bundle.min.js') }}"></script>
 </body>
 </html>

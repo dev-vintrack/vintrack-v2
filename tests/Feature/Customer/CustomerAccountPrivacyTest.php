@@ -76,7 +76,8 @@ class CustomerAccountPrivacyTest extends TestCase
             ->assertSee('Historial de Vehículos Consultados')
             ->assertSee('consultationHistory')
             ->assertSee('serverSide:true', false)
-            ->assertDontSee('excelHtml5');
+            ->assertSee('excelHtml5')
+            ->assertSee('Búsqueda rápida:');
         $history = $this->actingAs($customer)->getJson(route('customer.consultations.data'))->assertOk();
         $this->assertSame(1, $history->json('recordsTotal'));
         $this->assertSame('VIN-PROPIO', $history->json('data.0.vin'));
@@ -149,6 +150,38 @@ class CustomerAccountPrivacyTest extends TestCase
             ->assertSee('VIN-CLIENTE');
     }
 
+    public function test_authorized_report_masks_a_recognized_historical_provider_implementation_failure(): void
+    {
+        [$provider, $service] = $this->createService();
+        $provider->update(['adapter_code' => 'placas']);
+        $customer = $this->createUser('cliente_registrado');
+        $consultation = $this->createConsultation(
+            $customer,
+            $provider,
+            $service,
+            'VIN-TECHNICAL-ERROR',
+            [
+                'carfax' => [
+                    'data' => [
+                        'Message' => 'Cannot read properties of null (reading statusCode)',
+                        'robo' => false,
+                    ],
+                ],
+            ],
+        );
+
+        $this->actingAs($customer)
+            ->get(route('reports.show', $consultation->id))
+            ->assertOk()
+            ->assertSee('Estado del proveedor')
+            ->assertSee('Proveedor temporalmente no disponible.')
+            ->assertDontSee('Cannot read properties of null')
+            ->assertDontSee('ALERTA: Posible Reporte Robo o Recuperado', false);
+
+        $this->assertDatabaseCount('notification_cases', 0);
+        $this->assertDatabaseCount('notification_outbox', 0);
+    }
+
     private function createUser(string $role, bool $activo = true, string $status = 'active'): User
     {
         return User::factory()->create([
@@ -196,7 +229,7 @@ class CustomerAccountPrivacyTest extends TestCase
         ]);
     }
 
-    private function createConsultation(User $user, Provider $provider, ProviderService $service, string $value): Consultation
+    private function createConsultation(User $user, Provider $provider, ProviderService $service, string $value, array $responseJson = []): Consultation
     {
         return Consultation::create([
             'user_id' => $user->id,
@@ -208,7 +241,7 @@ class CustomerAccountPrivacyTest extends TestCase
             'costo_credito' => 1,
             'success' => true,
             'alerta_robo' => false,
-            'response_json' => [],
+            'response_json' => $responseJson,
         ]);
     }
 }

@@ -8,7 +8,7 @@ use App\Domain\Consultas\ValueObjects\ConsultationRequest;
 use App\Domain\Consultas\ValueObjects\ConsultationResponse;
 use App\Domain\Consultas\ValueObjects\ProviderResultAssessment;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\TransferException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 
@@ -26,7 +26,7 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
     {
         $this->client = $client ?? new Client([
             'timeout' => (int) Config::get('providers.vindata.http_timeout', self::DEFAULT_TIMEOUT),
-            'connect_timeout' => 10,
+            'connect_timeout' => (int) Config::get('providers.vindata.connect_timeout', 10),
         ]);
         $this->resultAssessor = $resultAssessor ?? new ProviderResultAssessor;
     }
@@ -38,6 +38,8 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
 
     public function consult(ConsultationRequest $request): ConsultationResponse
     {
+        @set_time_limit(max(90, (int) Config::get('providers.vindata.max_execution_seconds', 750)));
+
         $type = strtolower(trim($request->type()));
         if ($type !== 'vin') {
             return $this->errorResponse(422, 'VINData solo acepta consultas por VIN.');
@@ -66,7 +68,7 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
 
         $token = $this->getToken();
         if (empty($token)) {
-            return $this->errorResponse(500, 'No se pudo obtener token de autenticación de VINData.');
+            return $this->errorResponse(500, self::synchronizationFailureMessage());
         }
 
         $baseUrl = rtrim(Config::get('providers.vindata.url', 'https://api.vindata.com/v1'), '/');
@@ -84,15 +86,15 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
             ]);
 
             $buyBody = json_decode($buyResponse->getBody()->getContents(), true);
-        } catch (RequestException $e) {
+        } catch (TransferException $e) {
             return $this->errorResponse(
-                $e->getResponse()?->getStatusCode() ?? 500,
-                'No fue posible completar la compra del reporte VINData.'
+                $this->statusFromException($e),
+                self::synchronizationFailureMessage()
             );
         }
 
-        if (empty($buyBody['uuid'])) {
-            return $this->errorResponse(500, 'La respuesta de VINData no contiene el UUID del reporte.');
+        if (! is_array($buyBody) || empty($buyBody['uuid'])) {
+            return $this->errorResponse(500, self::synchronizationFailureMessage());
         }
 
         $uuid = $buyBody['uuid'];
@@ -110,10 +112,10 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
             ]);
 
             $reportBody = json_decode($reportResponse->getBody()->getContents(), true);
-        } catch (RequestException $e) {
+        } catch (TransferException $e) {
             return $this->errorResponse(
-                $e->getResponse()?->getStatusCode() ?? 500,
-                'No fue posible obtener el reporte VINData.',
+                $this->statusFromException($e),
+                self::synchronizationFailureMessage(),
                 $uuid
             );
         }
@@ -170,7 +172,7 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
             }
 
             return $token;
-        } catch (RequestException $e) {
+        } catch (TransferException $e) {
             return null;
         }
     }
@@ -247,5 +249,17 @@ class VinDataProviderAdapter implements ProviderAdapterInterface
                 'odometer_issue' => 0,
             ]
         );
+    }
+
+    private static function synchronizationFailureMessage(): string
+    {
+        return 'Problema en la sincronización de la respuesta, por favor intente de nuevo en unos minutos.';
+    }
+
+    private function statusFromException(TransferException $exception): int
+    {
+        return method_exists($exception, 'getResponse')
+            ? ($exception->getResponse()?->getStatusCode() ?? 500)
+            : 500;
     }
 }

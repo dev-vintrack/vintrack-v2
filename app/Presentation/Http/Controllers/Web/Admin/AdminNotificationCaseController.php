@@ -5,6 +5,7 @@ namespace App\Presentation\Http\Controllers\Web\Admin;
 use App\Application\NotificationCases\Services\NotificationCaseAuthorizationService;
 use App\Application\NotificationCases\Services\NotificationCaseDocumentService;
 use App\Application\NotificationCases\Services\NotificationCaseLifecycleService;
+use App\Application\NotificationCases\Services\NotificationCasePdfExportService;
 use App\Domain\NotificationCases\Enums\NotificationCaseStatus;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Models\NotificationCase;
@@ -14,11 +15,12 @@ use App\Presentation\Http\Requests\NotificationCases\AdminUpdateNotificationCase
 use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 final class AdminNotificationCaseController extends Controller
 {
-    public function __construct(private readonly NotificationCaseAuthorizationService $authorization, private readonly NotificationCaseLifecycleService $lifecycle, private readonly NotificationCaseDocumentService $documents) {}
+    public function __construct(private readonly NotificationCaseAuthorizationService $authorization, private readonly NotificationCaseLifecycleService $lifecycle, private readonly NotificationCaseDocumentService $documents, private readonly NotificationCasePdfExportService $pdfExport) {}
 
     public function index(Request $request): View
     {
@@ -30,10 +32,16 @@ final class AdminNotificationCaseController extends Controller
             ->when($filters['status'] ?? null, fn ($q, $value) => $q->where('status', $value))
             ->when($filters['date_from'] ?? null, fn ($q, $value) => $q->whereDate('opened_at', '>=', $value))
             ->when($filters['date_to'] ?? null, fn ($q, $value) => $q->whereDate('opened_at', '<=', $value));
-        $cases = $query->orderByRaw("CASE status WHEN 'SUBMITTED' THEN 0 WHEN 'UNDER_REVIEW' THEN 1 ELSE 2 END")->orderByDesc('updated_at')->orderByDesc('id')->paginate(20)->withQueryString();
+        $kpis = [
+            'total' => (clone $query)->count(),
+            'pending' => (clone $query)->where('status', 'PENDING')->count(),
+            'validated' => (clone $query)->where('status', 'VALIDATED')->count(),
+            'review' => (clone $query)->whereIn('status', ['SUBMITTED', 'UNDER_REVIEW'])->count(),
+        ];
+        $cases = $query->orderByRaw("CASE status WHEN 'SUBMITTED' THEN 0 WHEN 'UNDER_REVIEW' THEN 1 ELSE 2 END")->orderByDesc('updated_at')->orderByDesc('id')->get();
         $owners = User::whereHas('consultations')->orderBy('name')->get(['id', 'name', 'email']);
 
-        return view('admin.notification-cases.index', compact('cases', 'owners'));
+        return view('admin.notification-cases.index', compact('cases', 'owners', 'kpis'));
     }
 
     public function show(Request $request, NotificationCase $case): View
@@ -43,6 +51,14 @@ final class AdminNotificationCaseController extends Controller
         $documents = $this->documents->list($case, $request->user());
 
         return view('admin.notification-cases.show', ['case' => $case, 'documents' => $documents, 'editable' => $this->authorization->canEditAsAdministrator($request->user(), $case)]);
+    }
+
+    public function exportPdf(Request $request, NotificationCase $case): Response
+    {
+        abort_unless($this->authorization->canView($request->user(), $case), 403);
+        abort_unless($case->status === NotificationCaseStatus::VALIDATED, 404);
+
+        return $this->pdfExport->download($case);
     }
 
     public function update(AdminUpdateNotificationCaseRequest $request, NotificationCase $case): RedirectResponse

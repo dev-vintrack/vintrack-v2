@@ -25,11 +25,25 @@ final class CustomerNotificationCaseController extends Controller
     public function index(Request $request): View
     {
         abort_if($request->has('user_id'), 400, 'El filtro de usuario no está permitido.');
-        $cases = NotificationCase::query()->with('consultation')->where('user_id', $request->user()->id)
+        $filters = $request->validate([
+            'status' => ['nullable', 'in:PENDING,SUBMITTED,UNDER_REVIEW,REJECTED,VALIDATED,CLOSED_NO_FOLLOW_UP'],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+        ]);
+        $query = NotificationCase::query()->with('consultation')->where('user_id', $request->user()->id)
             ->withCount(['documents as active_documents_count' => fn ($query) => $query->whereNull('removed_at')])
-            ->orderByDesc('updated_at')->orderByDesc('id')->paginate(15)->withQueryString();
+            ->when($filters['status'] ?? null, fn ($query, $value) => $query->where('status', $value))
+            ->when($filters['date_from'] ?? null, fn ($query, $value) => $query->whereDate('opened_at', '>=', $value))
+            ->when($filters['date_to'] ?? null, fn ($query, $value) => $query->whereDate('opened_at', '<=', $value));
+        $kpis = [
+            'total' => (clone $query)->count(),
+            'pending' => (clone $query)->where('status', 'PENDING')->count(),
+            'validated' => (clone $query)->where('status', 'VALIDATED')->count(),
+            'submitted' => (clone $query)->whereIn('status', ['SUBMITTED', 'UNDER_REVIEW'])->count(),
+        ];
+        $cases = $query->orderByDesc('updated_at')->orderByDesc('id')->get();
 
-        return view('customer.notification-cases.index', compact('cases'));
+        return view('customer.notification-cases.index', compact('cases', 'kpis'));
     }
 
     public function show(Request $request, NotificationCase $case): View

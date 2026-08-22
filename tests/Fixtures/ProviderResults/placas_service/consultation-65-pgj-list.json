@@ -1,0 +1,7 @@
+{
+  "repuve": [{"PLACA":"HXD301A","MARCA":"VOLKSWAGEN","MODELO":"TIGUAN","ANIO_MODELO":"2024","VIN":"3VVVP65N4RM127029","TIPO_MOVIMIENTO":11}],
+  "ocra": {"conReporteRoboRecuperacion":"true","reporte":{"roboORecuperacion":2,"estatus":"CON REPORTE DE RECUPERADO"},"vehiculo":{"estatusVehiculo":"ROBO LOCALIZADO RECUPERADO"},"reporteRecuperacion":{"fechaRecuperacion":"31/03/2026"}},
+  "carfax": null,
+  "aviso": [],
+  "pgj": [{"VIN":"3VVVP65N4RM127029","PLACA":"HXD301A","ID_ESTATUS_VHI_ROBO":1,"ESTATUS_VHI_ROBO":"ROBADO","FTE_VHI_ROBO":"PGJ - JALISCO","FECHA_ACTUALIZA":"26/03/26","FECHA_ROBO":"24/03/26","FECHA_AVERIGUA":"26/03/26","FTE_RECUPERA":null,"FEC_ACT_REC":null}]
+}

@@ -14,10 +14,14 @@ class PlacasReportPresenter
 
     private const ACRONYMS = ['VIN', 'NIV', 'RFC', 'CURP', 'ID', 'CP', 'NRPV'];
 
+    private const TECHNICAL_PROVIDER_STATUS_KEY = 'provider_status';
+
+    private const TECHNICAL_PROVIDER_STATUS_MESSAGE = 'Proveedor temporalmente no disponible.';
+
     /**
      * Extrae las secciones esperadas del cuerpo crudo de la API.
      *
-     * @param array<string, mixed> $rawData
+     * @param  array<string, mixed>  $rawData
      * @return array<string, mixed>
      */
     public static function sections(array $rawData): array
@@ -50,7 +54,7 @@ class PlacasReportPresenter
     /**
      * Aplana una estructura de datos a pares [rutaClave, valorTexto].
      *
-     * @param mixed $data
+     * @param  mixed  $data
      * @return array<int, array{0:string,1:string}>
      */
     public static function flatten($data, string $prefix = ''): array
@@ -60,28 +64,36 @@ class PlacasReportPresenter
             return $rows;
         }
 
+        // Historical provider payloads are immutable evidence. A recognized
+        // implementation exception must not be rendered to portal users; the
+        // raw payload remains persisted on the consultation for audit/review.
+        if (self::containsTechnicalProviderFailure($data)) {
+            return [[self::TECHNICAL_PROVIDER_STATUS_KEY, self::TECHNICAL_PROVIDER_STATUS_MESSAGE]];
+        }
+
         if (is_array($data) && self::isList($data)) {
-            if (count($data) === 1 && is_array($data[0]) && !self::isList($data[0])) {
+            if (count($data) === 1 && is_array($data[0]) && ! self::isList($data[0])) {
                 return self::flatten($data[0], $prefix);
             }
         }
 
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             return $rows;
         }
 
         foreach ($data as $key => $value) {
-            $keyPath = $prefix !== '' ? $prefix . '.' . $key : (string) $key;
+            $keyPath = $prefix !== '' ? $prefix.'.'.$key : (string) $key;
 
-            if (is_array($value) && !self::isList($value)) {
+            if (is_array($value) && ! self::isList($value)) {
                 if (count($value) === 0) {
                     $rows[] = [$keyPath, '{}'];
+
                     continue;
                 }
                 foreach ($value as $childKey => $childValue) {
-                    $childPath = $keyPath . '.' . $childKey;
-                    if (is_array($childValue) && !self::isList($childValue)) {
-                        $rows[] = [$childPath, count($childValue) . ' atributos'];
+                    $childPath = $keyPath.'.'.$childKey;
+                    if (is_array($childValue) && ! self::isList($childValue)) {
+                        $rows[] = [$childPath, count($childValue).' atributos'];
                     } elseif (is_array($childValue)) {
                         $rows[] = [$childPath, self::formatValue($childValue)];
                     } else {
@@ -97,7 +109,7 @@ class PlacasReportPresenter
     }
 
     /**
-     * @param mixed $value
+     * @param  mixed  $value
      */
     public static function formatValue($value): string
     {
@@ -111,7 +123,7 @@ class PlacasReportPresenter
             if (self::isList($value)) {
                 $primitives = true;
                 foreach ($value as $item) {
-                    if (!(is_null($item) || is_bool($item) || is_string($item) || is_numeric($item))) {
+                    if (! (is_null($item) || is_bool($item) || is_string($item) || is_numeric($item))) {
                         $primitives = false;
                         break;
                     }
@@ -122,9 +134,11 @@ class PlacasReportPresenter
                         $value
                     ));
                 }
-                return count($value) . ' elementos';
+
+                return count($value).' elementos';
             }
-            return count($value) . ' atributos';
+
+            return count($value).' atributos';
         }
 
         return (string) $value;
@@ -136,6 +150,10 @@ class PlacasReportPresenter
      */
     public static function prettyKey(string $key): string
     {
+        if ($key === self::TECHNICAL_PROVIDER_STATUS_KEY) {
+            return 'Estado del proveedor';
+        }
+
         $segments = explode('.', $key);
         $part = end($segments);
         $part = str_replace('_', ' ', (string) $part);
@@ -148,7 +166,7 @@ class PlacasReportPresenter
             if (in_array($upper, self::ACRONYMS, true)) {
                 $out[] = $upper;
             } else {
-                $out[] = mb_strtoupper(mb_substr($word, 0, 1)) . mb_substr($word, 1);
+                $out[] = mb_strtoupper(mb_substr($word, 0, 1)).mb_substr($word, 1);
             }
         }
 
@@ -173,6 +191,7 @@ class PlacasReportPresenter
                 $valueHit = (bool) preg_match('/RECUPERADO|ROBO|ROBADO|RECUP|TRUE/', $u);
                 $keyHit = (bool) preg_match('/(con.?reporte.*recupera|estatus\s*vehiculo|estatus\s*reporte|estatus)/i', $kl);
                 $truthy = (bool) preg_match('/^(true|1|si|sí)$/i', $trimmed);
+
                 return $valueHit || ($keyHit && $truthy);
             case 'CARFAX':
                 return (bool) preg_match('/THEFT|STOLEN|ROBO/', $u);
@@ -180,6 +199,7 @@ class PlacasReportPresenter
                 if (str_contains($kl, 'tiene delito')) {
                     return (bool) preg_match('/^(true|1|si|sí)$/i', $trimmed);
                 }
+
                 return false;
             default:
                 return false;
@@ -189,7 +209,7 @@ class PlacasReportPresenter
     /**
      * Calcula el banner de alerta de 5 niveles.
      *
-     * @param array<string, mixed> $sections
+     * @param  array<string, mixed>  $sections
      * @return array{level:string, bg:string, color:string, message:string}
      */
     public static function computeBanner(array $sections, bool $alertaRobo): array
@@ -264,7 +284,7 @@ class PlacasReportPresenter
     }
 
     /**
-     * @param mixed $section
+     * @param  mixed  $section
      * @return mixed
      */
     private static function firstObject($section)
@@ -279,7 +299,7 @@ class PlacasReportPresenter
     /**
      * Determina si una sección de respuesta no contiene información relevante.
      *
-     * @param mixed $section
+     * @param  mixed  $section
      */
     private static function isEmptySection($section): bool
     {
@@ -287,7 +307,7 @@ class PlacasReportPresenter
             return true;
         }
 
-        if (!is_array($section)) {
+        if (! is_array($section)) {
             return empty($section);
         }
 
@@ -303,10 +323,38 @@ class PlacasReportPresenter
     }
 
     /**
-     * @param array<mixed> $array
+     * @param  array<mixed>  $array
      */
     private static function isList(array $array): bool
     {
         return array_keys($array) === range(0, count($array) - 1);
+    }
+
+    /**
+     * Detects only known implementation-error signatures. Business findings
+     * from the provider deliberately remain visible and are not reclassified.
+     *
+     * @param  mixed  $data
+     */
+    private static function containsTechnicalProviderFailure($data): bool
+    {
+        if (is_string($data)) {
+            return preg_match(
+                '/(?:cannot read properties of (?:null|undefined)|\\b(?:typeerror|referenceerror|syntaxerror)\\b|\\b(?:stack trace|unhandled exception)\\b)/i',
+                $data,
+            ) === 1;
+        }
+
+        if (! is_array($data)) {
+            return false;
+        }
+
+        foreach ($data as $value) {
+            if (self::containsTechnicalProviderFailure($value)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -17,6 +17,20 @@
         .alert-red { background-color: #f8d7da; }
         .alert-yellow { background-color: #fff3cd; }
         .alert-green { background-color: #d1e7dd; }
+        .status-badge { display: inline-block; padding: 3px 8px; border-radius: 10px; color: #fff; font-size: 10px; font-weight: bold; }
+        .status-badge.red { background-color: #dc3545; }
+        .status-badge.yellow { background-color: #ffc107; color: #333; }
+        .status-badge.green { background-color: #198754; }
+        .status-badge.default { background-color: #6c757d; }
+        .title-brand-notice { border-left: 4px solid #dc3545; background: #fff8f8; padding: 10px; margin: 10px 0; }
+        .title-brand-red td { background-color: #f8d7da; }
+        .title-brand-yellow td { background-color: #fff3cd; }
+        .title-brand-green td { background-color: #d1e7dd; }
+        .title-brand-border-red { border-left: 4px solid #dc3545; }
+        .title-brand-border-yellow { border-left: 4px solid #ffc107; }
+        .title-brand-border-green { border-left: 4px solid #198754; }
+        .title-brand-border-default { border-left: 4px solid #6c757d; }
+        .title-brand-flag { font-size: 9px; font-weight: bold; }
         .summary-box { background-color: #f8f9fa; padding: 10px; margin: 15px 0; border-left: 4px solid #0d6efd; }
         .summary-box.red { border-left-color: #dc3545; background-color: #fff8f8; }
         .summary-box.yellow { border-left-color: #ffc107; background-color: #fffdf0; }
@@ -59,6 +73,14 @@
         $make = $info['make'] ?? ($summary['make'] ?? null);
         $model = $info['model'] ?? ($summary['model'] ?? null);
         $color = $info['color'] ?? null;
+        $statusColor = strtolower((string) $color);
+        $status = match($statusColor) {
+            'red' => 'Warning',
+            'yellow' => 'Caution',
+            'green' => 'Clean',
+            default => $color,
+        };
+        $statusClass = in_array($statusColor, ['red', 'yellow', 'green'], true) ? $statusColor : 'default';
     @endphp
 
     <div class="pdf-footer">
@@ -84,7 +106,7 @@
     <table class="header">
         <tr>
             <td style="vertical-align:middle;">
-                <img src="{{ public_path('images/logo-vintrack.png') }}" alt="VINTrack" style="height:45px; vertical-align:middle; margin-right:10px;">
+                <img src="{{ asset('images/logo-vintrack.png') }}" alt="VINTrack" style="height:45px; vertical-align:middle; margin-right:10px;">
                 <span style="font-size:16px; color:#0d6efd; font-weight:700; vertical-align:middle;">Reporte de historial vehicular</span>
             </td>
             <td class="meta">
@@ -100,8 +122,8 @@
 
     <h2 style="font-size:24px; color:#0d6efd; margin-bottom:2px;">{{ $year }} {{ $make }} {{ $model }}</h2>
     <p style="margin:2px 0;">VIN: <strong>{{ $vin }}</strong></p>
-    @if($color)
-        <p style="margin:2px 0;">Color: {{ $color }}</p>
+    @if($status)
+        <p style="margin:2px 0;">Status: <span class="status-badge {{ $statusClass }}">{{ $status }}</span></p>
     @endif
 
     <div class="traffic-light">
@@ -121,6 +143,7 @@
         <table>
             <thead>
                 <tr>
+                    <th>Fecha</th>
                     <th>Evento</th>
                     <th>Ubicación</th>
                     <th>Detalles</th>
@@ -137,6 +160,7 @@
                         };
                     @endphp
                     <tr class="{{ $rowClass }}">
+                        <td>{{ $item['date'] ?? '' }}</td>
                         <td>{{ $item['event'] ?? 'N/A' }}</td>
                         <td>{{ $item['location'] ?? 'N/A' }}</td>
                         <td>
@@ -231,11 +255,44 @@
 
     @if(!empty($titleBrandReported))
         <h2>Marcas de título reportadas</h2>
-        <ul>
+        <div class="title-brand-notice">Advertencia: se reportaron una o más marcas de título DMV negativas o preventivas. <span style="float:right;">Fuente: NMVTIS</span></div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha de emisión</th>
+                    <th>Estado</th>
+                    <th>Marca</th>
+                    <th>Descripción</th>
+                </tr>
+            </thead>
+            <tbody>
             @foreach($titleBrandReported as $brand)
-                <li>{{ $brand['name'] ?? json_encode($brand) }}</li>
+                @php
+                    $brandName = $brand['brand'] ?? $brand['title'] ?? $brand['name'] ?? json_encode($brand);
+                    $brandColor = strtolower($brand['color'] ?? '');
+                    $brandFlag = strtolower($brand['flag'] ?? '');
+                    $rowClass = match($brandColor) {
+                        'red' => 'title-brand-red',
+                        'yellow' => 'title-brand-yellow',
+                        'green' => 'title-brand-green',
+                        default => ''
+                    };
+                    $borderClass = match($brandColor) {
+                        'red' => 'title-brand-border-red',
+                        'yellow' => 'title-brand-border-yellow',
+                        'green' => 'title-brand-border-green',
+                        default => 'title-brand-border-default'
+                    };
+                @endphp
+                <tr class="{{ $rowClass }}">
+                    <td class="{{ $borderClass }}">{{ isset($brand['date']) ? \Carbon\Carbon::parse($brand['date'])->format('d/m/Y') : 'N/A' }}</td>
+                    <td>{{ $brand['state'] ?? 'N/A' }}</td>
+                    <td>{{ $brandName }} @if($brandFlag !== '') <span class="title-brand-flag">({{ strtoupper($brandFlag) }})</span> @endif</td>
+                    <td>{{ $brand['description'] ?? 'N/A' }}</td>
+                </tr>
             @endforeach
-        </ul>
+            </tbody>
+        </table>
     @endif
 
     @if(!empty($trimLevels))

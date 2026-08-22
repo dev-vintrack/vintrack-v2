@@ -4,7 +4,7 @@ namespace App\Domain\Consultas\ValueObjects;
 
 final class ProviderResultAssessment
 {
-    public const VERSION = 'cr-004-v1';
+    public const VERSION = 'cr-004-v2';
 
     public const ACTIVE_QUALIFYING = 'ACTIVE_QUALIFYING';
 

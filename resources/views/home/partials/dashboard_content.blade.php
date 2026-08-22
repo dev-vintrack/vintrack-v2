@@ -98,7 +98,7 @@
                         <label class="form-label">Valor</label>
                         <input type="text" name="value" class="form-control" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Consultar</button>
+                    <button type="submit" class="btn btn-primary" data-consult-submit>Consultar</button>
                 </form>
                 <div id="consultaResult" class="mt-3"></div>
             </div>
@@ -155,7 +155,10 @@ updateServiceUI();
 document.getElementById('consultaForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
     const resultDiv = document.getElementById('consultaResult');
-    resultDiv.innerHTML = '<div class="alert alert-secondary">Consultando...</div>';
+    const submitButton = this.querySelector('[data-consult-submit]');
+    submitButton.disabled = true;
+    submitButton.setAttribute('aria-busy', 'true');
+    resultDiv.innerHTML = '<div class="text-center py-3" role="status" aria-live="polite"><img src="{{ asset('images/policecar.gif') }}" alt="" width="140" height="105"><div class="mt-2 text-muted">Consultando…</div></div>';
     try {
         const response = await fetch(this.action, {
             method: 'POST',
@@ -165,7 +168,13 @@ document.getElementById('consultaForm')?.addEventListener('submit', async functi
             },
             body: new FormData(this)
         });
-        const data = await response.json();
+        let data;
+        try {
+            data = await response.json();
+        } catch (_) {
+            resultDiv.innerHTML = '<div class="alert alert-danger">Problema en la sincronización de la respuesta, por favor intente de nuevo en unos minutos.</div>';
+            return;
+        }
         if (data.success) {
             let html = '';
             if (data.banner) {
@@ -186,7 +195,10 @@ document.getElementById('consultaForm')?.addEventListener('submit', async functi
             resultDiv.innerHTML = '<div class="alert alert-danger">' + (data.message || 'Error') + '</div>';
         }
     } catch (err) {
-        resultDiv.innerHTML = '<div class="alert alert-danger">Error de red: ' + err.message + '</div>';
+        resultDiv.innerHTML = '<div class="alert alert-danger">Problema en la sincronización de la respuesta, por favor intente de nuevo en unos minutos.</div>';
+    } finally {
+        submitButton.disabled = false;
+        submitButton.removeAttribute('aria-busy');
     }
 });
 </script>

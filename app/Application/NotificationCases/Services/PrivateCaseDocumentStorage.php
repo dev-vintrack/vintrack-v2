@@ -39,6 +39,12 @@ class PrivateCaseDocumentStorage
         return $this->filesystems->disk(self::DISK)->exists($key);
     }
 
+    /** @return resource|false */
+    public function readStream(string $key)
+    {
+        return $this->filesystems->disk(self::DISK)->readStream($key);
+    }
+
     public function download(string $key, string $safeName, string $mime): StreamedResponse
     {
         return $this->filesystems->disk(self::DISK)->download($key, $safeName, [

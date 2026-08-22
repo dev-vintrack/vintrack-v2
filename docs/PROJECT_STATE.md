@@ -31,11 +31,17 @@
 `consultations.provider_service_id` exists locally and in production. Do not recreate.
 
 ## Current Phase
-GOLDEN STAGING CANDIDATE — READY FOR OWNER REVIEW
+CR-005 AND CR-006 — IMPLEMENTED LOCALLY — OWNER LOCAL VISUAL VALIDATION ACCEPTED — STAGING NOT AUTHORIZED
 
 ## Current Class A Changes
 - CR-003 — Restore Report Access from History Tables: IMPLEMENTED LOCALLY — READY FOR OWNER REVIEW. It restores the existing `/reports/{consultation_id}` access from Client and Administrative history rows without changing report generation, providers, workflows, schema, migrations, or production.
 - CR-004 — Provider Result Assessment for `placas_service` and `nmvtis_plus`: IMPLEMENTED LOCALLY — OWNER LOCAL VALIDATION ACCEPTED — STAGING DEPLOYED AND VALIDATED WITH OBSERVATIONS — PRODUCTION RELEASE NOT AUTHORIZED. DEC-050 establishes explicit, service-code-based qualification; only current documented robbery/theft or fraud signals may create notification cases and their case-driven intents. Contract fixtures and the 130-test/605-assertion regression passed without billable provider calls. The Owner validated the Windows-compatible artifact after its authorized upload/extraction in `dev.vintrack.com.mx` / `public_html_dev`, preserving `.env` and `storage/`. See `docs/production/deployment/CR-004-STAGING-ARTIFACT-MANIFEST.md`; no production action is authorized or performed.
+
+## Current Remediation Change Requests
+- CR-005 - Controlled Provider Technical-Failure Presentation: APPROVED — IMPLEMENTED LOCALLY — OWNER LOCAL VISUAL VALIDATION ACCEPTED — STAGING NOT AUTHORIZED. It replaces only recognized historical provider implementation-error signatures at report presentation time with a stable status, preserving raw evidence and leaving qualification, notification cases, outbox, schema and data untouched.
+- CR-006 - Notification Process UTF-8 Presentation Integrity: APPROVED — IMPLEMENTED LOCALLY — OWNER LOCAL VISUAL VALIDATION ACCEPTED — STAGING NOT AUTHORIZED. Byte-level diagnosis isolated mojibake to static literals in the administrative Notification Process index; the targeted UTF-8 correction does not alter workflow, outbox, schema or data.
+- CR-008 - Provider Response Synchronization: APPROVED — IMPLEMENTED LOCALLY — OWNER LOCAL VISUAL VALIDATION ACCEPTED — STAGING NOT AUTHORIZED. It configures bounded provider response waits for `placas_service` and `nmvtis_plus` and removes technical synchronization errors from the client UI. No schema, data, wallet, workflow, staging, or production change is authorized.
+- CR-009 - PlacasInfo Payload Normalization: APPROVED — IMPLEMENTED LOCALLY — OWNER LOCAL VISUAL VALIDATION ACCEPTED — STAGING NOT AUTHORIZED. It corrects documented PGJ/Aviso object/list normalization and provider-error classification for future `placas_service` consultations using production-derived fixtures from consultations 64 and 65. No schema, data rewrite, staging, or production change is authorized.
 
 ## Phase 0 Documentation
 APPROVED — Version 1.0
@@ -56,7 +62,7 @@ NONE — SPRINT-08 CLOSED
 APPROVED WITH OBSERVATIONS — DEC-047
 
 ## PG-05
-IMPLEMENTED LOCALLY — PROVIDER SELECTION AND PRODUCTION VERIFICATION REQUIRED
+IMPLEMENTED LOCALLY — CLOUDMERSIVE SELECTED — EXTERNAL PRIVACY/CONTRACT AND PRODUCTION VERIFICATION REQUIRED
 
 ## PG-18
 CLOSED LOCALLY
@@ -83,7 +89,7 @@ READY WITH CONDITIONS
 NOT EXECUTED
 
 ## Next Step
-Owner decision on the documented CR-004 staging observations, then separate Production Environment Verification / production-release authorization if and when the remaining gates permit it. Do not create/clone `vintrack_app`, modify production, or perform additional SQL without new Owner authorization.
+If the Owner elects to continue, separately authorize preparation of a staging artifact and a validation plan for CR-005 and CR-006. Do not upload, extract, activate or validate in staging until expressly authorized. Do not create/clone `vintrack_app`, modify production, or perform additional SQL without new Owner authorization.
 
 ## Canonical Roadmap Decision
 DEC-036

@@ -7,12 +7,12 @@
 @endpush
 
 @section('content')
-<section class="rh-hero" style="background-image: url('{{ asset('images/vintrack-policeOfficer.png') }}');">
+<section class="rh-hero" style="background-image: url('{{ asset('images/vintrack-vigia.png') }}');">
     <div class="rh-hero-overlay"></div>
     <div class="rh-hero-content">
         <div class="rh-hero-toptitle">
             <span class="rh-hero-toptitle-white">CONSULTA VEHICULAR</span>
-            <span class="rh-hero-toptitle-blue">PARA UNIDAD DE ANÁLISIS E INVESTIGACIÓN DIGITAL</span>
+            <span class="rh-hero-toptitle-blue">UNIDAD DE INVESTIGACIÓN</span>
         </div>
         <span class="rh-hero-badge">Consulta información relacionada con robos de vehículos, reportes y estatus en tiempo real</span>
     </div>
@@ -33,7 +33,7 @@
         <div class="rh-carvana-wrapper" id="carvanaWrapper">
             <iframe
                 id="carvanaFrame"
-                src="https://www.carvana.com/value-tracker/get-value/entry"
+                src="https://www.carvana.com/sell-my-car/getoffer/entry"
                 loading="lazy"
                 allowfullscreen
                 title="Consulta Placa"

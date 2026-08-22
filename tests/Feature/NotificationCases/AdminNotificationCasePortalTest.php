@@ -30,9 +30,9 @@ class AdminNotificationCasePortalTest extends TestCase
         [$owner, $case] = $this->case(NotificationCaseStatus::SUBMITTED);
         $analyst = User::factory()->create(['rol' => 'analista', 'activo' => true]);
         $support = User::factory()->create(['rol' => 'soporte', 'activo' => true]);
-        $this->actingAs($analyst)->get(route('admin.notification-cases.index', ['folio' => $case->case_number, 'user_id' => $owner->id, 'status' => 'SUBMITTED']))->assertOk()->assertSee($case->case_number)->assertSee($owner->email);
+        $this->actingAs($analyst)->get(route('admin.notification-cases.index', ['folio' => $case->case_number, 'user_id' => $owner->id, 'status' => 'SUBMITTED']))->assertOk()->assertSee($case->case_number)->assertSee($owner->email)->assertSee('Vehículo')->assertSee('Apertura / límite')->assertSee('Envío / actualización')->assertDontSee('VehÃ');
         $this->actingAs($analyst)->get(route('admin.notification-cases.index', ['vin' => 'NONEXISTENTVIN']))->assertOk()->assertDontSee($case->case_number);
-        $this->actingAs($analyst)->get(route('admin.notification-cases.show', $case))->assertOk()->assertSee('Iniciar revisiÃ³n');
+        $this->actingAs($analyst)->get(route('admin.notification-cases.show', $case))->assertOk()->assertSee('Identificación inmutable')->assertSee('Iniciar revisión')->assertDontSee('Ã');
         $this->actingAs($support)->get(route('admin.notification-cases.index'))->assertForbidden();
         $this->actingAs($owner)->get(route('admin.notification-cases.index'))->assertForbidden();
     }

@@ -12,7 +12,7 @@
     <div class="rh-hero-content">
         <div class="rh-hero-toptitle">
             <span class="rh-hero-toptitle-white">CONSULTA VEHICULAR</span>
-            <span class="rh-hero-toptitle-blue">PARA OFICIALES</span>
+            <span class="rh-hero-toptitle-blue">AUTORIDAD OFICIAL</span>
         </div>
         <span class="rh-hero-badge">Consulta información relacionada con robos de vehículos, reportes y estatus en tiempo real</span>
     </div>

@@ -27,21 +27,29 @@ final class ProviderResultAssessor
         $active = [];
         $historical = [];
         $warnings = [];
+        $unavailable = [];
 
-        if (is_array($payload['pgj'] ?? null)) {
-            $status = $this->integer($payload['pgj']['ID_ESTATUS_VHI_ROBO'] ?? null);
+        $pgj = $payload['pgj'] ?? null;
+        if ($this->hasProviderError($pgj)) {
+            $unavailable[] = 'pgj';
+        }
+        foreach ($this->records($pgj) as $index => $record) {
+            $status = $this->integer($record['ID_ESTATUS_VHI_ROBO'] ?? null);
             if ($status === 1) {
-                $active[] = 'pgj.ID_ESTATUS_VHI_ROBO=1';
+                $active[] = "pgj.$index.ID_ESTATUS_VHI_ROBO=1";
             } elseif (in_array($status, [4, 12], true)) {
-                $historical[] = 'pgj.ID_ESTATUS_VHI_ROBO='.$status;
+                $historical[] = "pgj.$index.ID_ESTATUS_VHI_ROBO=$status";
             } elseif ($status !== null) {
-                $warnings[] = 'pgj.ID_ESTATUS_VHI_ROBO='.$status;
+                $warnings[] = "pgj.$index.ID_ESTATUS_VHI_ROBO=$status";
             }
         }
 
-        if (is_array($payload['ocra'] ?? null)) {
-            $reported = $this->boolean($payload['ocra']['conReporteRoboRecuperacion'] ?? null);
-            $status = $this->integer($payload['ocra']['reporte']['roboORecuperacion'] ?? null);
+        $ocra = $payload['ocra'] ?? null;
+        if ($this->hasProviderError($ocra)) {
+            $unavailable[] = 'ocra';
+        } elseif (is_array($ocra)) {
+            $reported = $this->boolean($ocra['conReporteRoboRecuperacion'] ?? null);
+            $status = $this->integer($ocra['reporte']['roboORecuperacion'] ?? null);
             if ($reported === true && $status === 1) {
                 $active[] = 'ocra.conReporteRoboRecuperacion=true+reporte.roboORecuperacion=1';
             } elseif ($reported === true && $status === 2) {
@@ -51,32 +59,67 @@ final class ProviderResultAssessor
             }
         }
 
-        if (is_array($payload['aviso'] ?? null)) {
-            $movement = $this->integer($payload['aviso']['ID_MOVIMIENTO'] ?? null);
+        $aviso = $payload['aviso'] ?? null;
+        if ($this->hasProviderError($aviso)) {
+            $unavailable[] = 'aviso';
+        }
+        foreach ($this->records($aviso) as $index => $record) {
+            if (empty($record['NIV']) && empty($record['TIPO_DELITO'])) {
+                continue;
+            }
+            $movement = $this->integer($record['ID_MOVIMIENTO'] ?? null);
             if (in_array($movement, [1, 3], true)) {
-                $active[] = 'aviso.ID_MOVIMIENTO='.$movement;
+                $active[] = "aviso.$index.ID_MOVIMIENTO=$movement";
             } elseif (in_array($movement, [0, 2], true)) {
-                $historical[] = 'aviso.ID_MOVIMIENTO='.$movement;
+                $historical[] = "aviso.$index.ID_MOVIMIENTO=$movement";
             } elseif ($movement !== null) {
-                $warnings[] = 'aviso.ID_MOVIMIENTO='.$movement;
+                $warnings[] = "aviso.$index.ID_MOVIMIENTO=$movement";
             }
         }
 
-        if (is_array($payload['rapi'] ?? null) && $this->boolean($payload['rapi']['tiene_delito'] ?? null) === true) {
-            $warnings[] = 'rapi.tiene_delito=true_without_documented_current_state';
+        $rapi = $payload['rapi'] ?? null;
+        if ($this->hasProviderError($rapi)) {
+            $unavailable[] = 'rapi';
+        } elseif (is_array($rapi) && $this->boolean($rapi['tiene_delito'] ?? null) === true) {
+            $status = $this->normalize((string) ($rapi['estado_vehiculo'] ?? ''));
+            if (in_array($status, ['procedencia ilicita', 'robado'], true)) {
+                $active[] = 'rapi.estado_vehiculo='.$status;
+            } elseif (in_array($status, ['recuperado', 'entregado'], true)) {
+                $historical[] = 'rapi.estado_vehiculo='.$status;
+            } else {
+                $warnings[] = 'rapi.tiene_delito=true_without_documented_current_state';
+            }
         }
 
-        $carfax = is_array($payload['carfax'] ?? null) ? $payload['carfax'] : [];
+        $carfax = $payload['carfax'] ?? null;
+        if ($this->hasProviderError($carfax)) {
+            $unavailable[] = 'carfax';
+        }
+        $carfax = is_array($carfax) ? $carfax : [];
         $carfaxData = is_array($carfax['data'] ?? null) ? $carfax['data'] : [];
         if ($this->boolean($carfaxData['robo'] ?? null) === true) {
             $active[] = 'carfax.data.robo=true';
         }
 
+        $repuve = $payload['repuve'] ?? null;
+        if ($this->hasProviderError($repuve)) {
+            $unavailable[] = 'repuve';
+        }
+        foreach ($this->records($repuve) as $index => $record) {
+            if ($this->integer($record['TIPO_MOVIMIENTO'] ?? null) === 2) {
+                $historical[] = "repuve.$index.TIPO_MOVIMIENTO=2";
+                break;
+            }
+        }
+
         if ($active !== []) {
-            return new ProviderResultAssessment('placas_service', ProviderResultAssessment::ACTIVE_QUALIFYING, $active, $active);
+            return new ProviderResultAssessment('placas_service', ProviderResultAssessment::ACTIVE_QUALIFYING, $active, array_merge($active, $historical, $warnings, $this->unavailableEvidence($unavailable)));
         }
         if ($historical !== []) {
-            return new ProviderResultAssessment('placas_service', ProviderResultAssessment::HISTORICAL_RECORD, $historical, $historical);
+            return new ProviderResultAssessment('placas_service', ProviderResultAssessment::HISTORICAL_RECORD, $historical, array_merge($historical, $warnings, $this->unavailableEvidence($unavailable)));
+        }
+        if ($unavailable !== []) {
+            return new ProviderResultAssessment('placas_service', ProviderResultAssessment::INDETERMINATE, $this->unavailableEvidence($unavailable), $this->unavailableEvidence($unavailable));
         }
         if ($warnings !== []) {
             return new ProviderResultAssessment('placas_service', ProviderResultAssessment::NON_QUALIFYING_WARNING, $warnings, $warnings);
@@ -142,6 +185,39 @@ final class ProviderResultAssessor
         }
 
         return false;
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function records(mixed $section): array
+    {
+        if (is_array($section) && isset($section['XCURSOR']) && is_array($section['XCURSOR'])) {
+            $section = $section['XCURSOR'];
+        } elseif (is_array($section) && isset($section['data']['XCURSOR']) && is_array($section['data']['XCURSOR'])) {
+            $section = $section['data']['XCURSOR'];
+        }
+
+        if (is_array($section) && array_is_list($section)) {
+            return array_values(array_filter($section, 'is_array'));
+        }
+
+        return is_array($section) && $section !== [] && ! $this->hasProviderError($section) ? [$section] : [];
+    }
+
+    private function hasProviderError(mixed $section): bool
+    {
+        return is_array($section) && (
+            array_key_exists('error', $section)
+            || (array_key_exists('statusCode', $section) && ! array_key_exists('data', $section))
+            || (array_key_exists('path', $section) && array_key_exists('status', $section))
+        );
+    }
+
+    /** @param array<int, string> $sources
+     * @return array<int, string>
+     */
+    private function unavailableEvidence(array $sources): array
+    {
+        return array_map(fn (string $source): string => "source_unavailable.$source", array_values(array_unique($sources)));
     }
 
     private function integer(mixed $value): ?int

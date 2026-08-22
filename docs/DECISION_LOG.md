@@ -395,3 +395,27 @@ Para `placas_service`, la interpretación debe usar los campos/estados fuente-es
 La respuesta cruda del proveedor se conserva como evidencia y la implementación debe guardar una instantánea normalizada y auditable de su evaluación. No se reescribe automáticamente el historial. Fallos, falta de datos o variantes de payload desconocidas son `INDETERMINATE` para calificación, nunca `CLEAR`; la integración debe fallar cerrada respecto de la creación del expediente.
 
 La implementación debe seguir la arquitectura Application/Domain/Infrastructure existente, usar fixtures de contrato versionados, preservar idempotencia/concurrencia, autorización, la regla de 90 días y el outbox de Portal/Email independiente. La implementación local fue realizada con fixtures sin llamadas facturables, sin schema, migrations, cambios de datos, Cron o SMTP. El Owner aceptó la validación local y, mediante autorización separada, validó en staging el artifact de runtime `c23d662` el 2026-08-17 sin consultas nuevas, provider calls, SMTP, Cron, Artisan o SQL. La evidencia de staging acepta dos observaciones no corregidas: mensaje técnico histórico de CARFAX visible en un reporte y mojibake de codificación en Proceso de Notificaciones. Ninguna cambia la calificación CR-004 ni autoriza producción. **APPROVED**
+
+## DEC-051 — Cloudmersive Provider Selection for PG-05
+
+**Estado:** APPROVED — LOCAL INTEGRATION IMPLEMENTED — EXTERNAL VERIFICATION PENDING
+**Aprobado por:** Project Owner
+**Fecha:** 2026-08-17
+
+Cloudmersive Virus Scan API is the selected PG-05 provider. VINTrack uses `POST /virus/scan/file/advanced` behind `MalwareScanner`; it sends only the quarantined private file stream and maps `CleanResult=true` exclusively to `CLEAN`. All other result classes remain blocked. The adapter applies content restrictions for `.pdf,.jpg,.jpeg,.png` and disables executables, invalid files, scripts, encrypted files, macros, XXE, HTML, unsafe archives, OLE objects and unwanted actions.
+
+The API key is an environment secret, never source-controlled or logged. The approved subscription constraint is 600 calls/month, 1 call/second and 3.5 MB/file; VINTrack retains its existing 3 MB business limit and bounded processor. HTTP 429/5xx and connectivity failures are retryable; authentication/configuration/client errors are fail-closed.
+
+Pending external evidence: provider privacy/DPA/contract, retention, confirmation that uploaded Evidence is not reused/shared, and exact North America processing conditions. Until approved, production activation and any real Evidence upload to Cloudmersive remain unauthorized. Neubox HTTPS connectivity and cPanel Cron verification are separately pending execution in the target environment. **APPROVED**
+
+## DEC-052 — PlacasInfo Payload Normalization and Result Priority
+
+**Estado:** APPROVED — IMPLEMENTED LOCALLY — OWNER LOCAL VISUAL VALIDATION ACCEPTED — STAGING NOT AUTHORIZED
+**Aprobado por:** Project Owner
+**Fecha:** 2026-08-19
+
+For immutable `placas_service`, PGJ and Aviso payload sections may be object, list, documented `XCURSOR` wrapper, empty, or recognized provider-error shape. The evaluator must normalize all record-bearing forms and inspect every record. A current source-specific predicate has priority for qualification: PGJ `ID_ESTATUS_VHI_ROBO=1`; OCRA `conReporteRoboRecuperacion=true` plus `reporte.roboORecuperacion=1`; Aviso `ID_MOVIMIENTO` 1 or 3; RAPI `tiene_delito=true` plus `estado_vehiculo` `PROCEDENCIA ILICITA` or `ROBADO`; CARFAX `data.robo=true`.
+
+Historical predicates remain non-qualifying: PGJ 4/12, OCRA 2, Aviso 0/2, RAPI `RECUPERADO`/`ENTREGADO`, and REPUVE `TIPO_MOVIMIENTO=2`. Recognized source errors are `INDETERMINATE` when no current/historical authoritative predicate is available; no unavailable/error source may be classified `CLEAR`. An active predicate remains qualifying even if another source carries historical or unavailable evidence; all supplied evidence remains preserved in the auditable assessment snapshot. No historical consultation is rewritten.
+
+Owner local visual validation was confirmed positive on 2026-08-20. Staging and production remain unauthorized.

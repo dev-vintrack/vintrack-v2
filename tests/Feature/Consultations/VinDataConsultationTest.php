@@ -129,7 +129,23 @@ class VinDataConsultationTest extends TestCase
             ->get(route('reports.show', $consultationId))
             ->assertStatus(200)
             ->assertSee('VINTrack')
-            ->assertSee('1HGCM82633A123456');
+            ->assertSee('1HGCM82633A123456')
+            ->assertSee('Status:')
+            ->assertSee('Caution')
+            ->assertDontSee('Color:')
+            ->assertSee('Fecha')
+            ->assertSee('11/25/2025')
+            ->assertSee('Open Lien')
+            ->assertSee('Marca preferida')
+            ->assertSee('Marca desde title')
+            ->assertSee('Marca desde name')
+            ->assertSee('01/07/2026')
+            ->assertSee('Arizona')
+            ->assertSee('Descripción de advertencia')
+            ->assertSee('WARNING')
+            ->assertSee('CAUTION')
+            ->assertSee('Fuente: NMVTIS')
+            ->assertDontSee('No debe mostrarse');
     }
 
     public function test_pdf_report_returns_pdf_response_for_vindata_consultation(): void
@@ -206,6 +222,7 @@ class VinDataConsultationTest extends TestCase
                         'productCode' => 'VHR',
                         'productName' => 'Vehicle History Report',
                         'vin' => $request->value(),
+                        'color' => 'YELLOW',
                         'rawData' => [
                             'summary' => [
                                 'year' => '2020',
@@ -214,7 +231,36 @@ class VinDataConsultationTest extends TestCase
                             ],
                             'reportSummary' => [
                                 'message' => 'No se encontraron problemas mayores.',
-                                'color' => 'green',
+                                'color' => 'yellow',
+                            ],
+                            'otherInformation' => [[
+                                'date' => '11/25/2025',
+                                'event' => 'Open Lien',
+                                'location' => '',
+                                'detailsList' => ['Vehicle is reported to have an open lien on title.'],
+                                'color' => 'yellow',
+                            ]],
+                            'titleBrandReported' => [
+                                [
+                                    'brand' => 'Marca preferida',
+                                    'title' => 'No debe mostrarse',
+                                    'name' => 'No debe mostrarse',
+                                    'date' => '2026-07-01T00:00:00Z',
+                                    'state' => 'Arizona',
+                                    'description' => 'Descripción de advertencia',
+                                    'color' => 'red',
+                                    'flag' => 'warning',
+                                ],
+                                [
+                                    'title' => 'Marca desde title',
+                                    'color' => 'yellow',
+                                    'flag' => 'caution',
+                                ],
+                                [
+                                    'name' => 'Marca desde name',
+                                    'color' => 'green',
+                                    'flag' => 'info',
+                                ],
                             ],
                         ],
                     ],

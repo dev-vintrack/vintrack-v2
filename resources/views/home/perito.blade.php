@@ -11,8 +11,9 @@
     <div class="rh-hero-overlay"></div>
     <div class="rh-hero-content">
         <div class="rh-hero-toptitle">
-            <span class="rh-hero-toptitle-white">CONSULTA VEHICULAR</span>
-            <span class="rh-hero-toptitle-blue">PARA PERITOS</span>
+            <span class="rh-hero-toptitle-white">CONSULTA ADN VEHICULAR</span>
+            <span class="rh-hero-toptitle-blue">EXPERTO PERICIAL</span>
+            <span class="rh-hero-toptitle-green">Análisis Técnico y Científico </span>
         </div>
         <span class="rh-hero-badge">Consulta información relacionada con robos de vehículos, reportes y estatus en tiempo real</span>
     </div>

@@ -3,8 +3,8 @@
 use App\Presentation\Http\Controllers\Web\Admin\AdminConsultationController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminInventoryController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminMenuPermissionController;
-use App\Presentation\Http\Controllers\Web\Admin\AdminNotificationController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminNotificationCaseController;
+use App\Presentation\Http\Controllers\Web\Admin\AdminNotificationController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminPackageController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminProviderController;
 use App\Presentation\Http\Controllers\Web\Admin\AdminProviderServiceRoleController;
@@ -135,6 +135,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('admin/proceso-notificaciones')->middleware(['role:analista'])->name('admin.notification-cases.')->group(function () {
         Route::get('/', [AdminNotificationCaseController::class, 'index'])->name('index');
         Route::get('/{case}', [AdminNotificationCaseController::class, 'show'])->name('show');
+        Route::get('/{case}/exportar-pdf', [AdminNotificationCaseController::class, 'exportPdf'])->name('export-pdf');
         Route::put('/{case}', [AdminNotificationCaseController::class, 'update'])->name('update');
         Route::post('/{case}/start-review', [AdminNotificationCaseController::class, 'startReview'])->name('start-review');
         Route::post('/{case}/validate', [AdminNotificationCaseController::class, 'validateCase'])->name('validate');

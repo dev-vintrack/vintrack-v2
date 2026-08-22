@@ -28,6 +28,19 @@
                 $make = $info['make'] ?? ($summary['make'] ?? null);
                 $model = $info['model'] ?? ($summary['model'] ?? null);
                 $color = $info['color'] ?? null;
+                $statusColor = strtolower((string) $color);
+                $status = match($statusColor) {
+                    'red' => 'Warning',
+                    'yellow' => 'Caution',
+                    'green' => 'Clean',
+                    default => $color,
+                };
+                $statusBadgeClass = match($statusColor) {
+                    'red' => 'bg-danger',
+                    'yellow' => 'bg-warning text-dark',
+                    'green' => 'bg-success',
+                    default => 'bg-secondary',
+                };
             @endphp
 
             @php
@@ -40,8 +53,8 @@
                 <div class="col-md-12">
                     <h2 class="mb-1">{{ $year }} {{ $make }} {{ $model }}</h2>
                     <p class="text-muted mb-1">VIN: <strong>{{ $vin }}</strong></p>
-                    @if($color)
-                        <p class="text-muted mb-2">Color: {{ $color }}</p>
+                    @if($status)
+                        <p class="text-muted mb-2">Status: <span class="badge rounded-pill {{ $statusBadgeClass }}">{{ $status }}</span></p>
                     @endif
 
                     <div style="display:inline-flex; align-items:center; background:#333; border-radius:24px; padding:5px 14px; margin:8px 0 14px 0; gap:8px;">
@@ -64,6 +77,7 @@
                     <table class="table table-sm table-bordered">
                         <thead class="table-light">
                             <tr>
+                                <th>Fecha</th>
                                 <th>Evento</th>
                                 <th>Ubicación</th>
                                 <th>Detalles</th>
@@ -80,6 +94,7 @@
                                     };
                                 @endphp
                                 <tr class="{{ $rowClass }}">
+                                    <td>{{ $item['date'] ?? '' }}</td>
                                     <td>{{ $item['event'] ?? 'N/A' }}</td>
                                     <td>{{ $item['location'] ?? 'N/A' }}</td>
                                     <td>
@@ -178,12 +193,57 @@
             @endif
 
             @if(!empty($titleBrandReported))
-                <h6 class="mt-4">Marcas de título reportadas</h6>
-                <ul class="list-group list-group-flush">
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <h6 class="mb-0">Marcas de título reportadas</h6>
+                    <small class="text-muted">Fuente: NMVTIS</small>
+                </div>
+                <div class="mt-2 mb-3" style="border-left: 4px solid #dc3545; background: #fff8f8; padding: 10px 14px;">
+                    Advertencia: se reportaron una o más marcas de título DMV negativas o preventivas.
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha de emisión</th>
+                                <th>Estado</th>
+                                <th>Marca</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                     @foreach($titleBrandReported as $brand)
-                        <li class="list-group-item">{{ $brand['name'] ?? json_encode($brand) }}</li>
+                        @php
+                            $brandName = $brand['brand'] ?? $brand['title'] ?? $brand['name'] ?? json_encode($brand);
+                            $brandColor = strtolower($brand['color'] ?? '');
+                            $brandFlag = strtolower($brand['flag'] ?? '');
+                            $rowClass = match($brandColor) {
+                                'red' => 'table-danger',
+                                'yellow' => 'table-warning',
+                                'green' => 'table-success',
+                                default => ''
+                            };
+                            $borderColor = match($brandColor) {
+                                'red' => '#dc3545',
+                                'yellow' => '#ffc107',
+                                'green' => '#198754',
+                                default => '#6c757d'
+                            };
+                        @endphp
+                        <tr class="{{ $rowClass }}">
+                            <td style="border-left: 4px solid {{ $borderColor }};">{{ isset($brand['date']) ? \Carbon\Carbon::parse($brand['date'])->format('d/m/Y') : 'N/A' }}</td>
+                            <td>{{ $brand['state'] ?? 'N/A' }}</td>
+                            <td>
+                                {{ $brandName }}
+                                @if($brandFlag !== '')
+                                    <span class="badge text-bg-{{ $brandColor === 'red' ? 'danger' : ($brandColor === 'yellow' ? 'warning' : ($brandColor === 'green' ? 'success' : 'secondary')) }} ms-1">{{ strtoupper($brandFlag) }}</span>
+                                @endif
+                            </td>
+                            <td>{{ $brand['description'] ?? 'N/A' }}</td>
+                        </tr>
                     @endforeach
-                </ul>
+                        </tbody>
+                    </table>
+                </div>
             @endif
 
             @if(!empty($trimLevels))
